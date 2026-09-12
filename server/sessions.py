@@ -57,6 +57,9 @@ def generate_post_generation_summary(
     is_edit: bool = False,
     sections_completed: int = 0,
     sections_planned: int = 0,
+    visual_check: Optional[str] = None,
+    visual_score: Optional[int] = None,
+    visual_issues: Optional[List[str]] = None,
 ) -> str:
     """
     Produces the mandatory structured post-generation summary:
@@ -87,6 +90,13 @@ def generate_post_generation_summary(
 
     lines.append("")
     lines.append("## Status")
+    if visual_check:
+        status_line = visual_check if visual_check.startswith("-") else f"- {visual_check}"
+        lines.append(status_line)
+    elif visual_score is not None:
+        issues_note = f" — {', '.join(visual_issues)}" if visual_issues else ""
+        lines.append(f"- Visual check: {visual_score}/5{issues_note}")
+
     if passed and not auto_recovered:
         lines.append("- ✅ All TypeScript types, JSX syntax, and CSS style tokens passed validation.")
     elif auto_recovered:

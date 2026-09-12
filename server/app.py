@@ -52,6 +52,7 @@ from server.sessions import (
     compute_file_diff,
     generate_post_generation_summary,
 )
+from visual_judge import _score_screenshot_heuristic, take_screenshot
 
 # ── App State ──────────────────────────────────────────────────────────────────
 
@@ -916,23 +917,12 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
         # 4. Create new versioned checkpoint
         chk_num = session.create_checkpoint(f"Edit: {prompt[:60]}")
 
-        # 5. Generate structured post-turn summary
-        summary = generate_post_generation_summary(
-            mode=session.mode,
-            files_touched=files_modified,
-            passed=True,
-            auto_recovered=[],
-            user_instruction=prompt,
-            is_edit=True,
-        )
-
-        # 6. Evaluate visual quality if site mode
+        # 5. Evaluate visual quality if site mode
         visual_score = None
         visual_issues = []
         if session.mode == "site":
             screenshot_path = session.workspace_dir / "screenshot.webp"
             try:
-                from visual_judge import _score_screenshot_heuristic, take_screenshot
                 ss = take_screenshot(project_dir=session.workspace_dir, output_path=screenshot_path)
                 if ss and ss.exists():
                     v_res = _score_screenshot_heuristic(ss)
@@ -945,6 +935,20 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
                         visual_score = h["visual_score"]
                         visual_issues = h.get("visual_issues", [])
                         break
+
+        # 6. Generate structured post-turn summary
+        visual_check = f"Visual check: {visual_score}/5" + (f" — {', '.join(visual_issues)}" if visual_issues else "") if visual_score is not None else None
+        summary = generate_post_generation_summary(
+            mode=session.mode,
+            files_touched=files_modified,
+            passed=True,
+            auto_recovered=[],
+            user_instruction=prompt,
+            is_edit=True,
+            visual_check=visual_check,
+            visual_score=visual_score,
+            visual_issues=visual_issues,
+        )
 
         # Record turn in session history
         turn_record = {
@@ -1116,7 +1120,6 @@ def _run_site_generation(task: dict, q: queue.Queue):
     visual_issues = []
     screenshot_path = site_export_dir / "screenshot.webp"
     try:
-        from visual_judge import _score_screenshot_heuristic, take_screenshot
         ss = take_screenshot(project_dir=site_export_dir, output_path=screenshot_path)
         if ss and ss.exists():
             v_res = _score_screenshot_heuristic(ss)
@@ -1129,10 +1132,40 @@ def _run_site_generation(task: dict, q: queue.Queue):
     # Retry logic: If visual quality score is low (< 3) and turn budget permits, run targeted refinement pass
     turns_used = len(result.get("turn_logs", []))
     if visual_score is not None and visual_score < 3 and turns_used < max_turns:
-        auto_recovered = result.get("auto_recovered_sections", [])
-        target_sec = auto_recovered[0] if auto_recovered else (sections[1] if len(sections) > 2 else sections[0])
-        print(f"[SiteGen] Visual quality {visual_score}/5 is below threshold (3/5). Running refinement pass on '{target_sec}'...")
-        q.put({"type": "log", "text": f"[Visual Judge] Visual score {visual_score}/5 below threshold. Running refinement pass on section '{target_sec}'..."})
+        target_sec = None
+        for issue in visual_issues:
+            issue_lower = issue.lower()
+            if "footer" in issue_lower:
+                for sec in reversed(sections):
+                    if "footer" in sec.lower():
+                        target_sec = sec
+                        break
+                if not target_sec and sections:
+                    target_sec = sections[-1]
+                break
+            elif "header" in issue_lower or "navigation" in issue_lower or "logo" in issue_lower:
+                for sec in sections:
+                    if any(k in sec.lower() for k in ("header", "nav")):
+                        target_sec = sec
+                        break
+                if not target_sec and sections:
+                    target_sec = sections[0]
+                break
+            elif "blank" in issue_lower or "density" in issue_lower or "flat" in issue_lower:
+                for sec in sections:
+                    if "hero" in sec.lower():
+                        target_sec = sec
+                        break
+                if not target_sec and len(sections) > 1:
+                    target_sec = sections[1]
+                break
+
+        if not target_sec:
+            auto_recovered = result.get("auto_recovered_sections", [])
+            target_sec = auto_recovered[0] if auto_recovered else (sections[1] if len(sections) > 2 else sections[0])
+
+        print(f"[SiteGen] Visual quality {visual_score}/5 is below threshold (3/5). Running corrective turn targeting '{target_sec}'...")
+        q.put({"type": "log", "text": f"[Visual Judge] Visual score {visual_score}/5 below threshold. Running corrective turn targeting section '{target_sec}'..."})
         try:
             from agent import auto_scaffold_section
             clean_custom_instr = brief.get("custom_section_instructions", {}).get(target_sec, "")
@@ -1151,6 +1184,18 @@ def _run_site_generation(task: dict, q: queue.Queue):
             _scaffold_site_vite_runner(session.workspace_dir, project_name, written_files, brief=brief)
             _scaffold_site_vite_runner(site_export_dir, project_name, written_files, brief=brief)
 
+            # Record corrective turn in turn logs and mark self-corrected
+            result.setdefault("turn_logs", []).append({
+                "turn": turns_used + 1,
+                "action": "visual_corrective_turn",
+                "section": target_sec,
+                "reason": f"Visual score {visual_score}/5 below threshold 3/5: {', '.join(visual_issues)}",
+            })
+            result["self_corrected"] = True
+            auto_rec = result.setdefault("auto_recovered_sections", [])
+            if target_sec not in auto_rec:
+                auto_rec.append(target_sec)
+
             ss2 = take_screenshot(project_dir=site_export_dir, output_path=screenshot_path)
             if ss2 and ss2.exists():
                 v_res2 = _score_screenshot_heuristic(ss2)
@@ -1168,6 +1213,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
 
     # Create initial checkpoint and post-generation structured summary
     chk_num = session.create_checkpoint(f"Initial site: {len(sections)} sections")
+    visual_check = f"Visual check: {visual_score}/5" + (f" — {', '.join(visual_issues)}" if visual_issues else "") if visual_score is not None else None
     summary = generate_post_generation_summary(
         mode="site",
         files_touched=list(written_files.keys()),
@@ -1177,6 +1223,9 @@ def _run_site_generation(task: dict, q: queue.Queue):
         is_edit=False,
         sections_completed=result.get("sections_completed", len(sections)),
         sections_planned=len(sections),
+        visual_check=visual_check,
+        visual_score=visual_score,
+        visual_issues=visual_issues,
     )
 
     session.history.append({"role": "user", "content": prompt, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")})
@@ -1200,7 +1249,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "mode":                 "site",
         "final_passed":         result["final_passed"],
         "initial_passed":       result["final_passed"],
-        "self_corrected":       False,
+        "self_corrected":       result.get("self_corrected", False),
         "turns_used":           len(result.get("turn_logs", [])),
         "sections_completed":   result.get("sections_completed", 0),
         "sections_planned":     len(sections),

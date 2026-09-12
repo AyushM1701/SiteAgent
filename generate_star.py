@@ -40,7 +40,7 @@ from agent_protocol import (
 )
 from evaluate import strip_test_imports
 from site_brief import generate_content_brief, brief_to_xml
-from visual_judge import _score_screenshot_heuristic, take_screenshot
+import visual_judge
 
 
 # ==============================================================================
@@ -112,11 +112,11 @@ def run_site_star_pipeline(
 
             # Evaluate visual quality
             screenshot_path = case_dir / "screenshot.webp"
-            ss = take_screenshot(project_dir=case_dir, output_path=screenshot_path)
+            ss = visual_judge.take_screenshot(project_dir=case_dir, output_path=screenshot_path)
             visual_score = 3  # Default neutral if screenshot tool unavailable
             issues = []
             if ss and ss.exists():
-                v_res = _score_screenshot_heuristic(ss)
+                v_res = visual_judge._score_screenshot_heuristic(ss)
                 visual_score = v_res.get("score", 0)
                 issues = v_res.get("issues", [])
 
