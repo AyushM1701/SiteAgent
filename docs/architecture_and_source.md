@@ -145,7 +145,7 @@ graph TD
    - **Teacher Synthesis (`generate_teacher.py`)**: Generates gold-standard multi-turn trajectory episodes.
    - **STaR Engine (`generate_star.py`, `dataset_build_star.py`)**: Self-Taught Reasoner bootstrapping with automated failure reflection.
    - **Site Trajectory Generators (`generate_site_trajectories.py`, `site_trajectories_batch2.py`)**: Synthesizes verified multi-section website trajectories across 15+ business domains.
-   - **QLoRA Fine-Tuner (`train.py`)**: Unsloth-accelerated training fitting large LoRA ranks (r=64, alpha=128) onto consumer GPUs.
+   - **QLoRA Fine-Tuner (`train.py`)**: Unsloth-accelerated training fitting LoRA adapters (shipped adapter: rank=16, alpha=16; sweep configurable up to rank=64, alpha=128) onto consumer GPUs.
 
 
 ### 1.4 Part 1: Site-Agent Starvation Bug Fix & Resilient Recovery Pipeline
@@ -32414,7 +32414,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 - **Path**: `file:///c:/Users/AYUSH/Documents/slm/my-react-agent-lora/adapter_config.json`
 - **Lines**: 54 | **Size**: 1,282 bytes
-- **Description**: Peft/LoRA configuration defining rank=64, alpha=128, target modules, and base model architecture.
+- **Description**: Peft/LoRA configuration defining shipped adapter rank=16, alpha=16, target modules, and base model architecture.
 
 ```json
 {

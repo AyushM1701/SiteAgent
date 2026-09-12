@@ -155,6 +155,21 @@ class Claim:
 
 def get_all_claims() -> List[Claim]:
     claims = [
+        # ── Step 2 / Phase 0: LoRA Config Reconciliation ───────────────────────────
+        Claim(
+            phase=0,
+            claim_id="P0.1",
+            description="`README.md` and `adapter_config.json` agree on LoRA rank=16 and alpha=16",
+            verify_fn=lambda: (
+                (True, f"README.md and adapter_config.json agree on rank=16 and alpha=16")
+                if ("LoRA Rank (`r`)" in read_file("README.md")[1] and
+                    "`16`" in read_file("README.md")[1] and
+                    json.loads(read_file("my-react-agent-lora/adapter_config.json")[1]).get("r") == 16 and
+                    json.loads(read_file("my-react-agent-lora/adapter_config.json")[1]).get("lora_alpha") == 16)
+                else (False, "Mismatch between README.md and adapter_config.json for rank or alpha")
+            )
+        ),
+
         # ── Phase 1: Explicit Section Parsing ──────────────────────────────────────
         Claim(
             phase=1,
@@ -418,7 +433,7 @@ def main():
         description="verify_claims.py: Source-Grounded Claim Verification Engine for ReactAgent SLM",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--phase", type=int, choices=[1, 2, 4, 6], help="Verify claims for a specific phase")
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 4, 6], help="Verify claims for a specific phase")
     parser.add_argument("--self-test", action="store_true", help="Run negative self-tests to prove false claims are caught")
 
     # Ad-hoc inspection flags
@@ -469,14 +484,14 @@ def main():
 
     # Standard Phase Verification mode
     claims = get_all_claims()
-    if args.phase:
+    if args.phase is not None:
         claims = [c for c in claims if c.phase == args.phase]
 
     print(c_bold("=================================================================="))
     print(c_bold(" ReactAgent SLM — Source-Grounded Claim Verification Engine"))
     print(c_bold("=================================================================="))
     print(f"Workspace Root: {BASE_DIR}")
-    print(f"Targeting: {'Phase ' + str(args.phase) if args.phase else 'All Confirmed Phases (1, 2, 4, 6)'}")
+    print(f"Targeting: {'Phase ' + str(args.phase) if args.phase is not None else 'All Confirmed Phases (0, 1, 2, 4, 6)'}")
 
     passed, failed = run_claims(claims)
 

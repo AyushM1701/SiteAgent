@@ -132,6 +132,23 @@ reactagent-slm/
 
 ---
 
+## 🧠 Shipped Model & LoRA Configuration
+
+The production model adapter is located in `my-react-agent-lora/`. The adapter was fine-tuned using Unsloth QLoRA 4-bit on multi-turn agentic trajectories.
+
+| Hyperparameter | Shipped Value | Notes |
+|---|---|---|
+| **Base Model** | `Qwen/Qwen2.5-Coder-3B-Instruct` | 3.09B parameter foundation coder |
+| **LoRA Rank (`r`)** | `16` | Shipped adapter rank (shapes: `[16, 11008]`, `[2048, 16]`) |
+| **LoRA Alpha (`alpha`)** | `16` | Scaling factor $\alpha / r = 1.0$ |
+| **Target Modules** | `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj` | All 7 attention & MLP projections |
+| **LoRA Dropout** | `0.0` | 0.0 for Unsloth fast kernel patching |
+| **Precision** | `4-bit NF4` (QLoRA) | Fits in 6GB VRAM (RTX 4050 Laptop GPU) |
+| **Max Sequence Length** | `8192` tokens | Thread-safe generation window |
+| **Rank Sweep Options** | `r in [8, 16, 32, 64]` | Configurable in `training/train_sft.py --rank` |
+
+---
+
 ## 🛠️ Unified CLI Reference (`slm.py`)
 
 The root CLI provides a unified interface across all workflows:
