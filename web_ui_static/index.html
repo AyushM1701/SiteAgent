@@ -1734,17 +1734,37 @@
         left: 0;
         top: var(--topbar-h);
         bottom: 0;
+        width: 280px !important;
+        min-width: 280px !important;
+        transform: translateX(-100%);
         box-shadow: 8px 0 24px rgba(0, 0, 0, 0.5);
+        z-index: 350;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #sidebar.open {
+        transform: translateX(0) !important;
       }
       .slideover-drawer {
         width: 100vw !important;
         max-width: none !important;
       }
       .chat-column-container {
-        padding: 0;
+        padding: 0 10px;
+        width: 100%;
+        max-width: 100%;
+      }
+      .chat-starters {
+        grid-template-columns: 1fr;
+      }
+      .brand-name, .brand-tag, #gen-timer, #queue-badge, #turn-badge {
+        display: none !important;
       }
       .topbar-center {
-        display: none;
+        display: flex;
+      }
+      .nav-drawer-btn {
+        padding: 4px 6px;
+        font-size: 0.6875rem;
       }
     }
 
@@ -2157,7 +2177,10 @@
     });
 
     drawer.classList.add('active');
-    if (backdrop) backdrop.classList.add('active');
+    if (backdrop) {
+      backdrop.classList.add('active');
+      backdrop.onclick = closeSlideover;
+    }
     try { localStorage.setItem('workbench_last_panel', tab); } catch (_) {}
 
     if (tab === 'shell') {
@@ -2186,9 +2209,26 @@
   function toggleSidebar() {
     const sb = $('sidebar');
     if (!sb) return;
-    sb.classList.toggle('collapsed');
-    const isCollapsed = sb.classList.contains('collapsed');
-    try { localStorage.setItem('workbench_sidebar_collapsed', isCollapsed ? '1' : '0'); } catch (_) {}
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      sb.classList.toggle('open');
+      const backdrop = $('slideover-backdrop');
+      if (backdrop) {
+        if (sb.classList.contains('open')) {
+          backdrop.classList.add('active');
+          backdrop.onclick = () => {
+            sb.classList.remove('open');
+            backdrop.classList.remove('active');
+          };
+        } else {
+          backdrop.classList.remove('active');
+        }
+      }
+    } else {
+      sb.classList.toggle('collapsed');
+      const isCollapsed = sb.classList.contains('collapsed');
+      try { localStorage.setItem('workbench_sidebar_collapsed', isCollapsed ? '1' : '0'); } catch (_) {}
+    }
   }
 
   // ── Theme Toggle & Persistence ─────────────────────────────────────────────
@@ -2678,40 +2718,32 @@
   if (subtabPreview) subtabPreview.addEventListener('click', e => { setRightSubtab('preview'); e.currentTarget.blur(); });
 
   // ── Toolbar View Switcher (Split / Code / Terminal / PowerShell)
-  const tabList = [tabSplit, tabCode, tabTerm, tabShell];
+  const tabList = [tabSplit, tabCode, tabTerm, tabShell].filter(Boolean);
   function setView(mode) {
     savePref('view_mode', mode);
-    panesEl.className = 'view-' + mode;
-    tabList.forEach(el => el.classList.remove('active'));
+    if (panesEl) panesEl.className = 'view-' + mode;
+    tabList.forEach(el => { if (el) el.classList.remove('active'); });
 
-    if (mode === 'split') {
-      tabSplit.classList.add('active');
-      if (subtabShell.classList.contains('active')) {
-        initShell();
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          fitShell();
-          if (shellTerm) shellTerm.focus();
-        }));
-      }
-    } else if (mode === 'code') {
-      tabCode.classList.add('active');
+    if (mode === 'split' || mode === 'code') {
+      if (tabCode) tabCode.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('code');
     } else if (mode === 'term') {
-      tabTerm.classList.add('active');
-      setRightSubtab('term');
+      if (tabTerm) tabTerm.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('term');
     } else if (mode === 'shell') {
-      tabShell.classList.add('active');
-      setRightSubtab('shell');
+      if (tabShell) tabShell.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('shell');
     }
   }
 
-  tabSplit.addEventListener('click', e => { setView('split'); e.currentTarget.blur(); });
-  tabCode.addEventListener('click',  e => { setView('code'); e.currentTarget.blur(); });
-  tabTerm.addEventListener('click',  e => { setView('term'); e.currentTarget.blur(); });
-  tabShell.addEventListener('click', e => { setView('shell'); e.currentTarget.blur(); });
+  if (tabSplit) tabSplit.addEventListener('click', e => { setView('split'); e.currentTarget.blur(); });
+  if (tabCode)  tabCode.addEventListener('click',  e => { setView('code'); e.currentTarget.blur(); });
+  if (tabTerm)  tabTerm.addEventListener('click',  e => { setView('term'); e.currentTarget.blur(); });
+  if (tabShell) tabShell.addEventListener('click', e => { setView('shell'); e.currentTarget.blur(); });
 
   // ── Drag Resizers (Direct Pixel Tracking — Cursor Pinned) ──
   let isDraggingSidebar = false;
-  sidebarRes.addEventListener('mousedown', e => {
+  if (sidebarRes) sidebarRes.addEventListener('mousedown', e => {
     if (window.innerWidth <= 860) return;
     e.preventDefault();
     isDraggingSidebar = true;
@@ -2721,7 +2753,7 @@
   });
 
   let isDraggingPane = false;
-  paneRes.addEventListener('mousedown', e => {
+  if (paneRes) paneRes.addEventListener('mousedown', e => {
     if (window.innerWidth <= 860) return;
     e.preventDefault();
     isDraggingPane = true;
@@ -2747,7 +2779,7 @@
       const codeW = Math.max(minCode, Math.min(maxCode, e.clientX - panesRect.left));
       codePane.style.flex = 'none';
       codePane.style.width = codeW + 'px';
-      rightPane.style.flex = '1';
+      if (rightPane) rightPane.style.flex = '1';
       clearTimeout(fitShellDragTimer);
       fitShellDragTimer = setTimeout(fitShell, 50);
     }
@@ -2768,12 +2800,12 @@
   });
 
   // Touch support for resizers
-  sidebarRes.addEventListener('touchstart', e => {
+  if (sidebarRes) sidebarRes.addEventListener('touchstart', e => {
     if (window.innerWidth <= 860) return;
     isDraggingSidebar = true;
   }, { passive: true });
 
-  paneRes.addEventListener('touchstart', e => {
+  if (paneRes) paneRes.addEventListener('touchstart', e => {
     if (window.innerWidth <= 860) return;
     isDraggingPane = true;
   }, { passive: true });
@@ -2795,7 +2827,7 @@
       const codeW = Math.max(minCode, Math.min(maxCode, touchX - panesRect.left));
       codePane.style.flex = 'none';
       codePane.style.width = codeW + 'px';
-      rightPane.style.flex = '1';
+      if (rightPane) rightPane.style.flex = '1';
       fitShell();
     }
   }, { passive: true });
@@ -2807,9 +2839,9 @@
   });
 
   // ── Custom Test Toggle
-  testToggle.addEventListener('click', () => {
+  if (testToggle) testToggle.addEventListener('click', () => {
     const open = testArea.classList.toggle('open');
-    testToggle.classList.toggle('active', open);
+    if (testToggle) testToggle.classList.toggle('active', open);
     testToggle.textContent = open ? 'Hide test' : 'Custom test';
   });
 
@@ -3649,8 +3681,8 @@
 
   if (chatSendBtn) chatSendBtn.addEventListener('click', sendChatFollowUp);
   if (chatInput) {
-    chatInput.addEventListener('input', autoResizeChatInput);
-    chatInput.addEventListener('keydown', e => {
+    if (chatInput) chatInput.addEventListener('input', autoResizeChatInput);
+    if (chatInput) chatInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         if (e.shiftKey) {
           // Shift+Enter inserts newline normally
@@ -3729,9 +3761,9 @@
       try {
         const r = await fetch(`/api/generation/${taskId}/status`);
         if (!r.ok) return false;
-        const data = await r.json();
-        if (data.status === 'completed' && data.result) {
-          handleTaskResult(data.result, symbol);
+        const resData = data.result || data.data;
+        if (data.status === 'completed' && resData) {
+          handleTaskResult(resData, symbol);
           cleanup();
           return true;
         } else if (data.status === 'error') {
@@ -4413,8 +4445,8 @@
   const savedCodeW = loadPref('code_pane_width', null);
   if (savedCodeW) {
     codePane.style.flex = 'none';
-    codePane.style.width = savedCodeW;
-    rightPane.style.flex = '1';
+    if (codePane) codePane.style.width = savedCodeW;
+    if (rightPane) rightPane.style.flex = '1';
   }
 
   loadHistory();
@@ -4502,7 +4534,7 @@
 
   // Restore sidebar state
   try {
-    if (localStorage.getItem('workbench_sidebar_collapsed') === '1') {
+    if (window.innerWidth > 768 && localStorage.getItem('workbench_sidebar_collapsed') === '1') {
       const sb = $('sidebar');
       if (sb) sb.classList.add('collapsed');
     }

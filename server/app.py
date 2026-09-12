@@ -1591,20 +1591,42 @@ def preview_session_page(session_id, filename="index.html"):
 def stream(task_id):
     q = task_queues.get(task_id)
     cached_result = _get_task_result(task_id)
-    if q is None and cached_result is None:
+    is_active = (_current_task and _current_task.get("task_id") == task_id)
+    if not is_active:
+        with _generation_queue.mutex:
+            for item in _generation_queue.queue:
+                if item.get("task_id") == task_id:
+                    is_active = True
+                    break
+
+    if q is None and cached_result is None and not is_active:
         return jsonify({"error": "Unknown or expired task_id"}), 404
 
     def generate_sse():
         # If task already completed, emit cached result event immediately
-        if cached_result:
-            yield f"data: {json.dumps({'type': 'result', 'data': cached_result})}\n\n"
+        if cached_result or task_id in task_results:
+            res = cached_result or _get_task_result(task_id)
+            if res:
+                yield f"data: {json.dumps({'type': 'result', 'data': res})}\n\n"
             yield "data: {\"type\": \"done\"}\n\n"
             return
 
         try:
             while True:
+                # If result was produced while reading, emit it
+                latest_res = _get_task_result(task_id)
+                if latest_res and (q is None or q.empty()):
+                    yield f"data: {json.dumps({'type': 'result', 'data': latest_res})}\n\n"
+                    yield "data: {\"type\": \"done\"}\n\n"
+                    break
+
+                if q is None:
+                    yield "data: {\"type\":\"heartbeat\"}\n\n"
+                    time.sleep(1)
+                    continue
+
                 try:
-                    msg = q.get(timeout=10)
+                    msg = q.get(timeout=3)
                 except queue.Empty:
                     yield "data: {\"type\":\"heartbeat\"}\n\n"
                     continue
@@ -1616,8 +1638,9 @@ def stream(task_id):
         except (GeneratorExit, BrokenPipeError, ConnectionResetError):
             pass
         finally:
-            # Clean up queue when stream finishes, client disconnects, or result is cached
-            if cached_result or task_id in task_results or (q and q.empty()):
+            # Only clean up queue when task is completed or cancelled, NOT on transient client disconnect
+            task_still_active = (_current_task and _current_task.get("task_id") == task_id)
+            if not task_still_active and (cached_result or task_id in task_results):
                 task_queues.pop(task_id, None)
 
     return Response(
