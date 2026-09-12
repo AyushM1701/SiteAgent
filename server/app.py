@@ -1340,6 +1340,7 @@ def status():
 
 @app.route("/api/generation/<task_id>/status", methods=["GET"])
 @app.route("/generation/<task_id>/status", methods=["GET"])
+@app.route("/api/task/<task_id>/status", methods=["GET"])
 def generation_task_status(task_id):
     """Fallback status endpoint allowing clients to verify job status if SSE drops."""
     res = _get_task_result(task_id)
