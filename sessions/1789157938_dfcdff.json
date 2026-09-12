@@ -1,0 +1,14 @@
+{
+  "session_id": "1789157938_dfcdff",
+  "title": "Nexus09",
+  "mode": "component",
+  "prompt": "Build a high-contrast Cyberpunk Neon terminal platform for \"NEXUS-09\" \u2014 an autonomous AI agent orchestration and neural engine.\n\n# Design System & Style Tokens\nTheme: Cyberpunk Neon Terminal (pitch-black canvas, neon lime & electric cyan accents, monospace HUD elements).\n- Canvas background: #050508\n- Surface card: #0d0e17\n- Border: 1px solid rgba(56, 189, 248, 0.25)\n- Text primary: #ffffff\n- Text secondary: #94a3b8\n- Accent Lime: #a3e635\n- Accent Cyan: #06b6d4\n- Accent Purple: #a855f7\n- Border Radius: 8px on cards, 4px on pills\n- Typography: Space Grotesk for display headers, Courier New / monospace for telemetry HUD\n\n# Required Sections & Capabilities:\n1. Header: Logo \"NEXUS // 09\", nav links (\"Neural Grid\", \"Agents\", \"Benchmarks\", \"Access\"), status badge with glowing green pulse (\"GRID SYNCHRONIZED\"), and mobile menu toggle (useState).\n2. Hero: Split terminal hero. Left: headline \"AUTONOMOUS REASONING AT BARE-METAL SPEED\", subtitle, interactive API key generator box with copy button (useState). Right: glowing real-time agent execution pipeline card showing simulated token velocity (tokens/sec) and active reasoning threads.\n3. Features: 3-column glowing card grid with category tabs (useState: \"All\", \"Reasoning\", \"Tool Use\", \"Consensus\") covering Autonomous Execution, Memory Sandboxes, and Zero-Telemetry Enclaves.\n4. Pricing: 3 tier cards (\"Hacker / $0\", \"Pro Agent / $49\", \"Sovereign / Custom\") with interactive Monthly vs Annual toggle (useState: 20% discount pill).\n5. Footer: System status ticker (\"NEXUS-09 KERNEL NOMINAL \u2014 P99 LATENCY 0.9ms\"), newsletter terminal prompt, documentation links, and sovereign air-gap disclaimer.",
+  "style_tokens": null,
+  "style_preset": null,
+  "created_at": "2026-09-12 01:48:58",
+  "updated_at": "2026-09-12 01:48:58",
+  "workspace_dir": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1789157938_dfcdff",
+  "history": [],
+  "checkpoints": [],
+  "current_plan": []
+}

@@ -1,0 +1,63 @@
+# --- Model weights (fetch via scripts/setup.sh, never commit) ---
+base-model/
+my-react-agent-lora/
+my-react-agent-lora-dpo/
+agent_lora_output/
+models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# --- Generated session output (recreated at runtime) ---
+generated_components/*/
+!generated_components/.gitkeep
+
+# --- Runtime state / logs ---
+web_ui_history.json
+agent_results.json
+eval_results.json
+.agent_workspace/
+.eval_workspace/
+.validation_workspace/
+.web_ui_workspace_*/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Node / Vite ---
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Unsloth / training caches ---
+unsloth_compiled_cache/
+outputs/
+wandb/
+.pytest_cache/
+.coverage
+htmlcov/
+*.tmp
+*.temp_*
+
+# --- OS / editor cruft ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+Thumbs.db
+scratch/
