@@ -278,7 +278,7 @@ DOMAINS_B6 = [
         "cta": "View Showroom", "hero_sub": "Joined with traditional mortise-and-tenon craftsmanship. Made in Oregon using sustainably felled American timber.",
         "section_name": "Furniture Pieces", "section_id": "furniture", "pill": True,
         "items": [
-            {"title": "The Pavilion Dining Table", "tag": "Solid White Oak", "desc": "3-meter dining table with seamless butterfly keys and hand-scraped chamfered edge profile."},
+            {"title": "The Pavilion Dining Table", "tag": "Solid White Oak", "desc": "3-meter dining table with precision butterfly keys and hand-scraped chamfered edge profile."},
             {"title": "Cord Lounge Chair", "tag": "Danish Paper Cord", "desc": "Sculptural solid walnut frame woven with 400 meters of unbleached three-ply paper cord."},
             {"title": "Floating Credenza 03", "tag": "Sliding Louvres", "desc": "Concealed wall-mount credenza with continuous wood grain tambour doors."},
             {"title": "Low Bench in Charred Ash", "tag": "Shou Sugi Ban", "desc": "Traditional Japanese flame-charred finish sealed with natural beeswax and citrus oil."}

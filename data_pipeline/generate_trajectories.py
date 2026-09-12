@@ -765,7 +765,7 @@ def trajectory_saas_01():
   <feature icon="chart" title="Smart Analytics" description="AI-powered dashboards surface bottlenecks before they block your team." />
   <feature icon="users" title="Team Automations" description="Build no-code workflows that handle handoffs, reminders, and approvals automatically." />
   <feature icon="plug" title="1000+ Integrations" description="Connect with Slack, Jira, GitHub, Salesforce, and every tool your team already uses." />
-  <feature icon="clock" title="Time Tracking" description="Effortless timesheets, billable hours tracking, and budget forecasting in one place." />
+  <feature icon="clock" title="Time Tracking" description="Streamlined timesheets, billable hours tracking, and budget forecasting in one place." />
   <contact>
     <email>hello@flowsync.io</email>
   </contact>
@@ -1179,7 +1179,7 @@ const FEATURES: Feature[] = [
   { icon: '\uD83D\uDCCA', title: 'Smart Analytics', description: 'AI-powered dashboards surface bottlenecks before they block your team.' },
   { icon: '\uD83D\uDC65', title: 'Team Automations', description: 'Build no-code workflows that handle handoffs, reminders, and approvals automatically.' },
   { icon: '\uD83D\uDD0C', title: '1000+ Integrations', description: 'Connect with Slack, Jira, GitHub, Salesforce, and every tool your team already uses.' },
-  { icon: '\u23F0', title: 'Time Tracking', description: 'Effortless timesheets, billable hours tracking, and budget forecasting in one place.' },
+  { icon: '\u23F0', title: 'Time Tracking', description: 'Streamlined timesheets, billable hours tracking, and budget forecasting in one place.' },
 ];
 
 export function Features() {
@@ -3587,7 +3587,7 @@ export function Pricing() {
 }"""
     t4_thought = thought(
         "Three pricing tiers get a classic side-by-side layout with the Pro tier "
-        "visually elevated (scaled up, purple border, 'Most Popular' badge) since "
+        "visually emphasized (scaled up, purple border, 'Most Popular' badge) since "
         "it's marked featured in the brief. Checkmark icons in the accent purple "
         "reinforce the perk lists."
     )
@@ -7964,7 +7964,7 @@ def trajectory_healthcare_01():
   <font_heading>Playfair Display</font_heading>
   <font_body>Inter</font_body>
   <sections>header, hero, services, testimonials, footer</sections>
-  <service name="Cosmetic Veneers" description="Custom porcelain laminates hand-crafted for natural light reflection and seamless smile enhancement." price="From $950" />
+  <service name="Cosmetic Veneers" description="Custom porcelain laminates hand-crafted for natural light reflection and natural smile contouring." price="From $950" />
   <service name="Invisalign Clear Aligners" description="3D digital smile mapping and discreet teeth straightening without traditional metal brackets." price="From $3,200" />
   <service name="Laser Teeth Whitening" description="In-chair light accelerated whitening achieving up to 8 shades whiter in a single 60-minute session." price="$490" />
   <service name="Gentle Family Hygiene" description="Ultra-quiet ultrasonic plaque removal, periodontal screening, and enamel remineralization therapy." price="$180" />
@@ -8394,7 +8394,7 @@ interface DentalService {
 const SERVICES: DentalService[] = [
   {
     name: 'Cosmetic Veneers',
-    desc: 'Custom porcelain laminates hand-crafted for natural light reflection, seamless contouring, and durable smile enhancement.',
+    desc: 'Custom porcelain laminates hand-crafted for natural light reflection, flawless contouring, and durable smile enhancement.',
     price: 'From $950 / tooth',
     tag: 'Smile Makeover'
   },
@@ -11252,7 +11252,7 @@ DOMAINS_B4 = [
         "heading_font": "Plus Jakarta Sans",
         "body_font": "Inter",
         "cta": "Request Audit",
-        "hero_sub": "Empowering Series A through C technology founders with automated real-time financial models, R&D tax credit capture, and Board audit readiness.",
+        "hero_sub": "Equipping Series A through C technology founders with automated real-time financial models, R&D tax credit capture, and Board audit readiness.",
         "section_name": "Advisory Capabilities",
         "section_id": "services",
         "items": [
@@ -11292,7 +11292,7 @@ ADDITIONAL_DOMAINS_DATA = [
     ("site_dentistry_pearl_dental_spa", "Pearl Aesthetic Dentistry", "Cosmetic Veneers, Clear Aligners, and Smile Makeovers", "dentistry", "pd", "#0a1924", "#06b6d4", "#0891b2", "#122838", "Outfit", "Inter", "Book Smile Consult", "Smile Treatments", "treatments", [("Handcrafted Porcelain Veneers", "Cosmetic", "Ultra-thin custom porcelain shells correcting shape and spacing."), ("Invisalign Clear Aligners", "Orthodontics", "Discreet orthodontic tooth straightening monitored via 3D scanning."), ("Laser Teeth Brightening", "Whitening", "Safe in-office laser activation brightening smiles up to 8 shades in 60m."), ("Guided Ceramic Dental Implants", "Restorative", "Biocompatible zirconia implants permanently replacing missing teeth.")]),
     ("site_plumbing_flow_pro_services", "FlowPro Master Plumbers", "24/7 Emergency Drain Clearing and Tankless Water Heaters", "plumbing", "fp", "#0e1824", "#0284c7", "#0369a1", "#152538", "Inter", "Inter", "Call Emergency Dispatch", "Plumbing Services", "services", [("24/7 Emergency Leak Repair", "Rapid Response", "Slab leak detection and burst pipe repairs dispatched in under 45m."), ("Hydro-Jetting & Drain Snaking", "Rooter", "High-pressure 4000 PSI water blasting eliminating stubborn grease & roots."), ("Tankless Water Heater Installation", "Energy Efficient", "Endless instant hot water with Navien and Rinnai gas units."), ("Trenchless Sewer Line Replacement", "No-Dig", "Cured-in-place pipe lining restoring cracked sewers without digging yards.")]),
     ("site_crypto_zenith_vault", "Zenith Institutional Vault", "Multi-Signature MPC Custody and On-Chain Staking", "crypto_custody", "zv", "#070b13", "#10b981", "#059669", "#111b2b", "Space Grotesk", "Inter", "Open Custody Account", "Security Architecture", "security", [("Threshold Multi-Party Computation (MPC)", "Hardware Isolation", "Eliminating single points of failure with distributed private key shares."), ("Segregated Institutional Cold Storage", "$500M Insured", "Bank-grade underground bunker vaults protected against physical & cyber coercion."), ("Native Proof-of-Stake Delegations", "High Yield", "Zero-slashing verified staking validators across Ethereum, Solana, and Cosmos."), ("Programmatic Automated Treasury API", "REST / Webhooks", "Whitelisted address routing with multi-tier managerial approval policies.")]),
-    ("site_jewelry_aurelia_fine_gems", "Aurelia Ethical Fine Jewelry", "Lab-Grown Diamonds and Bespoke Recycled Gold Rings", "jewelry", "au", "#161317", "#e0b0ff", "#c084fc", "#241f26", "Cinzel", "Inter", "Design Custom Ring", "Fine Collections", "collections", [("The Solitaire Engagement Ring", "Certified VVS1", "Hand-set lab-grown oval diamond in 18k recycled yellow gold."), ("Pavé Diamond Tennis Bracelet", "4.5 Carats", "Seamless continuous sparkle featuring lab diamonds set in platinum."), ("Eternity Wedding Bands", "Custom Fit", "Shared-prong brilliant cut diamonds calibrated for daily comfort."), ("Bespoke Bridal Commission", "One-of-a-Kind", "Collaborate directly with master goldsmiths from sketch to 3D wax model.")]),
+    ("site_jewelry_aurelia_fine_gems", "Aurelia Ethical Fine Jewelry", "Lab-Grown Diamonds and Bespoke Recycled Gold Rings", "jewelry", "au", "#161317", "#e0b0ff", "#c084fc", "#241f26", "Cinzel", "Inter", "Design Custom Ring", "Fine Collections", "collections", [("The Solitaire Engagement Ring", "Certified VVS1", "Hand-set lab-grown oval diamond in 18k recycled yellow gold."), ("Pavé Diamond Tennis Bracelet", "4.5 Carats", "Continuous brilliant sparkle featuring lab diamonds set in platinum."), ("Eternity Wedding Bands", "Custom Fit", "Shared-prong brilliant cut diamonds calibrated for daily comfort."), ("Bespoke Bridal Commission", "One-of-a-Kind", "Collaborate directly with master goldsmiths from sketch to 3D wax model.")]),
     ("site_martial_arts_ronin_bjj", "Ronin Martial Arts Academy", "Brazilian Jiu-Jitsu, Muay Thai, and Submission Grappling", "martial_arts", "ro", "#121214", "#dc2626", "#b91c1c", "#1f1f24", "Barlow Condensed", "Inter", "Claim Free Trial Class", "Academy Programs", "programs", [("Adult Brazilian Jiu-Jitsu (Gi)", "All Levels", "Fundamental positional control, escapes, guard passing, and submissions."), ("No-Gi Submission Grappling", "Advanced", "Wrestling takedowns, leg locks, and rapid transitional pressure."), ("Authentic Muay Thai Striking", "Cardio & Technique", "Dutch kickboxing combinations, heavy bag circuits, and clinch sparring."), ("Youth Champions Martial Arts", "Ages 5–14", "Bully prevention, discipline, self-defense, and balance fundamentals.")]),
     ("site_bookstore_the_inkwell_shelf", "The Inkwell Rare Books", "First Edition Classics, Antiquarian Maps, and Literary Cafe", "bookstore", "iw", "#1c1613", "#d97706", "#b45309", "#2b221d", "Cinzel", "Inter", "Browse Catalog", "Rare Volumes", "volumes", [("F. Scott Fitzgerald First Editions", "1925 Scribner", "Original cloth bindings in remarkably preserved collector condition."), ("Hand-Illuminated Medieval Folios", "15th Century", "Vellum manuscripts painted with gold leaf and lapis lazuli pigments."), ("18th Century Cartography & Atlases", "Antique Maps", "Copperplate engraved hand-colored navigational charts of the Americas."), ("Signed Literary Modernism", "Rare Author Inscriptions", "Authenticated signatures from Hemingway, Woolf, Joyce, and Baldwin.")]),
     ("site_landscaping_terra_verve", "TerraVerve Landscapes", "Drought-Resilient Outdoor Living and Architectural Hardscapes", "landscaping", "tv", "#101d16", "#22c55e", "#16a34a", "#1b2e23", "Plus Jakarta Sans", "Inter", "Request Site Design", "Landscape Disciplines", "disciplines", [("Architectural Paver Patios & Firepits", "Hardscapes", "Permeable bluestone paving with integrated natural gas fire features."), ("Native Xeriscape Plantings", "Water-Wise", "Drought-tolerant ornamental grasses, lavender, and drip irrigation."), ("Custom Outdoor Kitchens & Pergolas", "Outdoor Living", "Built-in stainless grills, pizza ovens, and cedar timber shade structures."), ("Low-Voltage LED Landscape Lighting", "Illumination", "Subtle warm-wash illumination highlighting specimen trees and pathways.")]),
@@ -11300,7 +11300,7 @@ ADDITIONAL_DOMAINS_DATA = [
     ("site_insurance_shield_harbor", "Shield Harbor Marine Insurance", "Commercial Hull, Superyacht, and Cargo Risk Protection", "insurance", "sh", "#0a1626", "#38bdf8", "#0284c7", "#12253d", "Merriweather", "Inter", "Request Marine Quote", "Coverage Policies", "policies", [("Luxury Yacht Hull & Machinery", "Agreed Value", "Comprehensive worldwide navigation coverage including tender and crew liability."), ("Commercial Cargo in Transit", "Ocean & Air", "All-risk cargo protection covering warehouse-to-warehouse international freight."), ("Marina & Shipyard Operator Liability", "Commercial", "Pollution indemnity, ship repairer legal liability, and storm surge damage."), ("Crew Healthcare & P&I Coverage", "Protection & Indemnity", "Medical evacuation and maritime employer liability for international crews.")]),
     ("site_pottery_earth_and_kiln", "Earth & Kiln Studio", "Handmade Functional Stoneware and Pottery Classes", "pottery", "ek", "#191512", "#f59e0b", "#d97706", "#27211d", "Cinzel", "Inter", "Book Potter's Wheel Class", "Studio Offerings", "offerings", [("Beginner Wheel Throwing Workshop", "3hr Intensive", "Hands-on guidance centering clay, opening, and pulling cylinder forms."), ("Handmade Stoneware Tableware", "Ceramic Shop", "Microwave and dishwasher-safe speckled clay dinner plates and mugs."), ("Wood-Fired Anagama Kiln Residencies", "Master Class", "48-hour continuous wood firings creating natural ash glaze patinas."), ("Monthly Open Studio Membership", "24/7 Access", "Dedicated shelf space, studio glazes, and unlimited high-fire kiln firings.")]),
     ("site_moving_smooth_move_logistics", "SmoothMove Elite Movers", "White-Glove Residential Moving and Climate-Controlled Storage", "moving", "sm", "#0d1824", "#0ea5e9", "#0284c7", "#142538", "DM Sans", "Inter", "Get Instant Moving Estimate", "Moving Services", "services", [("White-Glove Luxury Moving", "Full Service", "Full packing with custom wooden crating for fine art, mirrors, and pianos."), ("Interstate Long-Distance Moving", "Coast-to-Coast", "Guaranteed direct delivery dates without multi-client truck sharing."), ("Climate-Controlled Vault Storage", "Secure Storage", "Private wooden vault containers inside 24/7 guarded, humidity-regulated hubs."), ("Office & Commercial Relocation", "Business Moving", "Weekend technology disconnect, rolling server racks, and desk reassembly.")]),
-    ("site_apparel_terra_wear", "TerraWear Sustainable Activewear", "Performance Sportswear from Regenerated Ocean Plastics", "apparel", "tw", "#101814", "#10b981", "#059669", "#182620", "Outfit", "Inter", "Shop Sustainable Drop", "Core Performance Gear", "collection", [("Aero-Weave Running Shorts", "$68", "Lightweight four-way stretch recycled poly with anti-chafing compression liner."), ("Thermal Meridian Training Hoodie", "$118", "Brushed organic bamboo fleece providing thermoregulation and odor resistance."), ("High-Impact Seamless Leggings", "$88", "Squat-proof compression knit crafted from retrieved deep-ocean fishing nets."), ("Weatherproof Summit Shell Jacket", "$198", "Breathable 3-layer waterproof membrane made with 100% recycled nylon.")]),
+    ("site_apparel_terra_wear", "TerraWear Sustainable Activewear", "Performance Sportswear from Regenerated Ocean Plastics", "apparel", "tw", "#101814", "#10b981", "#059669", "#182620", "Outfit", "Inter", "Shop Sustainable Drop", "Core Performance Gear", "collection", [("Aero-Weave Running Shorts", "$68", "Lightweight four-way stretch recycled poly with anti-chafing compression liner."), ("Thermal Meridian Training Hoodie", "$118", "Brushed organic bamboo fleece providing thermoregulation and odor resistance."), ("High-Impact Precision Leggings", "$88", "Squat-proof compression knit crafted from retrieved deep-ocean fishing nets."), ("Weatherproof Summit Shell Jacket", "$198", "Breathable 3-layer waterproof membrane made with 100% recycled nylon.")]),
     ("site_museum_metropolitan_modern", "Metropolitan Digital Art Hall", "Immersive Audio-Visual Exhibits and Interactive Holography", "museum", "mm", "#080711", "#d946ef", "#c026d3", "#131024", "Space Grotesk", "Inter", "Reserve Timed Entry", "Current Exhibitions", "exhibitions", [("Infinite Horizons: Light in Void", "Gallery 01", "Laser light refractions creating floating geometric optical illusions."), ("Synthetic Dreams & Artificial Mind", "Gallery 02", "Autonomous generative video environments reacting to visitor heartbeats."), ("Resonance: Spatial Sound Labyrinth", "Gallery 03", "128-speaker ambisonic acoustic chambers exploring vibrational meditation."), ("The Quantum Canvas Experience", "Gallery 04", "Interactive touchscreens allowing visitors to paint with fluid particle physics.")]),
     ("site_pest_control_eco_guard", "EcoGuard Botanical Defense", "Non-Toxic Pest Exclusion and Organic Perimeter Defense", "pest_control", "eg", "#0f1c14", "#4ade80", "#22c55e", "#192e21", "Plus Jakarta Sans", "Inter", "Schedule Inspection", "Pest Solutions", "solutions", [("Botanical Barrier Home Perimeter", "Child & Pet Safe", "Organic essential oil barrier keeping ants, spiders, and roaches out."), ("Structural Rodent Proofing", "Permanent", "Sealing foundational entry points with heavy gauge steel mesh & copper wire."), ("Eco-Friendly Termite Interception", "Monitoring", "Subterranean baiting stations eliminating colonies without pumping chemical poisons."), ("Mosquito & Tick Yard Misting", "Seasonal", "Garlic and thyme oil micro-fogging drastically cutting biting insect counts.")]),
     ("site_charter_blue_horizon_sailing", "Blue Horizon Yacht Charters", "Private Crewed Catamarans and Virgin Island Sailing", "sailing", "bh", "#081729", "#00d2d3", "#00b4b5", "#10233b", "Cinzel", "Inter", "Book Yacht Charter", "Charter Fleet", "fleet", [("Lagoon 52 Luxury Catamaran", "Up to 8 Guests", "Air-conditioned staterooms, onboard chef, tender boat, and paddleboards."), ("Sunseeker 65 Sport Yacht", "Day Charters", "High-speed cruising with flybridge sunbeds and hydraulic swim platform."), ("Bavaria 46 Monohull Cruiser", "Bareboat", "Pure sailing performance equipped with twin helms and Raymarine radar."), ("All-Inclusive VIP Island Package", "Weekly Charter", "Custom gourmet dining, open bar, provisioning, and professional captain.")]),
@@ -11368,10 +11368,52 @@ def build_brief_xml(d):
 </content_brief>"""
 
 
-def build_trajectory(d):
+def _hex_to_rgb(hex_str: str):
+    hex_str = hex_str.lstrip("#")
+    if len(hex_str) == 3:
+        hex_str = "".join(c * 2 for c in hex_str)
+    if len(hex_str) >= 6:
+        return int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16)
+    return (15, 23, 42)
+
+def get_domain_section_desc(d: dict) -> str:
+    """Generates authentic, domain-specific section introductory copy without generic filler."""
+    t = d.get("type", "").lower()
+    name = d.get("name", "")
+    sec_name = d.get("section_name", "")
+    
+    if any(k in t for k in ("bakery", "coffee", "roast", "food", "cafe", "pastry")):
+        return "Handcrafted daily in small batches using single-origin harvests, heritage grains, and traditional fermentation methods."
+    elif any(k in t for k in ("law", "legal", "counsel", "litigation")):
+        return "Strategic counsel tailored to safeguard enterprise value, proprietary intellectual property, and complex commercial agreements."
+    elif any(k in t for k in ("database", "saas", "tech", "cloud", "security", "telemetry", "dev", "api", "ai")):
+        return "High-throughput architecture and fault-tolerant data pipelines engineered for mission-critical production scale."
+    elif any(k in t for k in ("oncology", "medical", "health", "biometric", "clinic", "therapy", "dental", "optometry")):
+        return "Clinical-grade diagnostics, patient telemetry, and rigorous therapeutic protocols adhering to strict medical standards."
+    elif any(k in t for k in ("jewelry", "luxury", "watch", "craft", "keyboards", "leather", "tailor")):
+        return "Meticulously hand-finished with exceptional precious materials, exacting tolerances, and timeless design proportions."
+    elif any(k in t for k in ("insurance", "cargo", "logistics", "freight", "marine")):
+        return "Comprehensive risk mitigation and worldwide supply chain protection backed by rated underwriting syndicates."
+    elif any(k in t for k in ("sailing", "charter", "yacht", "resort", "hotel", "hospitality", "safari")):
+        return "Curated private expeditions and luxury accommodations designed for unmatched privacy and natural immersion."
+    elif any(k in t for k in ("fitness", "bouldering", "climbing", "martial_arts", "apparel", "sport")):
+        return "Technical gear, standardized benchmark walls, and movement training engineered for peak physical demands."
+    elif any(k in t for k in ("architecture", "interior", "rendering", "sound", "audio", "cinema", "museum", "art", "pottery")):
+        return "Site-specific spatial compositions uniting acoustic precision, authentic materials, and bold geometric form."
+    else:
+        return f"Explore our dedicated {sec_name.lower()} developed to provide verified quality and measurable results for {name} clients."
+
+def build_diverse_domain_trajectory(d: dict, domain_idx: int = 0) -> dict:
     brief_xml = build_brief_xml(d)
     p = d["prefix"]
-    
+    sec_ts_name = d["section_name"].replace(" ", "").replace("&", "").replace("'", "").replace("-", "")
+    items_json = json.dumps(d["items"], indent=2)
+    sec_desc = get_domain_section_desc(d)
+    style_variant = domain_idx % 4
+
+    r_prim, g_prim, b_prim = _hex_to_rgb(d["primary"])
+    r_acc, g_acc, b_acc = _hex_to_rgb(d["accent"])
+
     # ── Turn 1: Header ──────────────────────────────────────────────────────────
     initial_user = (
         "Build a complete website for the following brief.\n\n"
@@ -11449,7 +11491,7 @@ export function Header() {{
   top: 0;
   z-index: 100;
   width: 100%;
-  background: rgba({int(d['primary'][1:3], 16)}, {int(d['primary'][3:5], 16)}, {int(d['primary'][5:7], 16)}, 0.92);
+  background: rgba({r_prim}, {g_prim}, {b_prim}, 0.92);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -11521,7 +11563,7 @@ export function Header() {{
 .{p}-header__cta:hover {{
   background: {d['accent_hover']};
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.35);
+  box-shadow: 0 4px 14px rgba({r_acc}, {g_acc}, {b_acc}, 0.35);
 }}
 
 .{p}-header__toggle {{
@@ -11529,7 +11571,7 @@ export function Header() {{
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px;
+  padding: 0.5rem;
   flex-direction: column;
   gap: 5px;
 }}
@@ -11539,58 +11581,568 @@ export function Header() {{
   width: 22px;
   height: 2px;
   background: #fafafa;
-  border-radius: 2px;
+  border-radius: 1px;
 }}
 
 .{p}-header__mobile-menu {{
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 2rem;
-  background: {d['primary']};
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  gap: 0.75rem;
-}}
-
-.{p}-header__mobile-menu a {{
-  color: #fafafa;
-  text-decoration: none;
-  font-size: 1rem;
-  padding: 0.5rem 0;
+  display: none;
 }}
 
 @media (max-width: 768px) {{
   .{p}-header__nav {{ display: none; }}
   .{p}-header__toggle {{ display: flex; }}
+  .{p}-header__mobile-menu {{
+    display: flex;
+    flex-direction: column;
+    background: {d['primary']};
+    padding: 1.5rem 2rem;
+    gap: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }}
+  .{p}-header__mobile-menu a {{
+    color: #fafafa;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+  }}
 }}
 """
 
     t1_action = write_site("src/components/Header.tsx", t1_tsx, "src/components/Header.css", t1_css)
 
-    # ── Turn 2: Hero ────────────────────────────────────────────────────────────
+    # ── Turn 2: Hero (Variant-driven structure) ──────────────────────────────
     t2_user = obs_ok(
         ["src/components/Header.tsx", "src/components/Header.css"],
-        f"Write the Hero section: a full-viewport responsive banner with the tagline as h1, "
+        "Write the Hero section: a responsive banner tailored to the brand with the tagline as h1, "
         f"subheading, and dual CTA buttons. Files: src/components/Hero.tsx + src/components/Hero.css"
     )
 
-    t2_thought = thought(
-        f"Header was approved. Now I'll create the Hero section for {d['name']}. "
-        f"The headline will render the tagline in high-impact {d['heading_font']} typography with balanced clamp sizing. "
-        f"I'll add radial ambient glowing backdrops using {d['accent']} at 12% opacity, supporting copy, "
-        f"a primary '{d['cta']}' button, and a secondary anchor link scrolling down to #{d['section_id']}."
-    )
-
-    t2_tsx = f"""import React from 'react';
+    if style_variant == 0:
+        # Style 0: Split-Hero (Left content, Right floating showcase card)
+        t2_thought = thought(
+            f"Header was approved. Now I'll create a responsive two-column Split Hero section for {d['name']}. "
+            f"The left column renders an editorial category badge, headline in {d['heading_font']} typography, "
+            f"and dual CTAs. The right column houses a floating showcase card featuring primary specifications."
+        )
+        t2_tsx = f"""import React from 'react';
 import './Hero.css';
 
 export function Hero() {{
   return (
-    <section className="{p}-hero" id="hero" aria-labelledby="{p}-hero-title">
-      <div className="{p}-hero__ambient" aria-hidden="true" />
+    <section className="{p}-hero {p}-hero--split" id="hero" aria-labelledby="{p}-hero-title">
+      <div className="{p}-hero__inner {p}-hero__inner--split">
+        <div className="{p}-hero__content">
+          <div className="{p}-hero__badge">
+            <span>{d['type'].replace('_', ' ').upper()} // SIGNATURE</span>
+          </div>
+          <h1 id="{p}-hero-title" className="{p}-hero__title">
+            {d['tagline']}
+          </h1>
+          <p className="{p}-hero__subtitle">
+            {d['hero_sub']}
+          </p>
+          <div className="{p}-hero__actions">
+            <a href="mailto:{d['contact']['email']}" className="{p}-hero__btn-primary">
+              {d['cta']}
+            </a>
+            <a href="#{d['section_id']}" className="{p}-hero__btn-secondary">
+              View {d['section_name']}
+            </a>
+          </div>
+        </div>
+
+        <div className="{p}-hero__showcase">
+          <div className="{p}-hero__card">
+            <div className="{p}-hero__card-tag">Signature Highlight</div>
+            <h3 className="{p}-hero__card-title">{d['items'][0]['title']}</h3>
+            <p className="{p}-hero__card-desc">{d['items'][0]['desc']}</p>
+            <div className="{p}-hero__card-meta">
+              <span className="{p}-hero__card-pill">{d['items'][0]['tag']}</span>
+              <a href="#{d['section_id']}" className="{p}-hero__card-link">Explore Details &rarr;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t2_css = f""".{p}-hero {{
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  background: {d['primary']};
+  padding: 5rem 2rem;
+}}
+
+.{p}-hero__inner--split {{
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 3.5rem;
+  align-items: center;
+}}
+
+.{p}-hero__badge {{
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin-bottom: 1.25rem;
+}}
+
+.{p}-hero__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  font-weight: 800;
+  color: #fafafa;
+  line-height: 1.15;
+  margin: 0 0 1.2rem;
+  letter-spacing: -0.02em;
+}}
+
+.{p}-hero__subtitle {{
+  font-size: 1.05rem;
+  color: #a1a1aa;
+  line-height: 1.65;
+  margin: 0 0 2rem;
+}}
+
+.{p}-hero__actions {{
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}}
+
+.{p}-hero__btn-primary {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 1.8rem;
+  background: {d['accent']};
+  color: #0c0d12;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__btn-primary:hover {{
+  background: {d['accent_hover']};
+  transform: translateY(-1px);
+}}
+
+.{p}-hero__btn-secondary {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 1.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__btn-secondary:hover {{
+  background: rgba(255, 255, 255, 0.1);
+}}
+
+.{p}-hero__card {{
+  background: {d['surface']};
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2.2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}}
+
+.{p}-hero__card-tag {{
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin-bottom: 0.75rem;
+}}
+
+.{p}-hero__card-title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-hero__card-desc {{
+  font-size: 0.92rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}}
+
+.{p}-hero__card-meta {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}}
+
+.{p}-hero__card-pill {{
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.15);
+  color: {d['accent']};
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}}
+
+.{p}-hero__card-link {{
+  color: {d['accent']};
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}}
+
+@media (max-width: 900px) {{
+  .{p}-hero__inner--split {{
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }}
+}}
+"""
+
+    elif style_variant == 1:
+        # Style 1: Editorial Centered Hero with Credibility Metric Strip
+        t2_thought = thought(
+            f"Header was approved. Now I'll create an editorial centered Hero section for {d['name']} with high-impact "
+            f"{d['heading_font']} typography, paired with an integrated three-metric credibility strip below the CTAs."
+        )
+        t2_tsx = f"""import React from 'react';
+import './Hero.css';
+
+export function Hero() {{
+  return (
+    <section className="{p}-hero {p}-hero--editorial" id="hero" aria-labelledby="{p}-hero-title">
       <div className="{p}-hero__inner">
+        <div className="{p}-hero__pill">
+          <span>VERIFIED STANDARDS &bull; {d['name'].upper()}</span>
+        </div>
+
+        <h1 id="{p}-hero-title" className="{p}-hero__title">
+          {d['tagline']}
+        </h1>
+
+        <p className="{p}-hero__subtitle">
+          {d['hero_sub']}
+        </p>
+
+        <div className="{p}-hero__actions">
+          <a href="mailto:{d['contact']['email']}" className="{p}-hero__btn-primary">
+            {d['cta']}
+          </a>
+          <a href="#{d['section_id']}" className="{p}-hero__btn-secondary">
+            Browse {d['section_name']}
+          </a>
+        </div>
+
+        <div className="{p}-hero__metrics">
+          <div className="{p}-metric-item">
+            <span className="{p}-metric-val">100%</span>
+            <span className="{p}-metric-lbl">Direct Sourcing</span>
+          </div>
+          <div className="{p}-metric-item">
+            <span className="{p}-metric-val">24/7</span>
+            <span className="{p}-metric-lbl">Client Support</span>
+          </div>
+          <div className="{p}-metric-item">
+            <span className="{p}-metric-val">&lt; 15m</span>
+            <span className="{p}-metric-lbl">Response Time</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t2_css = f""".{p}-hero {{
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: {d['primary']};
+  padding: 5rem 2rem;
+  text-align: center;
+}}
+
+.{p}-hero__inner {{
+  max-width: 840px;
+  margin: 0 auto;
+}}
+
+.{p}-hero__pill {{
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  color: {d['accent']};
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+}}
+
+.{p}-hero__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  font-weight: 800;
+  color: #fafafa;
+  line-height: 1.12;
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.02em;
+}}
+
+.{p}-hero__subtitle {{
+  font-size: 1.1rem;
+  color: #a1a1aa;
+  line-height: 1.65;
+  margin: 0 auto 2.5rem;
+  max-width: 680px;
+}}
+
+.{p}-hero__actions {{
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 3.5rem;
+}}
+
+.{p}-hero__btn-primary {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 1.8rem;
+  background: {d['accent']};
+  color: #0c0d12;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__btn-primary:hover {{
+  background: {d['accent_hover']};
+  transform: translateY(-1px);
+}}
+
+.{p}-hero__btn-secondary {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.85rem 1.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__metrics {{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}}
+
+.{p}-metric-item {{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}}
+
+.{p}-metric-val {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fafafa;
+}}
+
+.{p}-metric-lbl {{
+  font-size: 0.85rem;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}}
+
+@media (max-width: 640px) {{
+  .{p}-hero__metrics {{ grid-template-columns: 1fr; gap: 1.25rem; }}
+}}
+"""
+
+    elif style_variant == 2:
+        # Style 2: Angular Minimalist Hero with Geometric Divider
+        t2_thought = thought(
+            f"Header was approved. For {d['name']}, I'll implement an angular architectural Hero section featuring a clean "
+            f"geometric divider, high-contrast kicker text, and sharp focus on the primary value proposition."
+        )
+        t2_tsx = f"""import React from 'react';
+import './Hero.css';
+
+export function Hero() {{
+  return (
+    <section className="{p}-hero {p}-hero--angular" id="hero" aria-labelledby="{p}-hero-title">
+      <div className="{p}-hero__divider" aria-hidden="true" />
+      <div className="{p}-hero__inner">
+        <p className="{p}-hero__kicker">Precision Engineering // {d['type'].replace('_', ' ').title()}</p>
+
+        <h1 id="{p}-hero-title" className="{p}-hero__title">
+          {d['tagline']}
+        </h1>
+
+        <p className="{p}-hero__subtitle">
+          {d['hero_sub']}
+        </p>
+
+        <div className="{p}-hero__actions">
+          <a href="mailto:{d['contact']['email']}" className="{p}-hero__btn-solid">
+            {d['cta']}
+          </a>
+          <a href="#{d['section_id']}" className="{p}-hero__btn-outline">
+            Direct Overview
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t2_css = f""".{p}-hero {{
+  position: relative;
+  min-height: 82vh;
+  display: flex;
+  align-items: center;
+  background: {d['primary']};
+  padding: 5.5rem 2rem;
+  overflow: hidden;
+}}
+
+.{p}-hero__divider {{
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 45%;
+  height: 100%;
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.03);
+  clip-path: polygon(25% 0, 100% 0, 100% 100%, 0% 100%);
+  pointer-events: none;
+}}
+
+.{p}-hero__inner {{
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}}
+
+.{p}-hero__kicker {{
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: {d['accent']};
+  margin: 0 0 1.25rem;
+}}
+
+.{p}-hero__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(2.3rem, 4.8vw, 3.6rem);
+  font-weight: 800;
+  color: #fafafa;
+  line-height: 1.15;
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.02em;
+}}
+
+.{p}-hero__subtitle {{
+  font-size: 1.1rem;
+  color: #a1a1aa;
+  line-height: 1.7;
+  margin: 0 0 2.25rem;
+  max-width: 720px;
+}}
+
+.{p}-hero__actions {{
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}}
+
+.{p}-hero__btn-solid {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.9rem 2rem;
+  background: {d['accent']};
+  color: #0c0d12;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__btn-solid:hover {{
+  background: {d['accent_hover']};
+  transform: translateY(-1px);
+}}
+
+.{p}-hero__btn-outline {{
+  display: inline-flex;
+  align-items: center;
+  padding: 0.9rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}}
+
+.{p}-hero__btn-outline:hover {{
+  border-color: {d['accent']};
+  color: {d['accent']};
+}}
+"""
+
+    else:
+        # Style 3: Framed Showcase Hero Container
+        t2_thought = thought(
+            f"Header was approved. I will create a modern framed Hero section for {d['name']} featuring a glassmorphic "
+            f"container border, brand badges, and responsive action triggers."
+        )
+        t2_tsx = f"""import React from 'react';
+import './Hero.css';
+
+export function Hero() {{
+  return (
+    <section className="{p}-hero {p}-hero--framed" id="hero" aria-labelledby="{p}-hero-title">
+      <div className="{p}-hero__frame">
         <div className="{p}-hero__badge">
-          <span className="{p}-hero__badge-pulse" aria-hidden="true" />
-          <span>{d['name']} Official</span>
+          <span>CURATED PORTFOLIO &bull; {d['name'].upper()}</span>
         </div>
 
         <h1 id="{p}-hero-title" className="{p}-hero__title">
@@ -11614,91 +12166,70 @@ export function Hero() {{
   );
 }}
 """
-
-    t2_css = f""".{p}-hero {{
+        t2_css = f""".{p}-hero {{
   position: relative;
-  min-height: 86vh;
+  min-height: 85vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background: {d['primary']};
-  overflow: hidden;
   padding: 5rem 2rem;
 }}
 
-.{p}-hero__ambient {{
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 750px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.16) 0%, transparent 70%);
-  pointer-events: none;
-  filter: blur(24px);
-}}
-
-.{p}-hero__inner {{
-  position: relative;
-  z-index: 1;
-  max-width: 860px;
+.{p}-hero__frame {{
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
+  padding: 4rem 3rem;
+  background: rgba({int(r_prim * 0.85)}, {int(g_prim * 0.85)}, {int(b_prim * 0.85)}, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
   text-align: center;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
 }}
 
 .{p}-hero__badge {{
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  color: #e4e4e7;
-  font-size: 0.82rem;
-  font-weight: 500;
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.12);
+  color: {d['accent']};
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   margin-bottom: 1.5rem;
-}}
-
-.{p}-hero__badge-pulse {{
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: {d['accent']};
-  box-shadow: 0 0 8px {d['accent']};
 }}
 
 .{p}-hero__title {{
   font-family: '{d['heading_font']}', sans-serif;
-  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  font-size: clamp(2.3rem, 4.5vw, 3.6rem);
   font-weight: 800;
   color: #fafafa;
-  line-height: 1.12;
+  line-height: 1.15;
+  margin: 0 0 1.25rem;
   letter-spacing: -0.02em;
-  margin: 0 0 1.5rem;
 }}
 
 .{p}-hero__subtitle {{
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #a1a1aa;
-  line-height: 1.7;
-  max-width: 640px;
+  line-height: 1.65;
   margin: 0 auto 2.5rem;
+  max-width: 700px;
 }}
 
 .{p}-hero__actions {{
   display: flex;
-  gap: 1rem;
   justify-content: center;
+  gap: 1rem;
   flex-wrap: wrap;
 }}
 
 .{p}-hero__btn-primary {{
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.2rem;
+  padding: 0.85rem 1.8rem;
   background: {d['accent']};
   color: #0c0d12;
   font-weight: 700;
@@ -11710,18 +12241,16 @@ export function Hero() {{
 
 .{p}-hero__btn-primary:hover {{
   background: {d['accent_hover']};
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.35);
+  transform: translateY(-1px);
 }}
 
 .{p}-hero__btn-secondary {{
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.2rem;
-  background: transparent;
+  padding: 0.85rem 1.8rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fafafa;
-  border: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: 600;
   font-size: 0.95rem;
   text-decoration: none;
@@ -11729,33 +12258,28 @@ export function Hero() {{
   transition: all 0.2s ease;
 }}
 
-.{p}-hero__btn-secondary:hover {{
-  border-color: {d['accent']};
-  color: {d['accent']};
-  transform: translateY(-2px);
+@media (max-width: 640px) {{
+  .{p}-hero__frame {{ padding: 2.5rem 1.5rem; }}
 }}
 """
 
     t2_action = write_site("src/components/Hero.tsx", t2_tsx, "src/components/Hero.css", t2_css)
 
-    # ── Turn 3: Main Content Section ────────────────────────────────────────────
-    sec_ts_name = d["section_name"].replace(" ", "").replace("&", "")
+    # ── Turn 3: Core Section / Catalog (Variant-driven structure) ─────────────
     t3_user = obs_ok(
         ["src/components/Hero.tsx", "src/components/Hero.css"],
-        f"Write the {d['section_name']} section: display all items from the content brief in a responsive grid of cards "
-        f"with titles, tags, and detailed descriptions. Files: src/components/{sec_ts_name}.tsx + src/components/{sec_ts_name}.css"
+        f"Write the '{sec_ts_name}' component ({d['section_name']}): display the core offerings/features. "
+        f"Files: src/components/{sec_ts_name}.tsx + src/components/{sec_ts_name}.css"
     )
 
-    t3_thought = thought(
-        f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
-        f"I'll lay out the {len(d['items'])} items in a balanced 2x2 responsive grid. "
-        f"Each card will have a subtle surface background ({d['surface']}), an accent tag/badge, "
-        "and clean hover interactions with a left-border indicator to elevate user experience."
-    )
-
-    items_json = json.dumps(d["items"], indent=2)
-
-    t3_tsx = f"""import React from 'react';
+    if style_variant == 0:
+        # Style 0: Balanced 3-column / Auto-fit Grid
+        t3_thought = thought(
+            f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
+            f"I'll lay out the {len(d['items'])} items in a balanced multi-column responsive grid. "
+            f"Each card features authentic domain copy, category badge, and an interactive action link."
+        )
+        t3_tsx = f"""import React from 'react';
 import './{sec_ts_name}.css';
 
 interface Item {{
@@ -11771,24 +12295,26 @@ export function {sec_ts_name}() {{
     <section className="{p}-catalog" id="{d['section_id']}" aria-labelledby="{p}-catalog-title">
       <div className="{p}-catalog__inner">
         <div className="{p}-catalog__header">
-          <p className="{p}-catalog__eyebrow">Featured Highlights</p>
+          <p className="{p}-catalog__eyebrow">Signature Collection</p>
           <h2 id="{p}-catalog-title" className="{p}-catalog__title">
             {d['section_name']}
           </h2>
           <p className="{p}-catalog__desc">
-            Carefully curated offerings tailored to provide exceptional quality and reliability.
+            {sec_desc}
           </p>
         </div>
 
         <div className="{p}-catalog__grid">
-          {{ITEMS.map((item, idx) => (
+          {{ITEMS.map((item) => (
             <article key={{item.title}} className="{p}-card">
               <div className="{p}-card__top">
-                <span className="{p}-card__index">0{{idx + 1}}</span>
                 <span className="{p}-card__tag">{{item.tag}}</span>
               </div>
               <h3 className="{p}-card__title">{{item.title}}</h3>
               <p className="{p}-card__desc">{{item.desc}}</p>
+              <div className="{p}-card__footer">
+                <a href="#footer" className="{p}-card__action">Inquire &rarr;</a>
+              </div>
             </article>
           ))}}
         </div>
@@ -11797,8 +12323,7 @@ export function {sec_ts_name}() {{
   );
 }}
 """
-
-    t3_css = f""".{p}-catalog {{
+        t3_css = f""".{p}-catalog {{
   padding: 6.5rem 2rem;
   background: {d['primary']};
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -11811,23 +12336,23 @@ export function {sec_ts_name}() {{
 
 .{p}-catalog__header {{
   text-align: center;
-  max-width: 680px;
+  max-width: 720px;
   margin: 0 auto 3.5rem;
 }}
 
 .{p}-catalog__eyebrow {{
-  color: {d['accent']};
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin: 0 0 0.5rem;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin: 0 0 0.75rem;
 }}
 
 .{p}-catalog__title {{
   font-family: '{d['heading_font']}', sans-serif;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 700;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
   color: #fafafa;
   margin: 0 0 1rem;
 }}
@@ -11841,53 +12366,209 @@ export function {sec_ts_name}() {{
 
 .{p}-catalog__grid {{
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.75rem;
 }}
 
 .{p}-card {{
   background: {d['surface']};
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-left: 3px solid transparent;
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
   padding: 2rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }}
 
 .{p}-card:hover {{
-  transform: translateY(-4px);
-  border-left-color: {d['accent']};
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+  border-color: rgba({r_acc}, {g_acc}, {b_acc}, 0.35);
 }}
 
 .{p}-card__top {{
+  margin-bottom: 1rem;
+}}
+
+.{p}-card__tag {{
+  display: inline-block;
+  padding: 0.3rem 0.8rem;
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.12);
+  color: {d['accent']};
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 4px;
+}}
+
+.{p}-card__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-card__desc {{
+  font-size: 0.92rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+  flex: 1;
+}}
+
+.{p}-card__footer {{
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}}
+
+.{p}-card__action {{
+  color: {d['accent']};
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+}}
+"""
+
+    elif style_variant == 1:
+        # Style 1: Asymmetric Spotlight Grid
+        t3_thought = thought(
+            f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
+            f"I'll structure it as an asymmetric spotlight grid where the initial card holds priority showcase framing, "
+            f"paired with complementary offerings."
+        )
+        t3_tsx = f"""import React from 'react';
+import './{sec_ts_name}.css';
+
+interface Item {{
+  title: string;
+  tag: string;
+  desc: string;
+}}
+
+const ITEMS: Item[] = {items_json};
+
+export function {sec_ts_name}() {{
+  return (
+    <section className="{p}-catalog" id="{d['section_id']}" aria-labelledby="{p}-catalog-title">
+      <div className="{p}-catalog__inner">
+        <div className="{p}-catalog__header">
+          <p className="{p}-catalog__eyebrow">Collection Spotlight</p>
+          <h2 id="{p}-catalog-title" className="{p}-catalog__title">
+            {d['section_name']}
+          </h2>
+          <p className="{p}-catalog__desc">
+            {sec_desc}
+          </p>
+        </div>
+
+        <div className="{p}-catalog__asymmetric">
+          {{ITEMS.map((item, idx) => (
+            <article key={{item.title}} className={{`{p}-card ${{idx === 0 ? '{p}-card--spotlight' : ''}}`}}>
+              <div className="{p}-card__meta">
+                <span className="{p}-card__tag">{{item.tag}}</span>
+                {{idx === 0 && <span className="{p}-card__flag">Featured Focus</span>}}
+              </div>
+              <h3 className="{p}-card__title">{{item.title}}</h3>
+              <p className="{p}-card__desc">{{item.desc}}</p>
+              <div className="{p}-card__action-row">
+                <a href="mailto:{d['contact']['email']}" className="{p}-card__btn">Request Allocation &rarr;</a>
+              </div>
+            </article>
+          ))}}
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t3_css = f""".{p}-catalog {{
+  padding: 6.5rem 2rem;
+  background: {d['primary']};
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}}
+
+.{p}-catalog__inner {{
+  max-width: 1200px;
+  margin: 0 auto;
+}}
+
+.{p}-catalog__header {{
+  max-width: 680px;
+  margin-bottom: 3.5rem;
+}}
+
+.{p}-catalog__eyebrow {{
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-catalog__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  color: #fafafa;
+  margin: 0 0 1rem;
+}}
+
+.{p}-catalog__desc {{
+  font-size: 1.05rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin: 0;
+}}
+
+.{p}-catalog__asymmetric {{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}}
+
+.{p}-card--spotlight {{
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, {d['surface']}, rgba({r_acc}, {g_acc}, {b_acc}, 0.08));
+  border-color: rgba({r_acc}, {g_acc}, {b_acc}, 0.35);
+}}
+
+.{p}-card {{
+  background: {d['surface']};
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+}}
+
+.{p}-card__meta {{
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }}
 
-.{p}-card__index {{
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #71717a;
-  letter-spacing: 0.05em;
-}}
-
 .{p}-card__tag {{
   display: inline-block;
   padding: 0.3rem 0.8rem;
-  background: rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.15);
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.12);
   color: {d['accent']};
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  border-radius: 6px;
+  border-radius: 4px;
+}}
+
+.{p}-card__flag {{
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: {d['accent']};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }}
 
 .{p}-card__title {{
   font-family: '{d['heading_font']}', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #fafafa;
   margin: 0 0 0.75rem;
@@ -11896,14 +12577,342 @@ export function {sec_ts_name}() {{
 .{p}-card__desc {{
   font-size: 0.95rem;
   color: #a1a1aa;
-  line-height: 1.65;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+  flex: 1;
+}}
+
+.{p}-card__btn {{
+  color: {d['accent']};
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+}}
+
+@media (max-width: 800px) {{
+  .{p}-catalog__asymmetric {{ grid-template-columns: 1fr; }}
+}}
+"""
+
+    elif style_variant == 2:
+        # Style 2: Linear Specification Table / Row List
+        t3_thought = thought(
+            f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
+            f"I'll present the offerings as an elegant linear specification list with clear horizontal dividers, "
+            f"lead markers, and direct selection links."
+        )
+        t3_tsx = f"""import React from 'react';
+import './{sec_ts_name}.css';
+
+interface Item {{
+  title: string;
+  tag: string;
+  desc: string;
+}}
+
+const ITEMS: Item[] = {items_json};
+
+export function {sec_ts_name}() {{
+  return (
+    <section className="{p}-catalog" id="{d['section_id']}" aria-labelledby="{p}-catalog-title">
+      <div className="{p}-catalog__inner">
+        <div className="{p}-catalog__header">
+          <p className="{p}-catalog__eyebrow">Service & Capability Index</p>
+          <h2 id="{p}-catalog-title" className="{p}-catalog__title">
+            {d['section_name']}
+          </h2>
+          <p className="{p}-catalog__desc">
+            {sec_desc}
+          </p>
+        </div>
+
+        <div className="{p}-catalog__list">
+          {{ITEMS.map((item) => (
+            <div key={{item.title}} className="{p}-spec-row">
+              <div className="{p}-spec-row__lead">
+                <span className="{p}-spec-row__bullet">&mdash;</span>
+                <h3 className="{p}-spec-row__title">{{item.title}}</h3>
+              </div>
+              <p className="{p}-spec-row__desc">{{item.desc}}</p>
+              <div className="{p}-spec-row__meta">
+                <span className="{p}-spec-row__tag">{{item.tag}}</span>
+                <a href="mailto:{d['contact']['email']}" className="{p}-spec-row__link">Select &rarr;</a>
+              </div>
+            </div>
+          ))}}
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t3_css = f""".{p}-catalog {{
+  padding: 6.5rem 2rem;
+  background: {d['primary']};
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}}
+
+.{p}-catalog__inner {{
+  max-width: 1100px;
+  margin: 0 auto;
+}}
+
+.{p}-catalog__header {{
+  max-width: 700px;
+  margin-bottom: 4rem;
+}}
+
+.{p}-catalog__eyebrow {{
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-catalog__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  color: #fafafa;
+  margin: 0 0 1rem;
+}}
+
+.{p}-catalog__desc {{
+  font-size: 1.05rem;
+  color: #a1a1aa;
+  line-height: 1.6;
   margin: 0;
 }}
 
-@media (max-width: 768px) {{
-  .{p}-catalog__grid {{
+.{p}-catalog__list {{
+  display: flex;
+  flex-direction: column;
+}}
+
+.{p}-spec-row {{
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  padding: 1.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}}
+
+.{p}-spec-row:first-child {{
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}}
+
+.{p}-spec-row__lead {{
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}}
+
+.{p}-spec-row__bullet {{
+  color: {d['accent']};
+  font-weight: 700;
+}}
+
+.{p}-spec-row__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin: 0;
+}}
+
+.{p}-spec-row__desc {{
+  font-size: 0.92rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin: 0;
+}}
+
+.{p}-spec-row__meta {{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.25rem;
+}}
+
+.{p}-spec-row__tag {{
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fafafa;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+}}
+
+.{p}-spec-row__link {{
+  color: {d['accent']};
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+}}
+
+@media (max-width: 860px) {{
+  .{p}-spec-row {{
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }}
+  .{p}-spec-row__meta {{
+    justify-content: flex-start;
+  }}
+}}
+"""
+
+    else:
+        # Style 3: Horizontal Scroll-Snap Carousel Deck
+        t3_thought = thought(
+            f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
+            f"I'll build an interactive horizontal scroll-snap card strip providing focused tactile exploration."
+        )
+        t3_tsx = f"""import React from 'react';
+import './{sec_ts_name}.css';
+
+interface Item {{
+  title: string;
+  tag: string;
+  desc: string;
+}}
+
+const ITEMS: Item[] = {items_json};
+
+export function {sec_ts_name}() {{
+  return (
+    <section className="{p}-catalog" id="{d['section_id']}" aria-labelledby="{p}-catalog-title">
+      <div className="{p}-catalog__inner">
+        <div className="{p}-catalog__header">
+          <p className="{p}-catalog__eyebrow">Curated Showcase</p>
+          <h2 id="{p}-catalog-title" className="{p}-catalog__title">
+            {d['section_name']}
+          </h2>
+          <p className="{p}-catalog__desc">
+            {sec_desc}
+          </p>
+        </div>
+
+        <div className="{p}-catalog__carousel">
+          {{ITEMS.map((item) => (
+            <article key={{item.title}} className="{p}-carousel-card">
+              <div className="{p}-carousel-card__badge">{{item.tag}}</div>
+              <h3 className="{p}-carousel-card__title">{{item.title}}</h3>
+              <p className="{p}-carousel-card__desc">{{item.desc}}</p>
+              <div className="{p}-carousel-card__footer">
+                <a href="#footer" className="{p}-carousel-card__cta">View Specifications &rarr;</a>
+              </div>
+            </article>
+          ))}}
+        </div>
+      </div>
+    </section>
+  );
+}}
+"""
+        t3_css = f""".{p}-catalog {{
+  padding: 6.5rem 2rem;
+  background: {d['primary']};
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}}
+
+.{p}-catalog__inner {{
+  max-width: 1240px;
+  margin: 0 auto;
+}}
+
+.{p}-catalog__header {{
+  max-width: 720px;
+  margin-bottom: 3.5rem;
+}}
+
+.{p}-catalog__eyebrow {{
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: {d['accent']};
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-catalog__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  color: #fafafa;
+  margin: 0 0 1rem;
+}}
+
+.{p}-catalog__desc {{
+  font-size: 1.05rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin: 0;
+}}
+
+.{p}-catalog__carousel {{
+  display: flex;
+  gap: 1.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 1rem 0 2rem;
+}}
+
+.{p}-carousel-card {{
+  scroll-snap-align: start;
+  flex: 0 0 320px;
+  background: {d['surface']};
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 2.2rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}}
+
+.{p}-carousel-card__badge {{
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.3rem 0.8rem;
+  background: rgba({r_acc}, {g_acc}, {b_acc}, 0.12);
+  color: {d['accent']};
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+}}
+
+.{p}-carousel-card__title {{
+  font-family: '{d['heading_font']}', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fafafa;
+  margin: 0 0 0.75rem;
+}}
+
+.{p}-carousel-card__desc {{
+  font-size: 0.92rem;
+  color: #a1a1aa;
+  line-height: 1.65;
+  margin: 0 0 1.75rem;
+  flex: 1;
+}}
+
+.{p}-carousel-card__footer {{
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}}
+
+.{p}-carousel-card__cta {{
+  color: {d['accent']};
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
 }}
 """
 
@@ -12044,15 +13053,15 @@ export function Footer() {{
 
     t5_thought = thought(
         f"All 4 sections have been built and accepted for {d['name']}. "
-        "The site is complete with cohesive design tokens, responsive grid layouts, "
+        "The site is complete with cohesive design tokens, responsive layouts, "
         "valid TypeScript components, and scoped modern CSS."
     )
 
     t5_finish = finish(
         f"Built the complete {d['name']} ({d['type']}) website with 4 sections:\n"
         f"- Header: sticky navbar with logo, nav links, CTA button, and mobile menu\n"
-        f"- Hero: bold full-viewport banner with tagline h1, subtitle, and primary/secondary CTAs\n"
-        f"- {d['section_name']}: 2-column responsive grid displaying all {len(d['items'])} items with tags & descriptions\n"
+        f"- Hero: distinctive responsive hero banner styled with {['split layout', 'metric strip', 'angular divider', 'framed showcase'][style_variant]}\n"
+        f"- {d['section_name']}: {['multi-column card grid', 'asymmetric spotlight grid', 'linear specification table', 'scroll-snap carousel'][style_variant]} displaying all {len(d['items'])} items\n"
         f"- Footer: structured layout with business info, full address, phone, email, and hours\n"
         f"Color scheme: primary ({d['primary']}), accent ({d['accent']}), {d['heading_font']} headings on {d['body_font']} body."
     )
@@ -12075,6 +13084,17 @@ export function Footer() {{
         "task_id": d["id"],
         "messages": messages
     }
+
+def build_trajectory_b4(d: dict, idx: int = 0) -> dict:
+    return build_diverse_domain_trajectory(d, idx)
+
+
+def build_trajectory_b5(d: dict, idx: int = 0) -> dict:
+    return build_diverse_domain_trajectory(d, idx)
+
+
+build_trajectory = build_diverse_domain_trajectory
+
 
 
 
@@ -12156,7 +13176,7 @@ DOMAINS_B5 = [
             {"title": "Kernel-Level TCP Tracing", "tag": "Zero Overhead", "desc": "Monitor SYN packet drops, socket retransmissions, and round-trip jitter directly inside the Linux socket layer."},
             {"title": "Distributed Trace Graph", "tag": "Automatic", "desc": "Autonomous trace reconstruction across microservices via kernel context propagation with zero application bytecode instrumentation."},
             {"title": "Security Anomaly Detection", "tag": "Real-Time", "desc": "Trap unauthorized execve syscalls, root privilege escalations, and suspicious outbound DNS queries in milliseconds."},
-            {"title": "OTel Native Exporter", "tag": "OpenTelemetry", "desc": "Stream high-fidelity kernel metrics into existing Prometheus, Datadog, and Grafana pipelines seamlessly."}
+            {"title": "OTel Native Exporter", "tag": "OpenTelemetry", "desc": "Stream high-fidelity kernel metrics into existing Prometheus, Datadog, and Grafana pipelines directly."}
         ],
         "contact": {
             "address": "185 Berry St, Suite 3000, San Francisco, CA 94107",
@@ -12528,7 +13548,7 @@ DOMAINS_B5 = [
         "heading_font": "Merriweather",
         "body_font": "Inter",
         "cta": "Clinical Trials",
-        "hero_sub": "Translating cutting-edge CAR-T cell constructs, neoantigen cancer vaccines, and immune checkpoint combinations into life-saving clinical remissions.",
+        "hero_sub": "Translating advanced CAR-T cell constructs, neoantigen cancer vaccines, and immune checkpoint combinations into life-saving clinical remissions.",
         "section_name": "Therapeutic Pillars",
         "section_id": "pillars",
         "items": [
@@ -12563,7 +13583,7 @@ DOMAINS_B5 = [
         "section_name": "Flagship Editions",
         "section_id": "editions",
         "items": [
-            {"title": "Aether 65 Founders Edition", "tag": "Solid Brass Weight", "desc": "Seamless 6063 aerospace aluminium chassis with leaf-spring mounted FR4 plate and custom silicone acoustic dampener."},
+            {"title": "Aether 65 Founders Edition", "tag": "Solid Brass Weight", "desc": "Monolithic 6063 aerospace aluminium chassis with leaf-spring mounted FR4 plate and custom silicone acoustic dampener."},
             {"title": "Eclipse TKL Monolith", "tag": "Anodized Slate", "desc": "Tenkeyless layout featuring hot-swappable south-facing per-key RGB PCB and screw-in PCB stabilizers."},
             {"title": "Crystalline Linear Switches", "tag": "Factory Hand-Lubed", "desc": "Custom nylon housing, POM stem, and 62g dual-stage progressive gold-plated springs lubed with Krytox 205g0."},
             {"title": "Dye-Sub PBT Keycap Set", "tag": "Cherry Profile", "desc": "1.6mm thick dye-sublimated PBT keycaps with crisp legends and rich textured resistance to finger oil shine."}
@@ -12738,7 +13758,7 @@ DOMAINS_B5 = [
         "section_id": "amplifiers",
         "items": [
             {"title": "Reference 300B Monoblocks", "tag": "Pure Class A (8W)", "desc": "Zero negative feedback topology, Hashimoto audio transformers, and dual valve rectifier choke-input power supplies."},
-            {"title": "Aura KT88 Push-Pull Integrated", "tag": "45W Ultra-Linear", "desc": "Effortless speaker driving dynamics with stepped ladder attenuator and precision DC filament bias regulation."},
+            {"title": "Aura KT88 Push-Pull Integrated", "tag": "45W Ultra-Linear", "desc": "Dynamic speaker driving response with stepped ladder attenuator and precision DC filament bias regulation."},
             {"title": "Valvola Tube Phono Preamplifier", "tag": "Passive RIAA EQ", "desc": "Two-box chassis with isolated power supply, 12AX7 low-noise input tubes, and switchable MC step-up transformers."},
             {"title": "Custom Solid Walnut Chassis", "tag": "Aircraft Aluminium", "desc": "Acoustically damped solid kiln-dried American walnut timber frame topped with brushed anodized top plates."}
         ],
@@ -12858,7 +13878,7 @@ DOMAINS_B5 = [
             {"title": "Nordic Cultural Pavilion", "tag": "Winter Twilight", "desc": "Warm timber interiors glowing against snow-covered landscapes with accurate ray-traced glass reflections."},
             {"title": "Canal-Side Residential High-Rise", "tag": "Golden Hour Sunlight", "desc": "Micro-faceted bronze cladding interacting with sunset water caustics and urban pedestrian atmospheres."},
             {"title": "Unreal Engine 5 Real-Time Tour", "tag": "Lumen & Nanite", "desc": "Fully interactive virtual reality walkthrough allowing clients to toggle interior finishes and daylight hours live."},
-            {"title": "Drone Photogrammetry Integration", "tag": "Context Alignment", "desc": "Seamless 3D compositing of proposed architectural forms into live high-resolution drone survey footage."}
+            {"title": "Drone Photogrammetry Integration", "tag": "Context Alignment", "desc": "Direct 3D compositing of proposed architectural forms into live high-resolution drone survey footage."}
         ],
         "contact": {
             "address": "Kungsbron 1, 111 22 Stockholm, Sweden",
@@ -12886,7 +13906,7 @@ DOMAINS_B5 = [
         "items": [
             {"title": "Sci-Fi Feature Original Score", "tag": "London Symphony Orchestra", "desc": "Haunting low-brass clusters intertwined with Buchla 200e analog modular synthesis and microtonal cello solos."},
             {"title": "Documentary Series Theme Suite", "tag": "Acoustic Folk Strings", "desc": "Intimate Norwegian hardanger fiddle, hammered dulcimer, and field recordings captured across the Arctic Circle."},
-            {"title": "AAA Game Dynamic Music System", "tag": "Interactive Wwise/FMOD", "desc": "Multi-tiered adaptive stem compositions shifting seamlessly between ambient exploration and high-intensity battle."},
+            {"title": "AAA Game Dynamic Music System", "tag": "Interactive Wwise/FMOD", "desc": "Multi-tiered adaptive stem compositions shifting dynamically between ambient exploration and high-intensity battle."},
             {"title": "Dolby Atmos 7.1.4 Spatial Mixing", "tag": "Avid Pro Tools HDX", "desc": "Precision spatial placement of sonic elements creating an immersive three-dimensional acoustic soundstage."}
         ],
         "contact": {
@@ -13056,11 +14076,11 @@ DOMAINS_B5 = [
         "heading_font": "DM Sans",
         "body_font": "Inter",
         "cta": "Book Safari Stay",
-        "hero_sub": "Elevated wooden decks immersed in ancient leadwood trees, silent solar-electric game drive cruisers, and uninterrupted views of elephant herds.",
+        "hero_sub": "Raised wooden decks immersed in ancient leadwood trees, silent solar-electric game drive cruisers, and uninterrupted views of elephant herds.",
         "section_name": "Lodge Experiences",
         "section_id": "experiences",
         "items": [
-            {"title": "Canopy Tented Suites", "tag": "Elevated 8m", "desc": "Expansive canvas pavilions with outdoor open-air soaking tubs and wrap-around viewing decks over the floodplains."},
+            {"title": "Canopy Tented Suites", "tag": "Canopy Height 8m", "desc": "Expansive canvas pavilions with outdoor open-air soaking tubs and wrap-around viewing decks over the floodplains."},
             {"title": "Silent Electric Game Drives", "tag": "Zero Emissions", "desc": "Approach prides of lions and rare African wild dogs in whisper-quiet 4x4 electric vehicles without engine roar."},
             {"title": "Traditional Mokoro Water Trails", "tag": "Gliding Safari", "desc": "Drift along crystal channels navigated by skilled local polers to observe waterlilies and reed frogs."},
             {"title": "Star Bed Sleepout Deck", "tag": "Open Night Sky", "desc": "Spend a night beneath the Southern Cross galaxy on a private raised open-air platform deep in the reserve."}
@@ -13238,7 +14258,7 @@ DOMAINS_B5 = [
         "items": [
             {"title": "Industrial Iron-Flow Batteries", "tag": "20,000 Cycles Zero Fade", "desc": "Non-flammable, non-toxic electrolyte storage providing 12+ hours of continuous full-load factory operation."},
             {"title": "Bifacial Solar Canopies", "tag": "Tier-1 Photovoltaics", "desc": "High-efficiency double-sided solar arrays harvesting direct sunlight and pavement albedo reflection."},
-            {"title": "Sub-16ms Islanding Switchgear", "tag": "Zero Flicker", "desc": "Seamless automatic transition from utility grid to islanded mode during unexpected blackouts without data center interruption."},
+            {"title": "Sub-16ms Islanding Switchgear", "tag": "Zero Flicker", "desc": "Instantaneous automatic transition from utility grid to islanded mode during unexpected blackouts without data center interruption."},
             {"title": "AI Peak Shaving Dispatch", "tag": "Automated FinOps", "desc": "Predictive algorithms discharging stored energy during peak utility tariff hours to slash utility bills by up to 60%."}
         ],
         "contact": {
@@ -13522,7 +14542,7 @@ DOMAINS_B5 = [
         "heading_font": "Plus Jakarta Sans",
         "body_font": "Inter",
         "cta": "Buy Day Pass",
-        "hero_sub": "Over 15,000 square feet of seamless climbing terrain, adjustable LED Kilter and Tension boards, campus rungs, and continuous air purification.",
+        "hero_sub": "Over 15,000 square feet of unbroken climbing terrain, adjustable LED Kilter and Tension boards, campus rungs, and continuous air purification.",
         "section_name": "Facility Highlights",
         "section_id": "facility",
         "items": [
@@ -13570,730 +14590,7 @@ DOMAINS_B5 = [
 ]
 
 
-def build_trajectory(d: dict) -> dict:
-    """Builds a complete 5-turn trajectory for a single website domain."""
-    p = d["prefix"]
-    sec_ts_name = d["section_name"].replace(" ", "").replace("&", "").replace("'", "")
-
-    # ── Initial User Prompt ───────────────────────────────────────────────────
-    initial_user = (
-        f"Build a complete, modern, visually stunning website for {d['name']}. "
-        f"It is a {d['type']} business with the tagline '{d['tagline']}'. "
-        f"Produce the site section-by-section. Start with the Header section (sticky navbar, logo, links, CTA button). "
-        f"Required files for turn 1: src/components/Header.tsx + src/components/Header.css."
-    )
-
-    # ── Turn 1: Header ────────────────────────────────────────────────────────
-    t1_thought = thought(
-        f"Starting the build for {d['name']}. The brief specifies a {d['type']} website. "
-        f"For the Header, I'll implement a modern sticky navbar with the brand wordmark '{d['name']}', "
-        f"anchor links to the main sections (#hero, #{d['section_id']}, #footer), and a prominent CTA button '{d['cta']}'. "
-        f"I'll use {d['primary']} for the dark header background, with an accent color {d['accent']} for hover highlights."
-    )
-
-    t1_tsx = f"""import React, {{ useState, useEffect }} from 'react';
-import './Header.css';
-
-export function Header() {{
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {{
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }}, []);
-
-  return (
-    <header className={{`{p}-header ${{scrolled ? '{p}-header--scrolled' : ''}}`}}>
-      <div className="{p}-header__inner">
-        <a href="#hero" className="{p}-header__logo" aria-label="{d['name']} Home">
-          {d['name']}
-        </a>
-
-        <nav className="{p}-header__nav" aria-label="Main Navigation">
-          <a href="#hero" className="{p}-header__link">Home</a>
-          <a href="#{d['section_id']}" className="{p}-header__link">{d['section_name']}</a>
-          <a href="#footer" className="{p}-header__link">Contact</a>
-        </nav>
-
-        <div className="{p}-header__actions">
-          <a href="mailto:{d['contact']['email']}" className="{p}-header__cta">
-            {d['cta']}
-          </a>
-          <button
-            type="button"
-            className="{p}-header__toggle"
-            aria-label="Toggle navigation menu"
-            aria-expanded={{menuOpen}}
-            onClick={{() => setMenuOpen(!menuOpen)}}
-          >
-            <span className="{p}-header__bar" />
-            <span className="{p}-header__bar" />
-          </button>
-        </div>
-      </div>
-
-      {{menuOpen && (
-        <div className="{p}-header__mobile-menu">
-          <a href="#hero" onClick={{() => setMenuOpen(false)}}>Home</a>
-          <a href="#{d['section_id']}" onClick={{() => setMenuOpen(false)}}>{d['section_name']}</a>
-          <a href="#footer" onClick={{() => setMenuOpen(false)}}>Contact</a>
-        </div>
-      )}}
-    </header>
-  );
-}}
-"""
-
-    t1_css = f""".{p}-header {{
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  width: 100%;
-  background: rgba({int(d['primary'][1:3], 16)}, {int(d['primary'][3:5], 16)}, {int(d['primary'][5:7], 16)}, 0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}}
-
-.{p}-header--scrolled {{
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  border-bottom-color: {d['accent']};
-}}
-
-.{p}-header__inner {{
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  height: 74px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}}
-
-.{p}-header__logo {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #fafafa;
-  text-decoration: none;
-  letter-spacing: -0.01em;
-}}
-
-.{p}-header__nav {{
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}}
-
-.{p}-header__link {{
-  color: #a1a1aa;
-  text-decoration: none;
-  font-size: 0.92rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}}
-
-.{p}-header__link:hover {{
-  color: {d['accent']};
-}}
-
-.{p}-header__actions {{
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}}
-
-.{p}-header__cta {{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1.4rem;
-  background: {d['accent']};
-  color: #0c0d12;
-  font-size: 0.88rem;
-  font-weight: 700;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}}
-
-.{p}-header__cta:hover {{
-  background: {d['accent_hover']};
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.35);
-}}
-
-.{p}-header__toggle {{
-  display: none;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  flex-direction: column;
-  gap: 5px;
-}}
-
-.{p}-header__bar {{
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: #fafafa;
-  border-radius: 2px;
-}}
-
-.{p}-header__mobile-menu {{
-  display: flex;
-  flex-direction: column;
-  padding: 1rem 2rem;
-  background: {d['primary']};
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  gap: 0.75rem;
-}}
-
-.{p}-header__mobile-menu a {{
-  color: #fafafa;
-  text-decoration: none;
-  font-size: 1rem;
-  padding: 0.5rem 0;
-}}
-
-@media (max-width: 768px) {{
-  .{p}-header__nav {{ display: none; }}
-  .{p}-header__toggle {{ display: flex; }}
-}}
-"""
-
-    t1_action = write_site("src/components/Header.tsx", t1_tsx, "src/components/Header.css", t1_css)
-
-    # ── Turn 2: Hero ────────────────────────────────────────────────────────────
-    t2_user = obs_ok(
-        ["src/components/Header.tsx", "src/components/Header.css"],
-        f"Write the Hero section: a full-viewport responsive banner with the tagline as h1, "
-        f"subheading, and dual CTA buttons. Files: src/components/Hero.tsx + src/components/Hero.css"
-    )
-
-    t2_thought = thought(
-        f"Header was approved. Now I'll create the Hero section for {d['name']}. "
-        f"The headline will render the tagline in high-impact {d['heading_font']} typography with balanced clamp sizing. "
-        f"I'll add radial ambient glowing backdrops using {d['accent']} at 16% opacity, supporting copy, "
-        f"a primary '{d['cta']}' button, and a secondary anchor link scrolling down to #{d['section_id']}."
-    )
-
-    t2_tsx = f"""import React from 'react';
-import './Hero.css';
-
-export function Hero() {{
-  return (
-    <section className="{p}-hero" id="hero" aria-labelledby="{p}-hero-title">
-      <div className="{p}-hero__ambient" aria-hidden="true" />
-      <div className="{p}-hero__inner">
-        <div className="{p}-hero__badge">
-          <span className="{p}-hero__badge-pulse" aria-hidden="true" />
-          <span>{d['name']} Official</span>
-        </div>
-
-        <h1 id="{p}-hero-title" className="{p}-hero__title">
-          {d['tagline']}
-        </h1>
-
-        <p className="{p}-hero__subtitle">
-          {d['hero_sub']}
-        </p>
-
-        <div className="{p}-hero__actions">
-          <a href="mailto:{d['contact']['email']}" className="{p}-hero__btn-primary">
-            {d['cta']}
-          </a>
-          <a href="#{d['section_id']}" className="{p}-hero__btn-secondary">
-            Explore {d['section_name']}
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}}
-"""
-
-    t2_css = f""".{p}-hero {{
-  position: relative;
-  min-height: 86vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: {d['primary']};
-  overflow: hidden;
-  padding: 5rem 2rem;
-}}
-
-.{p}-hero__ambient {{
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 750px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.16) 0%, transparent 70%);
-  pointer-events: none;
-  filter: blur(24px);
-}}
-
-.{p}-hero__inner {{
-  position: relative;
-  z-index: 1;
-  max-width: 860px;
-  margin: 0 auto;
-  text-align: center;
-}}
-
-.{p}-hero__badge {{
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  color: #e4e4e7;
-  font-size: 0.82rem;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-}}
-
-.{p}-hero__badge-pulse {{
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: {d['accent']};
-  box-shadow: 0 0 8px {d['accent']};
-}}
-
-.{p}-hero__title {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
-  font-weight: 800;
-  color: #fafafa;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  margin: 0 0 1.5rem;
-}}
-
-.{p}-hero__subtitle {{
-  font-size: 1.15rem;
-  color: #a1a1aa;
-  line-height: 1.7;
-  max-width: 640px;
-  margin: 0 auto 2.5rem;
-}}
-
-.{p}-hero__actions {{
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}}
-
-.{p}-hero__btn-primary {{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.2rem;
-  background: {d['accent']};
-  color: #0c0d12;
-  font-weight: 700;
-  font-size: 0.95rem;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}}
-
-.{p}-hero__btn-primary:hover {{
-  background: {d['accent_hover']};
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba({int(d['accent'][1:3], 16)}, {int(d['accent'][3:5], 16)}, {int(d['accent'][5:7], 16)}, 0.35);
-}}
-
-.{p}-hero__btn-secondary {{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 2.2rem;
-  background: transparent;
-  color: #fafafa;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-weight: 600;
-  font-size: 0.95rem;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}}
-
-.{p}-hero__btn-secondary:hover {{
-  border-color: {d['accent']};
-  color: {d['accent']};
-  transform: translateY(-2px);
-}}
-"""
-
-    t2_action = write_site("src/components/Hero.tsx", t2_tsx, "src/components/Hero.css", t2_css)
-
-    # ── Turn 3: Main Content Section ────────────────────────────────────────────
-    t3_user = obs_ok(
-        ["src/components/Hero.tsx", "src/components/Hero.css"],
-        f"Write the {d['section_name']} section: display all items from the content brief in a responsive grid of cards "
-        f"with titles, tags, and detailed descriptions. Files: src/components/{sec_ts_name}.tsx + src/components/{sec_ts_name}.css"
-    )
-
-    t3_thought = thought(
-        f"Now creating the core content component '{sec_ts_name}' for {d['name']}. "
-        f"I'll lay out the {len(d['items'])} items in a balanced 2x2 responsive grid. "
-        f"Each card will have a subtle surface background ({d['surface']}), an accent tag/badge, "
-        "and clean hover interactions with a left-border indicator to elevate user experience."
-    )
-
-    items_json = json.dumps(d["items"], indent=2)
-
-    t3_tsx = f"""import React from 'react';
-import './{sec_ts_name}.css';
-
-interface Item {{
-  title: string;
-  tag: string;
-  desc: string;
-}}
-
-const ITEMS: Item[] = {items_json};
-
-export function {sec_ts_name}() {{
-  return (
-    <section className="{p}-catalog" id="{d['section_id']}" aria-labelledby="{p}-catalog-title">
-      <div className="{p}-catalog__inner">
-        <div className="{p}-catalog__header">
-          <p className="{p}-catalog__eyebrow">Featured Highlights</p>
-          <h2 id="{p}-catalog-title" className="{p}-catalog__title">
-            {d['section_name']}
-          </h2>
-          <p className="{p}-catalog__desc">
-            Carefully curated offerings tailored to provide exceptional quality and reliability.
-          </p>
-        </div>
-
-        <div className="{p}-catalog__grid">
-          {{ITEMS.map((item, idx) => (
-            <article key={{item.title}} className="{p}-card">
-              <div className="{p}-card__top">
-                <span className="{p}-card__index">0{{idx + 1}}</span>
-                <span className="{p}-card__tag">{{item.tag}}</span>
-              </div>
-              <h3 className="{p}-card__title">{{item.title}}</h3>
-              <p className="{p}-card__desc">{{item.desc}}</p>
-            </article>
-          ))}}
-        </div>
-      </div>
-    </section>
-  );
-}}
-"""
-
-    t3_css = f""".{p}-catalog {{
-  padding: 6.5rem 2rem;
-  background: {d['primary']};
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}}
-
-.{p}-catalog__inner {{
-  max-width: 1200px;
-  margin: 0 auto;
-}}
-
-.{p}-catalog__header {{
-  text-align: center;
-  max-width: 680px;
-  margin: 0 auto 3.5rem;
-}}
-
-.{p}-catalog__eyebrow {{
-  color: {d['accent']};
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  margin: 0 0 0.5rem;
-}}
-
-.{p}-catalog__title {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  color: #fafafa;
-  margin: 0 0 1rem;
-}}
-
-.{p}-catalog__desc {{
-  font-size: 1.05rem;
-  color: #a1a1aa;
-  line-height: 1.6;
-  margin: 0;
-}}
-
-.{p}-catalog__grid {{
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.75rem;
-}}
-
-.{p}-card {{
-  background: {d['surface']};
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 2.25rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}}
-
-.{p}-card::before {{
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: {d['accent']};
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}}
-
-.{p}-card:hover {{
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-}}
-
-.{p}-card:hover::before {{
-  opacity: 1;
-}}
-
-.{p}-card__top {{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-}}
-
-.{p}-card__index {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #71717a;
-}}
-
-.{p}-card__tag {{
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: {d['accent']};
-}}
-
-.{p}-card__title {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #fafafa;
-  margin: 0 0 0.75rem;
-}}
-
-.{p}-card__desc {{
-  font-size: 0.95rem;
-  color: #a1a1aa;
-  line-height: 1.65;
-  margin: 0;
-}}
-
-@media (max-width: 768px) {{
-  .{p}-catalog__grid {{
-    grid-template-columns: 1fr;
-  }}
-}}
-"""
-
-    t3_action = write_site(f"src/components/{sec_ts_name}.tsx", t3_tsx, f"src/components/{sec_ts_name}.css", t3_css)
-
-    # ── Turn 4: Footer ──────────────────────────────────────────────────────────
-    t4_user = obs_ok(
-        [f"src/components/{sec_ts_name}.tsx", f"src/components/{sec_ts_name}.css"],
-        "Write the Footer section: dark footer with business name, address, phone, email, hours, and copyright. "
-        "Files: src/components/Footer.tsx + src/components/Footer.css"
-    )
-
-    t4_thought = thought(
-        f"Writing the final section, Footer, for {d['name']}. "
-        "I'll organize it into a structured multi-column layout containing the brand wordmark, "
-        f"tagline, contact card (address: {d['contact']['address']}, phone: {d['contact']['phone']}, email: {d['contact']['email']}), "
-        "operating hours, and an automatic copyright line."
-    )
-
-    t4_tsx = f"""import React from 'react';
-import './Footer.css';
-
-export function Footer() {{
-  const year = new Date().getFullYear();
-
-  return (
-    <footer className="{p}-footer" id="footer" aria-label="Site Footer">
-      <div className="{p}-footer__inner">
-        <div className="{p}-footer__brand">
-          <p className="{p}-footer__logo">{d['name']}</p>
-          <p className="{p}-footer__tagline">{d['tagline']}</p>
-        </div>
-
-        <address className="{p}-footer__contact">
-          <h4 className="{p}-footer__heading">Visit & Connect</h4>
-          <p>{d['contact']['address']}</p>
-          <p><a href="tel:{d['contact']['phone']}">{d['contact']['phone']}</a></p>
-          <p><a href="mailto:{d['contact']['email']}">{d['contact']['email']}</a></p>
-        </address>
-
-        <div className="{p}-footer__hours">
-          <h4 className="{p}-footer__heading">Hours of Operation</h4>
-          <p>{d['contact']['hours']}</p>
-        </div>
-      </div>
-
-      <div className="{p}-footer__bottom">
-        <p>&copy; {{year}} {d['name']}. All rights reserved.</p>
-      </div>
-    </footer>
-  );
-}}
-"""
-
-    t4_css = f""".{p}-footer {{
-  background: #08080a;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4.5rem 2rem 2rem;
-  color: #a1a1aa;
-}}
-
-.{p}-footer__inner {{
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr;
-  gap: 3rem;
-  padding-bottom: 3rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}}
-
-.{p}-footer__logo {{
-  font-family: '{d['heading_font']}', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #fafafa;
-  margin: 0 0 0.75rem;
-}}
-
-.{p}-footer__tagline {{
-  font-size: 0.95rem;
-  line-height: 1.6;
-  max-width: 320px;
-  margin: 0;
-}}
-
-.{p}-footer__heading {{
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #fafafa;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 1.25rem;
-}}
-
-.{p}-footer__contact p,
-.{p}-footer__hours p {{
-  font-size: 0.92rem;
-  line-height: 1.8;
-  margin: 0 0 0.4rem;
-  font-style: normal;
-}}
-
-.{p}-footer__contact a {{
-  color: #fafafa;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}}
-
-.{p}-footer__contact a:hover {{
-  color: {d['accent']};
-}}
-
-.{p}-footer__bottom {{
-  max-width: 1200px;
-  margin: 2rem auto 0;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #71717a;
-}}
-
-@media (max-width: 768px) {{
-  .{p}-footer__inner {{
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }}
-}}
-"""
-
-    t4_action = write_site("src/components/Footer.tsx", t4_tsx, "src/components/Footer.css", t4_css)
-
-    # ── Turn 5: Complete & Finish ───────────────────────────────────────────────
-    t5_user = obs_done([
-        "src/components/Header.tsx", "src/components/Header.css",
-        "src/components/Hero.tsx", "src/components/Hero.css",
-        f"src/components/{sec_ts_name}.tsx", f"src/components/{sec_ts_name}.css",
-        "src/components/Footer.tsx", "src/components/Footer.css"
-    ])
-
-    t5_thought = thought(
-        f"All 4 sections have been built and accepted for {d['name']}. "
-        "The site is complete with cohesive design tokens, responsive grid layouts, "
-        "valid TypeScript components, and scoped modern CSS."
-    )
-
-    t5_finish = finish(
-        f"Built the complete {d['name']} ({d['type']}) website with 4 sections:\n"
-        f"- Header: sticky navbar with logo, nav links, CTA button, and mobile menu\n"
-        f"- Hero: bold full-viewport banner with tagline h1, subtitle, and primary/secondary CTAs\n"
-        f"- {d['section_name']}: 2-column responsive grid displaying all {len(d['items'])} items with tags & descriptions\n"
-        f"- Footer: structured layout with business info, full address, phone, email, and hours\n"
-        f"Color scheme: primary ({d['primary']}), accent ({d['accent']}), {d['heading_font']} headings on {d['body_font']} body."
-    )
-
-    messages = [
-        {"role": "system", "content": SITE_AGENT_SYSTEM_PROMPT},
-        {"role": "user", "content": initial_user},
-        {"role": "assistant", "content": f"{t1_thought}\n{t1_action}"},
-        {"role": "user", "content": t2_user},
-        {"role": "assistant", "content": f"{t2_thought}\n{t2_action}"},
-        {"role": "user", "content": t3_user},
-        {"role": "assistant", "content": f"{t3_thought}\n{t3_action}"},
-        {"role": "user", "content": t4_user},
-        {"role": "assistant", "content": f"{t4_thought}\n{t4_action}"},
-        {"role": "user", "content": t5_user},
-        {"role": "assistant", "content": f"{t5_thought}\n{t5_finish}"}
-    ]
-
-    return {
-        "task_id": d["id"],
-        "messages": messages
-    }
+# (build_trajectory for B5 delegates to build_diverse_domain_trajectory)
 
 
 
@@ -15893,8 +16190,8 @@ def run_batch(batch_name: str, out_dir: Path):
         out_file = out_dir / "site_trajectories_batch4.jsonl"
         print(f"Generating Batch 4 ({len(DOMAINS_B4)} domains) -> {out_file}...")
         with out_file.open("w", encoding="utf-8") as f:
-            for d in DOMAINS_B4:
-                rec = build_trajectory_b4(d)
+            for idx, d in enumerate(DOMAINS_B4):
+                rec = build_trajectory_b4(d, idx)
                 f.write(json.dumps(rec, ensure_ascii=True) + "\n")
         print(f"  ✓ Wrote {len(DOMAINS_B4)} trajectories to {out_file}")
 
@@ -15902,8 +16199,8 @@ def run_batch(batch_name: str, out_dir: Path):
         out_file = out_dir / "site_trajectories_batch5.jsonl"
         print(f"Generating Batch 5 ({len(DOMAINS_B5)} domains) -> {out_file}...")
         with out_file.open("w", encoding="utf-8") as f:
-            for d in DOMAINS_B5:
-                rec = build_trajectory_b5(d)
+            for idx, d in enumerate(DOMAINS_B5):
+                rec = build_trajectory_b5(d, idx)
                 f.write(json.dumps(rec, ensure_ascii=True) + "\n")
         print(f"  ✓ Wrote {len(DOMAINS_B5)} trajectories to {out_file}")
 
