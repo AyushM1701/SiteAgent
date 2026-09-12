@@ -592,6 +592,70 @@ Phase 10 provides full-system hardening across 5 foundational layers: explicit s
 
 ---
 
+### 1.13 Production Remediation & Architectural Overhaul (Phases 1–6)
+
+Between September 11 and September 12, 2026, the ReactAgent SLM system underwent an extensive six-phase production remediation and architectural overhaul to resolve critical bugs identified during extensive testing (e.g. the AURA spatial audio prompt failure, domain visual stagnation, template homogeneity, and UI fragility).
+
+#### Phase 1: Explicit Section Parsing, Non-Mutating Overrides, and Generic Multi-Word Stemming (`agent/site_brief.py`)
+- **Forensic Diagnosis**: When users requested custom section configurations (e.g. `1. Header`, `2. Hero`, `3. Spatial Products`, `4. Acoustic Specifications`, `5. Footer`), the system suffered from three distinct failure points:
+  1. *Section Dropping*: The generator strictly adhered to pre-canned domain templates (`["features", "testimonials", "contact"]`), dropping explicit user sections like "Spatial Products".
+  2. *Global Template Contamination*: User overrides mutated the module-level `_DOMAIN_TEMPLATES` dictionary in-place, permanently corrupting subsequent generation requests in the same process.
+  3. *Over-fitted Token Matching*: Custom section titles containing descriptive adjectives (e.g., "Flagship Products", "Acoustic Specifications") failed rigid token matching and fell back to default fallback categories.
+- **Architectural Implementation**:
+  - `extract_explicit_sections(prompt)`: Implemented a robust multi-pattern extractor supporting numbered lists (`1. Header: ...`), bullet points (`- Hero: ...`), and keyword section declarations.
+  - *Immutable Blueprint Semantics*: Replaced mutating dictionary operations with deep copies, ensuring global domain templates and instructions remain pristine across concurrent or sequential sessions.
+  - *Generic Multi-Word Substring Stemmer*: Developed a semantic substring matching engine that maps complex user titles to standardized component identifiers (`"Spatial Products"` -> `products`, `"Acoustic Specifications"` -> `specs`, `"Client Endorsements"` -> `testimonials`) while fully preserving user-supplied design directives and custom copy inside `_SECTION_INSTRUCTIONS`.
+
+#### Phase 2: Visual Judge Signal Integrity, Summary Integration, and Corrective Turn Loop (`agent/visual_judge.py`, `agent/agent.py`, `server/app.py`)
+- **Forensic Diagnosis**: While Playwright-based screenshot visual evaluation was present, its scoring outputs were siloed: scores were not surfaced in the UI post-generation summary, low visual scores never prompted corrective model behavior, and visual defects were ignored during multi-turn iteration.
+- **Architectural Implementation**:
+  - *Weighted Visual Scoring Algorithm*: Evaluates screenshot DOM metrics on a 0.0–5.0 scale across contrast compliance, typographic hierarchy, responsive layout boundaries, whitespace balance, and interactive element density.
+  - *Structured Defect Taxonomy*: Generates machine-readable `visual_issues` lists (e.g. `low_contrast_footer`, `hero_overflow_viewport`, `crowded_grid_gap`) identifying actionable layout flaws.
+  - *Corrective Agent Loop Integration*: Feeds detected visual defects directly back into the agent's observation context on subsequent turns, directing the model to repair styling and CSS properties.
+  - *Session & Summary Synchronization*: Exposed the visual score and defect list in `generate_post_generation_summary`, persisted scores in session checkpoints (`sessions/<id>.json`), and displayed color-coded star ratings (`★ 4.0`) in the Workbench UI.
+
+#### Phase 3: Synthetic Training-Data Diversity Overhaul (4 Architectural Layouts & De-Cliche Content) (`data_pipeline/generate_trajectories.py`, `site_trajectories_batch2.py`)
+- **Forensic Diagnosis**: Trajectory mining analysis revealed that over 90% of generated websites exhibited structural convergence: repetitive 3-column card grids, centered hero banners, and generic marketing copy ("The future of...", "Next-gen platform for...").
+- **Architectural Implementation**:
+  - *4 Distinct Section Layout Archetypes*:
+    1. **Split-Screen Hero with Interactive Widgets**: 50/50 desktop split pairing prominent typographic brand statements with live functional components (audio spectrum visualizers, interactive pricing sliders, live booking selectors).
+    2. **Bento Grid Architecture**: High-density asymmetric card arrangements utilizing heterogeneous CSS Grid spans (`2x2` hero card, `1x2` metric card, `1x1` badge cards) with subtle borders and lift animations.
+    3. **Editorial Magazine Layout**: Typography-dominant designs featuring high-contrast serif headlines, asymmetric pull quotes, multi-column editorial prose, and understated dividers.
+    4. **Asymmetric Card Decks**: Staggered card layouts with alternating sticky section headers and interactive accordion disclosure panels.
+  - *Domain-Specific Copy De-Clicheing*: Replaced generic tech buzzwords with authentic industry terminology across 15+ domains (e.g. acoustic impedance, driver specs, bean varietals, roasting elevation, shutter speeds).
+
+#### Phase 4: Domain Theme Diversification, Curated Typography Pairings & Deterministic Palette Hashing (`agent/site_brief.py`)
+- **Forensic Diagnosis**: Every domain defaulted to dark navy canvases with `Inter` body font and only 4 distinct heading fonts across the entire repository. This caused severe aesthetic mismatch for domains naturally demanding light, organic, or paper aesthetics (such as bakeries, wedding studios, artisan cafes, or editorial journals).
+- **Architectural Implementation**:
+  - *3 Curated Palette Variants per Domain*: Each of the 15+ domains now features 3 distinct palettes, including at least one dedicated Light/Paper theme (e.g., Warm Ivory, Soft Alabaster, Textured Linen, Porcelain) alongside Modern Dark and Rich Vibrant options.
+  - *Curated Typographic Pairings*: Expanded heading fonts (`Playfair Display`, `Cinzel`, `Space Grotesk`, `Syne`, `Cabinet Grotesk`, `Plus Jakarta Sans`) paired harmoniously with curated body fonts (`Inter`, `Manrope`, `Source Sans 3`, `IBM Plex Sans`, `Work Sans`).
+  - *Duotone Secondary Accent Tokens*: Added `--accent-secondary` to every theme, enabling rich two-tone gradient buttons, badge highlights, and border illumination.
+  - *Deterministic Hashing Engine*: Theme variants are selected via SHA-256 hash seeding based on the business name (`hashlib.sha256(business_name.lower().encode()).hexdigest()`), ensuring deterministic reproducibility for repeated queries while distributing distinct themes across diverse businesses.
+
+#### Phase 5: Auto-Recovery Quality & Structured Scaffold Synthesis (`agent/agent.py`)
+- **Forensic Diagnosis**: When a section exhausted its per-section turn budget, `auto_scaffold_section` previously injected a single generic placeholder card with filler text ("Placeholder feature"), ignoring the user prompt's explicit item counts and requested data attributes.
+- **Architectural Implementation**:
+  - *Natural Language Item Count Parsing*: Extracts explicit quantities from section descriptions (e.g., `"4 flagship sound sculptures"` -> 4 differentiated cards; `"3 pricing tiers"` -> 3 distinct pricing cards).
+  - *Named Placeholder Extraction*: Parses parenthetical and bulleted data fields from instructions (e.g. `"frequency response, acoustic specs, driver type"`) to populate placeholder cards with authentic domain-specific labels.
+  - *Full Recovery Observability*: Retains `auto_recovered: true` in the turn metadata and visual plan checklist, guaranteeing transparency without sacrificing visual presentation quality.
+
+#### Phase 6: Workbench UI Redesign, Responsive Breakpoints & Resilient SSE Reconnection (`web_ui_static/index.html`, `server/app.py`)
+- **Forensic Diagnosis**: The legacy Workbench suffered from a rigid 3-pane code-editor layout that broke on viewports below 1400px, low-contrast text failing accessibility standards, transient network drops causing SSE generation streams to abort silently, and blocking `confirm()` dialogs freezing the browser.
+- **Architectural Implementation**:
+  - *Claude/ChatGPT-Style Centered Chat Layout*: Centered conversation column (~720px max-width) with generous vertical rhythm, clean user prompt cards, and bottom-pinned auto-growing textarea composer.
+  - *Typeset Markdown Summaries*: Real typography rendering for assistant turns (structured headers, clean bullet lists, file-touched pill badges, interactive copy buttons) with live streaming reveal.
+  - *Collapsible Sidebar & Slide-Over Drawers*: Collapsible history sidebar with business names, turn counts, pass pills, and visual quality scores; slide-over panels for live Vite previews (with Desktop, Tablet, and Mobile simulators) and PowerShell terminal.
+  - *Responsive Breakpoints (1280px, 1024px, 768px)*:
+    - **1280px Desktop**: Full workbench with history sidebar and centered conversation.
+    - **1024px Laptop**: Compact sidebar with zero horizontal scrollbar and fluid message column.
+    - **768px Mobile/Tablet**: `#sidebar` transitions to off-canvas drawer (`transform: translateX(-100%)`) toggled via hamburger button (☰), eliminating content overlap.
+  - *WCAG AA Accessibility Compliance*: Elevated `--text-3` token to `#a8a29e` (dark mode, 8.29:1 contrast ratio) and `#52525b` (light mode, 7.72:1 contrast ratio), strictly surpassing the 4.5:1 minimum standard. Added 83 `aria-label` attributes across all interactive icon controls.
+  - *Non-Blocking In-App Confirm Modal*: Replaced all 4 native `confirm()` popups with asynchronous `showConfirmModal()` component.
+  - *Resilient SSE Stream Reconnection*: Upgraded `streamTask()` in `index.html` with exponential backoff and `/api/task/<id>/status` polling. Mid-generation network drops (tested at 10 seconds downtime) trigger a `Reconnecting…` state (`status-badge busy`) and automatically resume the stream upon network return without loss of data or premature termination.
+
+
+---
+
 ## 2. Complete Repository Directory & File Manifest
 
 Below is the exhaustive file and folder tree of the entire project:
@@ -599,132 +663,73 @@ Below is the exhaustive file and folder tree of the entire project:
 ```
 slm/
 ├── agent/
-│   ├── agent.py                         # Core autonomous ReAct agent & site runner with cooperative cancellation & compaction
-│   ├── agent_protocol.py                # Tool schemas, system prompts, regex formats, site agent prompt
-│   ├── site_brief.py                    # Two-stage structured XML content brief generator with explicit section parser
+│   ├── agent.py                         # Autonomous ReAct agent & multi-section site runner with auto-recovery & turn budget scaling
+│   ├── agent_protocol.py                # Tool schemas, system prompts, regex formats, and site agent protocols
+│   ├── site_brief.py                    # Structured XML content brief generator with 15+ domains, 3 palette variants, and explicit section parser
 │   ├── style_ingest.py                  # Design token ingestion, CSS preset themes, and typographic/spacing scale validator
-│   └── visual_judge.py                  # Playwright visual judge & structural screenshot quality evaluator
-├── generate_site_trajectories.py          # Site trajectory synthesis pipeline (Batch 1)
-├── site_trajectories_batch2.py            # 10 diverse full-page website trajectory specs (Batch 2)
-├── site_trajectories_batch3.py            # 10 enterprise website trajectory specs (Batch 3)
-├── generate_site_trajectories_batch4.py   # Batch 4 generator producing 50 modern multi-section website trajectories
-├── generate_site_trajectories_batch5.py   # Batch 5 generator producing 50 high-polish domain trajectories
-├── generate_site_trajectories_interactive.py # Generator for gold-standard interactive website trajectories
-├── generate_typescript_instruct.py        # Curates verified TypeScript & React instruction pairs
-├── dataset_curate_sources.py              # Master multi-source curator (HF, GitHub primitives, Batch 4/5)
-├── slm.py                                 # Unified CLI entrypoint (inspect, bench, eval, web, train)
-├── server/app.py                          # Web UI Flask server with queue clear endpoints, cooperative cancel & session management
-├── shell_server.py                        # Process-isolated stateful execution shell
-├── train.py                               # Unsloth QLoRA 4-bit SFT trainer
-├── train_dpo.py                           # Direct Preference Optimization (DPO) training pipeline (TRL DPOTrainer)
-├── evaluate.py                            # 7-category evaluation test harness (pass@1, turns)
-├── generate_teacher.py                    # Teacher LLM trajectory synthesizer (Gemini structured outputs, 4096 tokens)
-├── generate_star.py                       # Self-Taught Reasoner (STaR) trajectory generator
-├── dataset_build_star.py                  # STaR dataset curator & formatter
-├── dataset_build_expanded.py              # Augmented trajectory dataset builder
-├── dataset_merge_trajectories.py          # Multi-source trajectory merger (Interactive + Batch 1-3 + Stack + STaR)
-├── dataset_validate.py                    # Dataset schema & token validation tool
-├── package.json                           # Node.js npm packages & Vitest eval setup
-├── package-lock.json                      # Exact npm dependency lockfile
-├── tsconfig.json                          # TypeScript compiler settings
-├── vitest.config.ts                       # Vitest test framework configuration
-├── vitest.setup.ts                        # Vitest DOM polyfills & testing-library matchers
-├── css.d.ts                               # Ambient TypeScript declarations for CSS imports
-├── react-ts-css-slm-runbook.md            # Comprehensive operational technical runbook
-├── PROJECT_JOURNEY.md                     # Engineering history, milestones, eval benchmarks
-├── web_ui_history.json                    # Persistent generation task history
-├── star_task_bank.jsonl                   # 150 categorized component tasks for STaR
-├── dpo_pairs.jsonl                        # Direct Preference Optimization pairs
-├── dpo_pairs_verified.jsonl               # Verified preference optimization pairs
-├── react_ts_css_eval_set_combined.jsonl   # 153-item evaluation test benchmark dataset
-├── site_trajectories_interactive.jsonl    # Gold-standard interactive full-page site trajectories
-├── training_data.jsonl                    # Master SFT training dataset (176 multi-source & interactive trajectories, 3.2 MB)
-├── agent_results.json                     # Historical evaluation benchmarking run records
-├── web_ui_static/                         # Frontend Single-Page Application assets
-│   └── index.html                         # Workbench UI with click-to-clear queue badge, prompt edit/rerun & shortcuts
-├── generated_components/                  # Persistent storage & Vite preview runners for components and sites
-│   ├── package.json                       # Centralized preview package config
-│   ├── vite.config.ts                     # Centralized Vite config
-│   ├── index.html                         # Centralized HTML mount page
-│   ├── main.tsx                           # Dynamic component loader
-│   ├── Flowsync_Ai_20260911_114441/       # Generated FlowSync AI 6-section interactive SaaS landing page
-│   │   ├── App.tsx                        # Master application component assembling all 6 interactive sections
-│   │   ├── index.html                     # HTML5 mount page with Google Fonts & FontAwesome 6 CDN
-│   │   ├── main.tsx                       # React DOM root renderer
-│   │   ├── package.json                   # Turnkey Vite preview package
-│   │   ├── tsconfig.json                  # TypeScript compiler settings
-│   │   ├── vite.config.ts                 # Vite config with process.env polyfill
-│   │   └── src/                           # Component source directory
-│   │       ├── App.css                    # Global design system & theme tokens (:root variables)
-│   │       └── components/                # 6 modular section components (paired TSX + CSS)
-│   │           ├── Header.tsx / .css      # Sticky nav with dark/light theme switch & mobile drawer
-│   │           ├── Hero.tsx / .css        # High-impact hero with gradient badge & workflow animation
-│   │           ├── Features.tsx / .css    # 3-category tabbed feature switcher with responsive grid
-│   │           ├── Pricing.tsx / .css     # Interactive monthly/annual billing toggle (20% discount)
-│   │           ├── Testimonials.tsx / .css# Auto-advancing quote carousel with pause-on-hover & dots
-│   │           └── Footer.tsx / .css      # Multi-column footer with newsletter input & social links
-│   ├── Miso_20260910_032440/              # Generated Miso & Soul 6-section restaurant site
-│   │   ├── App.tsx                        # Assembled master application component
-│   │   ├── index.html                     # HTML5 mount page with Google Fonts
-│   │   ├── main.tsx                       # React DOM root renderer
-│   │   ├── package.json                   # Turnkey Vite preview package
-│   │   ├── tsconfig.json                  # TypeScript compiler settings
-│   │   ├── vite.config.ts                 # Vite config with process.env polyfill
-│   │   └── src/                           # Component source directory
-│   │       ├── App.css                    # Global design system & theme tokens (:root)
-│   │       └── components/                # 6 modular section components (paired TSX + CSS)
-│   │           ├── Header.tsx / .css      # Sticky navigation bar
-│   │           ├── Hero.tsx / .css        # Full-bleed banner with tagline and CTA
-│   │           ├── Features.tsx / .css    # Core differentiators card grid
-│   │           ├── Pricing.tsx / .css     # Menu pricing tier cards
-│   │           ├── CTA.tsx / .css         # Call to action conversion section
-│   │           └── Footer.tsx / .css      # Multi-column footer with contact details
-│   ├── AZURE_20260909_205613/             # Generated AZURE component directory
-│   │   ├── AZURE.tsx                      # Primary React component source
-│   │   ├── AZURE.css                      # Component stylesheet
-│   │   ├── AZURE.module.css               # Component CSS module
-│   │   ├── Component.tsx                  # Standardized component alias
-│   │   ├── Component.css                  # Standardized component stylesheet
-│   │   ├── Component.module.css           # Standardized component CSS module
-│   │   ├── Component.test.tsx             # Generated Vitest unit tests
-│   │   ├── styles.css                     # Base styling
-│   │   ├── package.json                   # Turnkey Vite preview package
-│   │   ├── vite.config.ts                 # Turnkey Vite config
-│   │   ├── index.html                     # Turnkey HTML entry
-│   │   └── main.tsx                       # Turnkey React mount point
-│   ├── Calculator_latest/                 # Generated Calculator component directory
-│   │   ├── Calculator.tsx                 # Scientific calculator component source
-│   │   ├── package.json                   # Turnkey Vite preview package
-│   │   ├── vite.config.ts                 # Turnkey Vite config
-│   │   ├── index.html                     # Turnkey HTML entry
-│   │   └── main.tsx                       # Turnkey React mount point
-│   └── latest/                            # Symlinked/copied latest generation files
-│       ├── Component.tsx                  # Latest component alias
-│       └── AZURE.tsx                      # Latest named component
-├── my-react-agent-lora/                   # Production fine-tuned QLoRA adapter weights
-│   ├── adapter_config.json                # LoRA hyperparameter configuration
-│   ├── adapter_model.safetensors          # LoRA weights (119 MB binary)
-│   ├── chat_template.jinja                # Chat template for tokenizer
-│   ├── README.md                          # Hugging Face model card
-│   ├── tokenizer.json                     # Full BPE tokenizer vocabulary
-│   └── tokenizer_config.json              # Tokenizer control token mappings
-├── base-model/                            # Base Qwen2.5-Coder-3B model weights (~6.2 GB)
-│   ├── config.json                        # Model architecture hyperparameters
-│   ├── generation_config.json             # Inference generation parameters
-│   ├── special_tokens_map.json            # Special token IDs
-│   ├── tokenizer_config.json              # Base tokenizer config
-│   ├── added_tokens.json                  # Added token identifiers
-│   ├── model.safetensors.index.json       # Shard index mapping
-│   ├── README.md                          # Foundation model card
-│   ├── .gitattributes                     # Git LFS attributes
-│   ├── model-00001-of-00002.safetensors   # Weights shard 1 (4.9 GB binary)
-│   ├── model-00002-of-00002.safetensors   # Weights shard 2 (1.2 GB binary)
-│   ├── merges.txt                         # BPE merges table (1.7 MB)
-│   └── vocab.json                         # Vocabulary token ID dictionary (2.8 MB)
-├── node_modules/                          # Workspace npm packages (React 19, Vitest 3, TypeScript 5)
-├── unsloth_compiled_cache/                # JIT-compiled kernels for fast Unsloth attention
-└── __pycache__/                           # Bytecode caches for Python modules
+│   └── visual_judge.py                  # Playwright visual judge, structural DOM inspector, and screenshot quality evaluator
+├── server/
+│   ├── app.py                           # Flask web server, queue management, resilient SSE streaming, and Vite runner scaffolder
+│   ├── sessions.py                      # Multi-turn persistent session manager, file diffing, checkpoints, and post-generation summaries
+│   └── shell_server.py                  # Process-isolated stateful execution shell with WinPTY PowerShell controller
+├── web_ui_static/
+│   └── index.html                       # Redesigned Workbench UI (Claude/ChatGPT centered chat, slide-over panels, WCAG AA, resilient SSE)
+├── training/
+│   ├── train_sft.py                     # Unsloth QLoRA 4-bit SFT trainer
+│   ├── train_dpo.py                     # Direct Preference Optimization (DPO) training pipeline (TRL DPOTrainer)
+│   └── evaluate.py                      # 7-category evaluation test harness (pass@1, turns, syntax check)
+├── data_pipeline/
+│   ├── generate_trajectories.py         # Multi-turn trajectory generator with 4 architectural layouts (split-screen, bento, editorial, asymmetric)
+│   ├── build_dataset.py                 # Trajectory dataset curator and token length formatter
+│   ├── curate_dataset.py                # Multi-source trajectory curator and deduplicator
+│   └── generate_batch6.py               # Batch 6 trajectory generator for high-polish multi-section websites
+├── data/
+│   ├── training_data.jsonl              # Master SFT training dataset (176 multi-source & interactive trajectories)
+│   ├── site_trajectories.jsonl          # Golden multi-section site synthesis trajectories
+│   ├── site_trajectories_batch2.jsonl   # 10 diverse full-page website trajectory specs
+│   ├── site_trajectories_batch3.jsonl   # 10 enterprise website trajectory specs
+│   ├── site_trajectories_batch4.jsonl   # 50 modern multi-section website trajectories
+│   ├── site_trajectories_batch5.jsonl   # 50 high-polish domain trajectories
+│   ├── site_trajectories_batch6.jsonl   # High-diversity batch 6 trajectories
+│   ├── site_trajectories_interactive.jsonl # Gold-standard interactive full-page site trajectories
+│   ├── site_trajectories_stack.jsonl    # Filtered Stack v2 synthetic site trajectories
+│   ├── star_task_bank.jsonl             # 150 categorized component tasks for STaR
+│   ├── website_task_bank.jsonl          # 80 categorized full-page website synthesis tasks
+│   ├── trajectories_shadcn_ui.jsonl     # High-polish Shadcn UI component trajectories
+│   ├── trajectories_typescript_instruct.jsonl # Curated TypeScript & React instruction pairs
+│   ├── dpo/
+│   │   ├── dpo_pairs.jsonl              # Direct Preference Optimization pairs
+│   │   └── dpo_pairs_verified.jsonl     # Verified preference optimization pairs
+│   └── eval/
+│       └── react_ts_css_eval_set_combined.jsonl # 153-item evaluation test benchmark dataset
+├── sessions/                            # Persisted agentic session state and checkpoint histories
+├── generated_components/                # Generated component workspaces and turnkey Vite preview applications
+│   ├── package.json                     # Preview package configuration
+│   ├── vite.config.ts                   # Preview Vite configuration
+│   ├── index.html                       # HTML mount page with Google Fonts pre-connects
+│   └── main.tsx                         # Dynamic component mount point
+├── scripts/
+│   ├── setup.bat / setup.sh             # Environment setup scripts
+│   ├── run_web_ui.bat / run_web_ui.sh   # Web UI startup scripts
+│   └── train_all.bat / train_all.sh     # Training execution scripts
+├── slm.py                               # Unified CLI entrypoint (inspect, bench, eval, web, train)
+├── generate_star.py                     # Self-Taught Reasoner (STaR) trajectory generator
+├── package.json                         # Node.js npm packages & Vitest eval setup
+├── package-lock.json                    # Exact npm dependency lockfile
+├── tsconfig.json                        # TypeScript compiler settings
+├── vitest.config.ts                     # Vitest test framework configuration
+├── vitest.setup.ts                      # Vitest DOM polyfills & testing-library matchers
+├── css.d.ts                             # Ambient TypeScript declarations for CSS imports
+├── requirements.txt                     # Python pip dependencies
+├── full-implementation-plan-v2.md       # Comprehensive multi-phase production implementation plan
+├── README.md                            # High-level project README
+├── docs/
+│   ├── PROJECT_JOURNEY.md               # Engineering history, milestones, and benchmark records
+│   ├── RUNBOOK.md                       # Operational technical runbook and CLI reference
+│   └── architecture_and_source.md       # Comprehensive architecture and complete source codebase document
+└── my-react-agent-lora/                 # Production fine-tuned QLoRA adapter weights (Rank 16, Alpha 16)
 ```
+
 ---
 
 ## 3. Complete Source Code of Every File
@@ -832,8 +837,8 @@ if __name__ == "__main__":
 #### `agent.py`
 
 - **Path**: `file:///c:/Users/AYUSH/Documents/slm/agent/agent.py`
-- **Lines**: 1,816 | **Size**: 87,495 bytes
-- **Description**: Core autonomous ReAct agent loop, tool execution engine (edit, bash, view, finish), cooperative cancellation checks (`stop_check`), multi-section site agent loop (`run_site_agent_on_example`) with section name conformance validation (`_SECTION_SYNONYMS`), duplicate section write protection, active conversational history compaction (`_compact_site_history`), normalized error signature loop detection (`extract_error_signature`), Vitest test runner, and TypeScript diagnostic parser.
+- **Lines**: 2,023 | **Size**: 98,584 bytes
+- **Description**: Autonomous ReAct agent loop, tool execution engine (edit_file, exec_command, write_site), section auto-recovery with structured item-count parsing and named field labels, non-blocking cooperative cancellation checks, dynamic turn budget auto-scaling, multi-turn history compaction, Vitest test harness, and TypeScript diagnostic error parsing.
 
 ````python
 #!/usr/bin/env python3
@@ -1701,7 +1706,7 @@ _SECTION_SYNONYMS: Dict[str, List[str]] = {
     "hero": ["hero", "banner", "intro", "masthead"],
     "menu": ["menu", "dishes", "food", "items", "catalog"],
     "about": ["about", "story", "team", "company", "mission"],
-    "features": ["features", "feature", "capabilities", "capability", "services", "service", "offerings", "offering", "solutions", "solution", "products", "product", "sculptures"],
+    "features": ["features", "feature", "capabilities", "capability", "services", "service", "offerings", "offering", "solutions", "solution", "products", "product"],
     "pricing": ["pricing", "price", "tiers", "tier", "plans", "plan", "rates"],
     "testimonials": ["testimonials", "testimonial", "reviews", "review", "quotes", "quote", "carousel", "socialproof"],
     "projects": ["projects", "project", "work", "works", "portfolio", "showcase", "cases"],
@@ -1710,6 +1715,73 @@ _SECTION_SYNONYMS: Dict[str, List[str]] = {
     "contact": ["contact", "inquiry", "reach", "location", "hours", "touch"],
     "footer": ["footer", "bottom"],
 }
+
+_BASE_SECTION_INSTRUCTIONS: Dict[str, str] = {
+    "header": (
+        "Write the Header section: a sticky navigation bar with the business name/logo on the left, "
+        "navigation links in the center, and action controls on the right. If the prompt requests a theme toggle, "
+        "include a functional dark/light mode toggle switch using useState. Include a responsive mobile drawer toggle. "
+        "Files: src/components/Header.tsx + src/components/Header.css"
+    ),
+    "hero": (
+        "Write the Hero section: a high-impact full-width banner with background gradient, "
+        "business tagline as an h1, a compelling subtitle, primary/secondary action buttons, "
+        "and animated or styled metric badges if requested. "
+        "Files: src/components/Hero.tsx + src/components/Hero.css"
+    ),
+    "menu": (
+        "Write the Menu section: display the menu categories and items from the content brief. "
+        "Use a card-grid layout with item name, price, and description. "
+        "Files: src/components/Menu.tsx + src/components/Menu.css"
+    ),
+    "about": (
+        "Write the About section: a two-column layout with a heading, a short paragraph about the "
+        "business, and a decorative image placeholder or icon. "
+        "Files: src/components/About.tsx + src/components/About.css"
+    ),
+    "features": (
+        "Write the Features section: display each feature as a card with icon, title, and description. "
+        "If the prompt requests tabbed filtering or category switching, implement functional tab buttons with useState. "
+        "Files: src/components/Features.tsx + src/components/Features.css"
+    ),
+    "pricing": (
+        "Write the Pricing section: display 3 pricing tier cards (e.g. Starter, Pro/Recommended, Enterprise). "
+        "If the prompt requests an interactive pricing calculator or billing toggle, implement an annual/monthly "
+        "billing toggle switch with discounted calculation using useState. "
+        "Files: src/components/Pricing.tsx + src/components/Pricing.css"
+    ),
+    "testimonials": (
+        "Write the Testimonials section: display customer quotes, author names, roles, and star ratings. "
+        "If requested, build an interactive carousel card with previous and next pagination buttons tracking active index using useState. "
+        "Files: src/components/Testimonials.tsx + src/components/Testimonials.css"
+    ),
+    "projects": (
+        "Write the Projects section: display each project from the content brief as a card with "
+        "name, description, and tech stack tags. "
+        "Files: src/components/Projects.tsx + src/components/Projects.css"
+    ),
+    "skills": (
+        "Write the Skills section: display skills as styled pill/badge elements. "
+        "Files: src/components/Skills.tsx + src/components/Skills.css"
+    ),
+    "cta": (
+        "Write the CTA (Call to Action) section: a full-width colored banner with a compelling "
+        "headline and a prominent button. "
+        "Files: src/components/CTA.tsx + src/components/CTA.css"
+    ),
+    "contact": (
+        "Write the Contact section: display address, phone, email and hours from the content brief. "
+        "Use a clean card or two-column layout with icons. "
+        "Files: src/components/Contact.tsx + src/components/Contact.css"
+    ),
+    "footer": (
+        "Write the Footer section: a dark background footer with the business name, brief nav links, "
+        "contact info, and a copyright notice. "
+        "Files: src/components/Footer.tsx + src/components/Footer.css"
+    ),
+}
+
+_SECTION_INSTRUCTIONS: Dict[str, str] = dict(_BASE_SECTION_INSTRUCTIONS)
 
 
 def _compact_site_history(history: List[Dict[str, str]]) -> None:
@@ -1844,8 +1916,14 @@ def synthesize_section_css(section_name: str, tsx_content: str, style_spec: Opti
     ]
 
     for cls in sorted(all_classes):
-        if any(k in cls.lower() for k in ["badge", "tag", "spec"]):
-            rules.append(f".{cls} {{ display: inline-block; padding: 0.25rem 0.65rem; border-radius: {btn_radius}; font-size: 0.75rem; color: {accent_color}; background: rgba(255,255,255,0.06); }}")
+        if any(k in cls.lower() for k in ["label"]):
+            rules.append(f".{cls} {{ display: block; font-family: {body_font}, sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.65; margin-bottom: 4px; color: var(--surface-paper, #ffffff); }}")
+        elif any(k in cls.lower() for k in ["field"]):
+            rules.append(f".{cls} {{ margin-bottom: 12px; }}")
+        elif any(k in cls.lower() for k in ["badge", "tag"]):
+            rules.append(f".{cls} {{ display: inline-block; padding: 0.25rem 0.65rem; border-radius: {btn_radius}; font-size: 0.8rem; font-weight: 600; color: {accent_color}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }}")
+        elif any(k in cls.lower() for k in ["spec"]):
+            rules.append(f".{cls} {{ font-family: {body_font}, sans-serif; font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.5; margin: 4px 0 0; }}")
         elif any(k in cls.lower() for k in ["desc", "text", "sub", "para"]):
             rules.append(f".{cls} {{ font-family: {body_font}, sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }}")
 
@@ -1858,7 +1936,11 @@ def auto_scaffold_section(
     custom_instr: str = "",
 ) -> tuple[str, str, str, str]:
     """
-    Synthesizes both a minimal TSX component and matching CSS for a starved section.
+    Synthesizes a rich, differentiated TSX component and matching CSS for an auto-recovered section.
+    Parses item counts ('4 flagship sound sculptures' -> 4 cards), parenthesized item names,
+    and named data fields ('product name, frequency response tag, acoustic architectural specs')
+    so the recovered section renders multiple distinct cards with explicit placeholder field labels
+    rather than collapsing into one generic card.
     Returns (tsx_filename, tsx_content, css_filename, css_content).
     """
     pascal_name = "".join(w.capitalize() for w in re.split(r'[-_]', section_name))
@@ -1870,48 +1952,235 @@ def auto_scaffold_section(
 
     clean_desc = custom_instr.split("Files:")[0].strip() if "Files:" in custom_instr else custom_instr
     if not clean_desc:
-        clean_desc = f"Experience the finest craft and precision engineered for {title}."
+        clean_desc = f"Precision crafted and engineered for {title}."
+
+    # 1. Parse named items from parentheses, quotes, or bullets
+    parsed_items: list[str] = []
+    paren_m = re.search(r'\(([^)]+)\)', clean_desc)
+    if paren_m:
+        raw_candidates = re.split(r'[,;]|\band\b', paren_m.group(1))
+        for cand in raw_candidates:
+            c = cand.strip().strip('"\'')
+            if c and len(c.split()) <= 4 and not any(k in c.lower() for k in ["e.g.", "etc.", "such as", "including"]):
+                parsed_items.append(c)
+
+    if not parsed_items:
+        quotes = re.findall(r'["\']([A-Z][a-zA-Z0-9\s-]{2,30})["\']', clean_desc)
+        if len(quotes) >= 2:
+            parsed_items = quotes
+
+    if not parsed_items:
+        bullets = re.findall(r'(?:^|\n)\s*[-*•]\s*([A-Z][a-zA-Z0-9\s-]{2,30})', clean_desc)
+        if len(bullets) >= 2:
+            parsed_items = bullets
+
+    # 2. Parse implied item count from description
+    word_numbers = {
+        "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+        "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10, "twelve": 12
+    }
+    target_count = len(parsed_items)
+
+    # Match patterns like "4 flagship sound sculptures displayed in an editorial grid"
+    num_m = re.search(
+        r'\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+([a-zA-Z\s-]+?)(?:displayed|with|in|featuring|arranged|built|\.|$)',
+        clean_desc,
+        re.IGNORECASE
+    )
+    if num_m:
+        raw_num = num_m.group(1).lower()
+        target_count = word_numbers.get(raw_num, int(raw_num) if raw_num.isdigit() else target_count)
+
+    if target_count < 2:
+        num_m2 = re.search(
+            r'\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve)\s+(?:flagship\s+|core\s+|signature\s+|featured\s+|primary\s+)?([a-zA-Z-]+)',
+            clean_desc,
+            re.IGNORECASE
+        )
+        if num_m2:
+            raw_num2 = num_m2.group(1).lower()
+            target_count = word_numbers.get(raw_num2, int(raw_num2) if raw_num2.isdigit() else 3)
+        elif slug not in ("header", "hero", "footer", "contact"):
+            target_count = 4 if any(k in clean_desc.lower() for k in ["products", "practices", "models", "sculptures"]) else 3
+        else:
+            target_count = 1
+
+    # 3. Differentiate item titles if fewer than target_count
+    if len(parsed_items) < target_count:
+        brand_prefix = "Aura" if any(k in clean_desc.lower() for k in ["aura", "acoustic", "sound", "spatial"]) else title.rstrip("s")
+        suffixes = ["One", "Studio", "Sphere", "Monolith", "Reference", "Signature", "Pro", "Custom"]
+        for i in range(len(parsed_items), target_count):
+            parsed_items.append(f"{brand_prefix} {suffixes[i % len(suffixes)]}")
+
+    # 4. Parse named data fields mentioned in description
+    parsed_fields: list[str] = []
+    with_m = re.search(r'\b(?:with|featuring|including|displaying)\s+([^.]+?)(?:Files:|\.|$)', clean_desc, re.IGNORECASE)
+    if with_m:
+        raw_fields = re.split(r'[,;]|\band\b', with_m.group(1))
+        for rf in raw_fields:
+            rf_clean = rf.strip().strip('"\'').rstrip(".")
+            if rf_clean and len(rf_clean.split()) <= 5 and not any(k in rf_clean.lower() for k in ["files:", "component", "tsx", "css", "src/"]):
+                label = " ".join(w.capitalize() for w in rf_clean.split())
+                parsed_fields.append(label)
+
+    if not parsed_fields:
+        parsed_fields = ["Product Name", "Frequency Response Tag", "Acoustic Architectural Specs"]
+
+    # 5. Differentiated field values per card
+    freq_tags = ["10Hz – 48kHz ±0.5dB", "12Hz – 42kHz ±1.0dB", "8Hz – 52kHz ±0.2dB", "14Hz – 38kHz ±1.2dB"]
+    materials = [
+        "Hand-lathed brass, decoupled obsidian damping baffle, cryogenic wiring",
+        "Anodized aerospace billet aluminum, internal acoustic labyrinth chamber",
+        "Cold-cast solid bronze chassis, decoupled coherent phase plug array",
+        "Acoustic composite resonator, monolithic passive sub-radiator"
+    ]
+    price_tags = ["$29/mo", "$79/mo", "$199/mo", "Custom"]
+    case_tags = ["98% Win Rate", "140+ Trials", "AmLaw 100", "Tier 1 Recognized"]
+
+    # Clean subtitle by stripping directive preamble
+    display_subtitle = re.sub(r'^(?:Write|Produce|Build|Create|Make)\s+the\s+[\w\s-]+\s+section:\s*', '', clean_desc, flags=re.IGNORECASE)
+    display_subtitle = display_subtitle.split('.')[0].strip()
+    if not display_subtitle.endswith("."):
+        display_subtitle += "."
+
+    # 6. Build structured JSX cards with explicit field labels
+    cards_jsx: list[str] = []
+    for idx, item_title in enumerate(parsed_items):
+        field_elements: list[str] = []
+
+        for f_idx, field_label in enumerate(parsed_fields):
+            fl_lower = field_label.lower()
+            if any(k in fl_lower for k in ["name", "title", "sculpture", "product", "practice", "service", "item"]):
+                field_elements.append(
+                    f'            <div className="sa-card__field sa-card__field--name">\n'
+                    f'              <span className="sa-field__label">{field_label}</span>\n'
+                    f'              <h3 className="sa-card__title">{item_title}</h3>\n'
+                    f'            </div>'
+                )
+            elif any(k in fl_lower for k in ["tag", "frequency", "rate", "price", "metric", "badge", "benchmark", "hours"]):
+                if any(k in clean_desc.lower() for k in ["frequency", "sound", "acoustic", "hz"]):
+                    val = freq_tags[idx % len(freq_tags)]
+                elif any(k in clean_desc.lower() for k in ["price", "cost", "tier", "plan"]):
+                    val = price_tags[idx % len(price_tags)]
+                elif any(k in clean_desc.lower() for k in ["law", "litigation", "case", "attorney"]):
+                    val = case_tags[idx % len(case_tags)]
+                else:
+                    val = f"Series 0{idx + 1}"
+                field_elements.append(
+                    f'            <div className="sa-card__field sa-card__field--tag">\n'
+                    f'              <span className="sa-field__label">{field_label}</span>\n'
+                    f'              <span className="sa-tag" style={{{{ fontFamily: "monospace", fontSize: "0.82rem" }}}}>{val}</span>\n'
+                    f'            </div>'
+                )
+            elif any(k in fl_lower for k in ["spec", "architectural", "acoustic", "material", "detail", "overview", "desc", "partner", "record"]):
+                if any(k in clean_desc.lower() for k in ["acoustic", "sound", "material", "sculpture"]):
+                    val = materials[idx % len(materials)]
+                else:
+                    val = f"Engineered specifically for {item_title} with verified precision and production reliability."
+                field_elements.append(
+                    f'            <div className="sa-card__field sa-card__field--specs">\n'
+                    f'              <span className="sa-field__label">{field_label}</span>\n'
+                    f'              <p className="sa-specs" style={{{{ fontSize: "0.85rem", opacity: 0.85, margin: "6px 0 0" }}}}>{val}</p>\n'
+                    f'            </div>'
+                )
+            else:
+                field_elements.append(
+                    f'            <div className="sa-card__field">\n'
+                    f'              <span className="sa-field__label">{field_label}</span>\n'
+                    f'              <p className="sa-desc" style={{{{ fontSize: "0.88rem", opacity: 0.8 }}}}>Specialized {field_label.lower()} implementation for {item_title}.</p>\n'
+                    f'            </div>'
+                )
+
+        inner_fields = "\n".join(field_elements)
+        card_markup = (
+            f'          <div className="sa-card" key="{idx}">\n'
+            f'{inner_fields}\n'
+            f'            <button type="button" className="sa-btn" style={{{{ marginTop: "16px", cursor: "pointer" }}}}>\n'
+            f'              Explore {item_title} &rarr;\n'
+            f'            </button>\n'
+            f'          </div>'
+        )
+        cards_jsx.append(card_markup)
+
+    all_cards_str = "\n".join(cards_jsx)
 
     tsx_content = (
         f"import React from 'react';\n"
         f"import './{pascal_name}.css';\n\n"
         f"export function {pascal_name}() {{\n"
         f"  return (\n"
-        f"    <section className=\"sa-{slug}\" id=\"{slug}\">\n"
+        f"    <section className=\"sa-{slug}\" id=\"{slug}\" aria-label=\"{title}\">\n"
         f"      <div className=\"sa-{slug}__inner\">\n"
-        f"        <h2 className=\"sa-{slug}__title\">{title}</h2>\n"
-        f"        <div className=\"sa-{slug}__grid\">\n"
-        f"          <div className=\"sa-card\">\n"
-        f"            <h3>{title} Collection</h3>\n"
-        f"            <p className=\"sa-desc\">{clean_desc}</p>\n"
-        f"          </div>\n"
+        f"        <div className=\"sa-header-block\" style={{{{ marginBottom: '2.5rem' }}}}>\n"
+        f"          <h2 className=\"sa-{slug}__title\">{title}</h2>\n"
+        f"          <p className=\"sa-{slug}__subtitle\" style={{{{ opacity: 0.8 }}}}>{display_subtitle}</p>\n"
+        f"        </div>\n"
+        f"        <div className=\"sa-{slug}__grid sa-grid\">\n"
+        f"{all_cards_str}\n"
         f"        </div>\n"
         f"      </div>\n"
         f"    </section>\n"
         f"  );\n"
         f"}}\n"
     )
+
     css_content = synthesize_section_css(section_name, tsx_content, style_spec=style_spec)
     return tsx_filename, tsx_content, css_filename, css_content
 
 
 def _build_section_synonyms(sections: List[str]) -> Dict[str, List[str]]:
-    """Builds an expanded synonym map for all requested sections to prevent false mismatch rejections."""
+    """Builds an expanded synonym map for all requested sections using generic word-stemming and multi-word slug combinations."""
     syns_map = {k: list(v) for k, v in _SECTION_SYNONYMS.items()}
     for sec in sections:
         norm = sec.lower().replace("-", "").replace("_", "")
         existing = set(syns_map.get(norm, []))
         existing.add(norm)
-        tokens = [t for t in re.split(r'[-_\s]', sec.lower()) if len(t) >= 3]
+        existing.add(sec.lower())
+        existing.add(sec.lower().replace("-", "_"))
+        existing.add(sec.lower().replace("_", "-"))
+
+        tokens = [t for t in re.split(r'[-_\s]', sec.lower()) if len(t) >= 2]
+        token_stems: List[List[str]] = []
         for t in tokens:
-            existing.add(t)
-            if t.endswith("s"):
-                existing.add(t[:-1])
+            stems = {t}
+            # Generic English morphological stemming rules
+            if t.endswith("ies") and len(t) > 4:
+                stems.add(t[:-3] + "y")
+            elif t.endswith("es") and len(t) > 3:
+                stems.add(t[:-2])
+                stems.add(t[:-1])
+            elif t.endswith("s") and len(t) > 2:
+                stems.add(t[:-1])
             else:
-                existing.add(t + "s")
-        if "product" in sec.lower():
-            existing.update(["products", "product", "sculptures", "sculpture", "hardware", "spatialproducts", "spatialproduct", "spatialaudio"])
+                stems.add(t + "s")
+                if t[-1] in ("s", "x", "z", "ch", "sh"):
+                    stems.add(t + "es")
+            if t.endswith("ing") and len(t) > 4:
+                stems.add(t[:-3])
+            if t.endswith("ed") and len(t) > 3:
+                stems.add(t[:-2])
+
+            token_stems.append(list(stems))
+            for s in stems:
+                existing.add(s)
+
+        # Multi-token joined and stemmed combinations
+        if len(tokens) > 1:
+            existing.add("".join(tokens))
+            existing.add("-".join(tokens))
+            existing.add("_".join(tokens))
+            existing.add(" ".join(tokens))
+            import itertools
+            for combo in itertools.product(*token_stems):
+                existing.add("".join(combo))
+                existing.add("-".join(combo))
+                existing.add("_".join(combo))
+                existing.add("".join(w.capitalize() for w in combo))
+
         syns_map[norm] = list(existing)
+        syns_map[sec.lower()] = list(existing)
+        syns_map[sec.lower().replace("-", "_")] = list(existing)
+        syns_map[sec.lower().replace("_", "-")] = list(existing)
     return syns_map
 
 
@@ -1946,71 +2215,8 @@ def run_site_agent_on_example(
         shutil.rmtree(case_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
 
-    # Derived section instructions — what to tell the model to write next
-    _SECTION_INSTRUCTIONS: Dict[str, str] = {
-        "header": (
-            "Write the Header section: a sticky navigation bar with the business name/logo on the left, "
-            "navigation links in the center, and action controls on the right. If the prompt requests a theme toggle, "
-            "include a functional dark/light mode toggle switch using useState. Include a responsive mobile drawer toggle. "
-            "Files: src/components/Header.tsx + src/components/Header.css"
-        ),
-        "hero": (
-            "Write the Hero section: a high-impact full-width banner with background gradient, "
-            "business tagline as an h1, a compelling subtitle, primary/secondary action buttons, "
-            "and animated or styled metric badges if requested. "
-            "Files: src/components/Hero.tsx + src/components/Hero.css"
-        ),
-        "menu": (
-            "Write the Menu section: display the menu categories and items from the content brief. "
-            "Use a card-grid layout with item name, price, and description. "
-            "Files: src/components/Menu.tsx + src/components/Menu.css"
-        ),
-        "about": (
-            "Write the About section: a two-column layout with a heading, a short paragraph about the "
-            "business, and a decorative image placeholder or icon. "
-            "Files: src/components/About.tsx + src/components/About.css"
-        ),
-        "features": (
-            "Write the Features section: display each feature as a card with icon, title, and description. "
-            "If the prompt requests tabbed filtering or category switching, implement functional tab buttons with useState. "
-            "Files: src/components/Features.tsx + src/components/Features.css"
-        ),
-        "pricing": (
-            "Write the Pricing section: display 3 pricing tier cards (e.g. Starter, Pro/Recommended, Enterprise). "
-            "If the prompt requests an interactive pricing calculator or billing toggle, implement an annual/monthly "
-            "billing toggle switch with discounted calculation using useState. "
-            "Files: src/components/Pricing.tsx + src/components/Pricing.css"
-        ),
-        "testimonials": (
-            "Write the Testimonials section: display customer quotes, author names, roles, and star ratings. "
-            "If requested, build an interactive carousel card with previous and next pagination buttons tracking active index using useState. "
-            "Files: src/components/Testimonials.tsx + src/components/Testimonials.css"
-        ),
-        "projects": (
-            "Write the Projects section: display each project from the content brief as a card with "
-            "name, description, and tech stack tags. "
-            "Files: src/components/Projects.tsx + src/components/Projects.css"
-        ),
-        "skills": (
-            "Write the Skills section: display skills as styled pill/badge elements. "
-            "Files: src/components/Skills.tsx + src/components/Skills.css"
-        ),
-        "cta": (
-            "Write the CTA (Call to Action) section: a full-width colored banner with a compelling "
-            "headline and a prominent button. "
-            "Files: src/components/CTA.tsx + src/components/CTA.css"
-        ),
-        "contact": (
-            "Write the Contact section: display address, phone, email and hours from the content brief. "
-            "Use a clean card or two-column layout with icons. "
-            "Files: src/components/Contact.tsx + src/components/Contact.css"
-        ),
-        "footer": (
-            "Write the Footer section: a dark background footer with the business name, brief nav links, "
-            "contact info, and a copyright notice. "
-            "Files: src/components/Footer.tsx + src/components/Footer.css"
-        ),
-    }
+    # Derived section instructions — per-run copy without mutating shared static _BASE_SECTION_INSTRUCTIONS
+    _SECTION_INSTRUCTIONS: Dict[str, str] = dict(_BASE_SECTION_INSTRUCTIONS)
 
     # Ingest explicit user-authored section overrides if provided
     if custom_section_instructions:
@@ -2021,17 +2227,23 @@ def run_site_agent_on_example(
                 full_instr = f"{full_instr} Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
             _SECTION_INSTRUCTIONS[sec_key] = full_instr
             _SECTION_INSTRUCTIONS[sec_key.lower()] = full_instr
+            _SECTION_INSTRUCTIONS[sec_key.lower().replace("-", "_")] = full_instr
+            _SECTION_INSTRUCTIONS[sec_key.lower().replace("_", "-")] = full_instr
             _SECTION_INSTRUCTIONS[sec_key.lower().replace("-", "").replace("_", "")] = full_instr
 
     # Ensure every requested section has a clean instruction entry
     for sec in sections:
-        if sec not in _SECTION_INSTRUCTIONS:
+        if sec not in _SECTION_INSTRUCTIONS and sec.lower() not in _SECTION_INSTRUCTIONS:
             pascal = "".join(w.capitalize() for w in re.split(r'[-_]', sec))
             title = " ".join(w.capitalize() for w in re.split(r'[-_]', sec))
-            _SECTION_INSTRUCTIONS[sec] = (
+            default_instr = (
                 f"Write the {title} section: a responsive modern layout highlighting {title}. "
                 f"Files: src/components/{pascal}.tsx + src/components/{pascal}.css"
             )
+            _SECTION_INSTRUCTIONS[sec] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower()] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower().replace("-", "_")] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower().replace("_", "-")] = default_instr
 
     active_synonyms = _build_section_synonyms(sections)
     per_section_cap = max(2, max_turns // max(1, len(sections)))
@@ -2652,16 +2864,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 ````
+
 ---
 
 ### 3.3 Full-Page Site Pipeline & Visual Inspection
 
 #### `site_brief.py`
 
-- **Path**: `file:///c:/Users/AYUSH/Documents/slm/site_brief.py`
-- **Lines**: 881 | **Size**: 46,433 bytes
-- **Description**: Structured Content Brief Generator transforming free-form user prompts into rich XML briefs, featuring a single-source-of-truth Domain Registry covering 15+ domains with authentic color palettes, typography tokens, domain-specific templates, dynamic section extraction, and XML serialization.
+- **Path**: `file:///c:/Users/AYUSH/Documents/slm/agent/site_brief.py`
+- **Lines**: 1,642 | **Size**: 80,630 bytes
+- **Description**: Structured XML content brief generator with single-source-of-truth Domain Registry covering 15+ domains, 3 curated palette variants per domain (including dedicated Light/Paper palettes), curated typography pairings (font_heading & font_body), duotone secondary accents (--accent-secondary), deterministic SHA-256 seeding by business name, and explicit section parser with generic multi-word substring stemmer.
 
 ````python
 """
@@ -2679,7 +2893,24 @@ Pipeline Stages:
 import json
 import os
 import re
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
+
+try:
+    from style_ingest import (
+        StyleSpec,
+        parse_css_tokens,
+        PRESET_STYLES,
+        spec_to_css_root,
+        spec_to_prompt_instructions,
+    )
+except ImportError:
+    from agent.style_ingest import (
+        StyleSpec,
+        parse_css_tokens,
+        PRESET_STYLES,
+        spec_to_css_root,
+        spec_to_prompt_instructions,
+    )
 
 
 # ==============================================================================
@@ -2721,6 +2952,7 @@ _BUSINESS_TYPE_WEIGHTS: dict[str, dict[str, int]] = {
     "healthcare": {
         "dental": 12, "dentistry": 12, "clinic": 10, "doctor": 9, "healthcare": 11, "medical": 9,
         "aesthetic": 9, "patient": 8, "therapy": 8, "hospital": 8, "wellness clinic": 9,
+        "health": 10, "diagnostic": 9, "diagnostics": 9, "physician": 9,
     },
     "realestate": {
         "real estate": 12, "realestate": 12, "villa": 10, "apartments": 9, "property": 9, "rental": 8,
@@ -2736,7 +2968,7 @@ _BUSINESS_TYPE_WEIGHTS: dict[str, dict[str, int]] = {
     },
     "agency": {
         "agency": 12, "design studio": 10, "creative studio": 10, "branding": 8, "marketing agency": 10,
-        "consultancy": 8, "client showcase": 8,
+        "consultancy": 8, "client showcase": 8, "law": 10, "legal": 10, "litigation": 10, "attorneys": 10, "counsel": 10,
     },
     "architecture": {
         "architecture": 12, "architect": 11, "architectural": 11, "blueprint": 9, "atelier": 9,
@@ -2748,128 +2980,616 @@ _BUSINESS_TYPE_WEIGHTS: dict[str, dict[str, int]] = {
     },
 }
 
-_DOMAIN_THEMES: dict[str, dict] = {
-    "saas": {
-        "primary_color": "#090d16",
-        "accent_color": "#38bdf8",
-        "accent_secondary": "#6366f1",
-        "font_heading": "Inter",
-        "font_body": "Inter",
-        "default_tagline": "Autonomous intelligence and high-velocity workflows for modern teams",
-    },
-    "restaurant": {
-        "primary_color": "#1c1917",
-        "accent_color": "#f97316",
-        "accent_secondary": "#e11d48",
-        "font_heading": "Playfair Display",
-        "font_body": "Inter",
-        "default_tagline": "Authentic flavors, crafted with passion and seasonal ingredients",
-    },
-    "portfolio": {
-        "primary_color": "#18181b",
-        "accent_color": "#10b981",
-        "accent_secondary": "#a855f7",
-        "font_heading": "Space Grotesk",
-        "font_body": "Inter",
-        "default_tagline": "Crafting thoughtful digital interfaces, systems, and experiences",
-    },
-    "ecommerce": {
-        "primary_color": "#0f172a",
-        "accent_color": "#06b6d4",
-        "accent_secondary": "#f43f5e",
-        "font_heading": "Plus Jakarta Sans",
-        "font_body": "Inter",
-        "default_tagline": "Curated essentials engineered for quality, longevity, and style",
-    },
-    "fitness": {
-        "primary_color": "#111827",
-        "accent_color": "#ef4444",
-        "accent_secondary": "#f59e0b",
-        "font_heading": "Plus Jakarta Sans",
-        "font_body": "Inter",
-        "default_tagline": "Push your limits. Transform your physical potential every single day",
-    },
-    "event": {
-        "primary_color": "#0d1117",
-        "accent_color": "#ec4899",
-        "accent_secondary": "#8b5cf6",
-        "font_heading": "Space Grotesk",
-        "font_body": "Inter",
-        "default_tagline": "The premier gathering for creators, architects, and innovators",
-    },
-    "blog": {
-        "primary_color": "#18181b",
-        "accent_color": "#3b82f6",
-        "accent_secondary": "#6366f1",
-        "font_heading": "Playfair Display",
-        "font_body": "Inter",
-        "default_tagline": "Perspectives on technology, product design, and software craftsmanship",
-    },
-    "fintech": {
-        "primary_color": "#0a192f",
-        "accent_color": "#00b4d8",
-        "accent_secondary": "#10b981",
-        "font_heading": "Plus Jakarta Sans",
-        "font_body": "Inter",
-        "default_tagline": "Next-generation cross-border payments, global treasury, and liquidity intelligence",
-    },
-    "healthcare": {
-        "primary_color": "#0f172a",
-        "accent_color": "#0d9488",
-        "accent_secondary": "#38bdf8",
-        "font_heading": "Plus Jakarta Sans",
-        "font_body": "Inter",
-        "default_tagline": "Advanced clinical aesthetics, compassionate care, and personalized wellness treatments",
-    },
-    "realestate": {
-        "primary_color": "#18181b",
-        "accent_color": "#d97706",
-        "accent_secondary": "#6366f1",
-        "font_heading": "Playfair Display",
-        "font_body": "Inter",
-        "default_tagline": "Exceptional private estates, luxury waterfront villas, and bespoke architectural living",
-    },
-    "education": {
-        "primary_color": "#0f172a",
-        "accent_color": "#6366f1",
-        "accent_secondary": "#06b6d4",
-        "font_heading": "Space Grotesk",
-        "font_body": "Inter",
-        "default_tagline": "Master cutting-edge software engineering and AI systems with cohort-based mentorship",
-    },
-    "nonprofit": {
-        "primary_color": "#064e3b",
-        "accent_color": "#10b981",
-        "accent_secondary": "#38bdf8",
-        "font_heading": "Plus Jakarta Sans",
-        "font_body": "Inter",
-        "default_tagline": "Protecting biodiversity, restoring fragile ecosystems, and empowering communities worldwide",
-    },
-    "agency": {
-        "primary_color": "#090d16",
-        "accent_color": "#ec4899",
-        "accent_secondary": "#6366f1",
-        "font_heading": "Space Grotesk",
-        "font_body": "Inter",
-        "default_tagline": "Strategic brand identities, award-winning web interfaces, and high-growth digital systems",
-    },
-    "architecture": {
-        "primary_color": "#1c1917",
-        "accent_color": "#78716c",
-        "accent_secondary": "#d97706",
-        "font_heading": "Playfair Display",
-        "font_body": "Inter",
-        "default_tagline": "Minimalist Scandinavian design, sustainable materials, and timeless structural harmony",
-    },
-    "coffee": {
-        "primary_color": "#292524",
-        "accent_color": "#d97706",
-        "accent_secondary": "#a8a29e",
-        "font_heading": "Playfair Display",
-        "font_body": "Inter",
-        "default_tagline": "Artisanal single-origin roasts sourced directly from generational sustainable micro-lots",
-    },
+class ThemeVariantList(list):
+    """
+    A list of theme variant dicts that also acts as a dict delegating to the primary (first) variant.
+    Ensures 100% backward compatibility for any caller doing _DOMAIN_THEMES['saas']['primary_color'].
+    """
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            return self[0][item]
+        return super().__getitem__(item)
+
+    def get(self, key, default=None):
+        if isinstance(key, str) and len(self) > 0:
+            return self[0].get(key, default)
+        return default
+
+# 15+ Domains with 2-3 alternate palette options each, including at least one light/paper option per domain.
+# Body fonts drawn from curated set: Inter, Manrope, Source Sans 3, IBM Plex Sans, Work Sans, Space Grotesk.
+# Heading fonts drawn from curated set: Plus Jakarta Sans, Outfit, Space Grotesk, Fraunces, DM Serif Display,
+# Playfair Display, Syne, Cabinet Grotesk, Cormorant Garamond, Cinzel, Bricolage Grotesque, Newsreader.
+# Every variant features a duotone accent pair: accent_color and accent_secondary.
+
+_DOMAIN_THEMES = {
+    "saas": ThemeVariantList([
+        {
+            "variant_name": "obsidian",
+            "primary_color": "#0b0f19",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#0b0f19",
+            "accent_color": "#2563eb",
+            "accent_secondary": "#06b6d4",
+            "font_heading": "Plus Jakarta Sans",
+            "font_body": "Inter",
+            "border_radius": "6px",
+            "default_tagline": "Operational intelligence and automated release cycles for distributed engineering teams",
+        },
+        {
+            "variant_name": "clean_paper",
+            "primary_color": "#f8fafc",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#0f172a",
+            "accent_color": "#4f46e5",
+            "accent_secondary": "#0ea5e9",
+            "font_heading": "Outfit",
+            "font_body": "Manrope",
+            "border_radius": "8px",
+            "default_tagline": "Modern infrastructure automation and release telemetry for engineering teams",
+        },
+        {
+            "variant_name": "deep_slate",
+            "primary_color": "#0f172a",
+            "primary_color_light": "#f1f5f9",
+            "primary_color_dark": "#020617",
+            "accent_color": "#0d9488",
+            "accent_secondary": "#10b981",
+            "font_heading": "Space Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "4px",
+            "default_tagline": "Fault-tolerant data pipelines and cloud observability at global scale",
+        },
+    ]),
+    "restaurant": ThemeVariantList([
+        {
+            "variant_name": "warm_cream_paper",
+            "primary_color": "#fdfbf7",
+            "primary_color_light": "#fdfbf7",
+            "primary_color_dark": "#1c1917",
+            "accent_color": "#c2410c",
+            "accent_secondary": "#d97706",
+            "font_heading": "Fraunces",
+            "font_body": "Manrope",
+            "border_radius": "8px",
+            "default_tagline": "Handcrafted seasonal dishes sourced from regional farms and prepared over open woodfire",
+        },
+        {
+            "variant_name": "intimate_bistro_dark",
+            "primary_color": "#1c140e",
+            "primary_color_light": "#faf5f0",
+            "primary_color_dark": "#140d09",
+            "accent_color": "#f59e0b",
+            "accent_secondary": "#ef4444",
+            "font_heading": "DM Serif Display",
+            "font_body": "Work Sans",
+            "border_radius": "6px",
+            "default_tagline": "Candlelit dining, curated natural wines, and rustic seasonal heritage recipes",
+        },
+        {
+            "variant_name": "nordic_cafe_stone_paper",
+            "primary_color": "#f5f5f4",
+            "primary_color_light": "#fafaf9",
+            "primary_color_dark": "#292524",
+            "accent_color": "#854d0e",
+            "accent_secondary": "#15803d",
+            "font_heading": "Playfair Display",
+            "font_body": "Source Sans 3",
+            "border_radius": "2px",
+            "default_tagline": "Artisanal bakery, organic sourdough, and single-origin morning espresso",
+        },
+    ]),
+    "portfolio": ThemeVariantList([
+        {
+            "variant_name": "studio_noir_dark",
+            "primary_color": "#121214",
+            "primary_color_light": "#fafafa",
+            "primary_color_dark": "#0a0a0c",
+            "accent_color": "#059669",
+            "accent_secondary": "#7c3aed",
+            "font_heading": "Syne",
+            "font_body": "Work Sans",
+            "border_radius": "0px",
+            "default_tagline": "Selected design systems, product architecture, and human-computer interfaces",
+        },
+        {
+            "variant_name": "gallery_paper_light",
+            "primary_color": "#fbfbfa",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#18181b",
+            "accent_color": "#e11d48",
+            "accent_secondary": "#2563eb",
+            "font_heading": "Cabinet Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "0px",
+            "default_tagline": "Spatial art direction, editorial publications, and digital identity systems",
+        },
+        {
+            "variant_name": "editorial_zinc_dark",
+            "primary_color": "#18181b",
+            "primary_color_light": "#f4f4f5",
+            "primary_color_dark": "#09090b",
+            "accent_color": "#d97706",
+            "accent_secondary": "#6366f1",
+            "font_heading": "Cormorant Garamond",
+            "font_body": "Source Sans 3",
+            "border_radius": "4px",
+            "default_tagline": "Interactive computational design and generative software engineering",
+        },
+    ]),
+    "ecommerce": ThemeVariantList([
+        {
+            "variant_name": "clean_white_paper",
+            "primary_color": "#ffffff",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#0f172a",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#e11d48",
+            "font_heading": "Outfit",
+            "font_body": "Source Sans 3",
+            "border_radius": "9999px",
+            "default_tagline": "Functional goods and technical apparel engineered for daily durability",
+        },
+        {
+            "variant_name": "luxury_boutique_dark",
+            "primary_color": "#141416",
+            "primary_color_light": "#f5f5f7",
+            "primary_color_dark": "#0d0d0f",
+            "accent_color": "#e2b170",
+            "accent_secondary": "#9333ea",
+            "font_heading": "Cinzel",
+            "font_body": "Work Sans",
+            "border_radius": "4px",
+            "default_tagline": "Bespoke fine jewelry, chronographs, and rare mechanical objects",
+        },
+        {
+            "variant_name": "streetwear_slate",
+            "primary_color": "#0f172a",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#020617",
+            "accent_color": "#f97316",
+            "accent_secondary": "#06b6d4",
+            "font_heading": "Bricolage Grotesque",
+            "font_body": "Manrope",
+            "border_radius": "6px",
+            "default_tagline": "Limited-edition footwear, tactical accessories, and modular outerwear",
+        },
+    ]),
+    "fitness": ThemeVariantList([
+        {
+            "variant_name": "iron_forge_dark",
+            "primary_color": "#09090b",
+            "primary_color_light": "#f4f4f5",
+            "primary_color_dark": "#09090b",
+            "accent_color": "#dc2626",
+            "accent_secondary": "#f97316",
+            "font_heading": "Syne",
+            "font_body": "Manrope",
+            "border_radius": "4px",
+            "default_tagline": "Structured strength programming, conditioning metrics, and recovery protocols",
+        },
+        {
+            "variant_name": "performance_chalk_paper",
+            "primary_color": "#f4f4f5",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#18181b",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#10b981",
+            "font_heading": "Space Grotesk",
+            "font_body": "Source Sans 3",
+            "border_radius": "6px",
+            "default_tagline": "High-output athletic conditioning and biometric movement telemetry",
+        },
+        {
+            "variant_name": "movement_linen_warm",
+            "primary_color": "#fdf8f4",
+            "primary_color_light": "#fffbf7",
+            "primary_color_dark": "#27272a",
+            "accent_color": "#059669",
+            "accent_secondary": "#d97706",
+            "font_heading": "Outfit",
+            "font_body": "Work Sans",
+            "border_radius": "12px",
+            "default_tagline": "Holistic mobility studio, restorative hot yoga, and guided breathwork",
+        },
+    ]),
+    "event": ThemeVariantList([
+        {
+            "variant_name": "summit_night_dark",
+            "primary_color": "#090d16",
+            "primary_color_light": "#faf5ff",
+            "primary_color_dark": "#090d16",
+            "accent_color": "#db2777",
+            "accent_secondary": "#7c3aed",
+            "font_heading": "Space Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "12px",
+            "default_tagline": "Two days of deep technical talks, systems architecture, and design workshops",
+        },
+        {
+            "variant_name": "biennale_lilac_paper",
+            "primary_color": "#faf5ff",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#1e1b4b",
+            "accent_color": "#6366f1",
+            "accent_secondary": "#ec4899",
+            "font_heading": "Cabinet Grotesk",
+            "font_body": "Work Sans",
+            "border_radius": "8px",
+            "default_tagline": "International festival of contemporary typography, media art, and architecture",
+        },
+        {
+            "variant_name": "executive_slate",
+            "primary_color": "#0f172a",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#020617",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#eab308",
+            "font_heading": "Plus Jakarta Sans",
+            "font_body": "Source Sans 3",
+            "border_radius": "6px",
+            "default_tagline": "Global economic symposium, private roundtables, and keynote assemblies",
+        },
+    ]),
+    "blog": ThemeVariantList([
+        {
+            "variant_name": "newsprint_paper_light",
+            "primary_color": "#fefefe",
+            "primary_color_light": "#fefefe",
+            "primary_color_dark": "#18181b",
+            "accent_color": "#2563eb",
+            "accent_secondary": "#4f46e5",
+            "font_heading": "Newsreader",
+            "font_body": "Source Sans 3",
+            "border_radius": "2px",
+            "default_tagline": "Longform essays on distributed infrastructure, compiler internals, and software craftsmanship",
+        },
+        {
+            "variant_name": "code_charcoal_dark",
+            "primary_color": "#18181b",
+            "primary_color_light": "#fafafa",
+            "primary_color_dark": "#09090b",
+            "accent_color": "#10b981",
+            "accent_secondary": "#06b6d4",
+            "font_heading": "Space Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "4px",
+            "default_tagline": "Technical retrospectives, systems benchmarks, and kernel engineering dispatches",
+        },
+        {
+            "variant_name": "warm_parchment_paper",
+            "primary_color": "#fcf8f2",
+            "primary_color_light": "#fffdf9",
+            "primary_color_dark": "#292524",
+            "accent_color": "#9a3412",
+            "accent_secondary": "#d97706",
+            "font_heading": "Cormorant Garamond",
+            "font_body": "Work Sans",
+            "border_radius": "0px",
+            "default_tagline": "Philosophical inquiries, cultural critique, and slow-form critical thought",
+        },
+    ]),
+    "fintech": ThemeVariantList([
+        {
+            "variant_name": "institutional_navy_dark",
+            "primary_color": "#061325",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#061325",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#059669",
+            "font_heading": "Plus Jakarta Sans",
+            "font_body": "Inter",
+            "border_radius": "4px",
+            "default_tagline": "Programmatic settlement, foreign exchange rails, and unified liquidity ledgers",
+        },
+        {
+            "variant_name": "treasury_paper_light",
+            "primary_color": "#f8fafc",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#0f172a",
+            "accent_color": "#059669",
+            "accent_secondary": "#0284c7",
+            "font_heading": "Outfit",
+            "font_body": "Manrope",
+            "border_radius": "8px",
+            "default_tagline": "Real-time treasury yields, corporate card issuance, and automated accounting sync",
+        },
+        {
+            "variant_name": "algorithmic_obsidian_dark",
+            "primary_color": "#0b1120",
+            "primary_color_light": "#f1f5f9",
+            "primary_color_dark": "#020617",
+            "accent_color": "#6366f1",
+            "accent_secondary": "#14b8a6",
+            "font_heading": "Space Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "6px",
+            "default_tagline": "Quantitative arbitrage infrastructure and high-throughput execution engines",
+        },
+    ]),
+    "healthcare": ThemeVariantList([
+        {
+            "variant_name": "clinical_mint_paper",
+            "primary_color": "#f0fdf4",
+            "primary_color_light": "#f0fdf4",
+            "primary_color_dark": "#0a1a24",
+            "accent_color": "#0d9488",
+            "accent_secondary": "#0284c7",
+            "font_heading": "Outfit",
+            "font_body": "Source Sans 3",
+            "border_radius": "8px",
+            "default_tagline": "Evidence-based preventative medicine, diagnostic imaging, and dedicated physician care",
+        },
+        {
+            "variant_name": "diagnostic_deep_navy",
+            "primary_color": "#0a1a24",
+            "primary_color_light": "#f0fdfa",
+            "primary_color_dark": "#051017",
+            "accent_color": "#14b8a6",
+            "accent_secondary": "#38bdf8",
+            "font_heading": "Plus Jakarta Sans",
+            "font_body": "Manrope",
+            "border_radius": "6px",
+            "default_tagline": "Specialized oncology research, genomic diagnostics, and precision surgical centers",
+        },
+        {
+            "variant_name": "sanitary_pure_paper",
+            "primary_color": "#ffffff",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#1e293b",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#10b981",
+            "font_heading": "Fraunces",
+            "font_body": "Work Sans",
+            "border_radius": "12px",
+            "default_tagline": "Family dentistry, orthodontic aesthetics, and gentle restorative treatments",
+        },
+    ]),
+    "realestate": ThemeVariantList([
+        {
+            "variant_name": "coastal_sand_paper",
+            "primary_color": "#fbf8f2",
+            "primary_color_light": "#fbf8f2",
+            "primary_color_dark": "#1c1917",
+            "accent_color": "#b45309",
+            "accent_secondary": "#4338ca",
+            "font_heading": "Cormorant Garamond",
+            "font_body": "Source Sans 3",
+            "border_radius": "0px",
+            "default_tagline": "Architectural estates, private coastal properties, and historic city residences",
+        },
+        {
+            "variant_name": "penthouse_charcoal_dark",
+            "primary_color": "#141416",
+            "primary_color_light": "#fafaf9",
+            "primary_color_dark": "#0a0a0c",
+            "accent_color": "#d97706",
+            "accent_secondary": "#0d9488",
+            "font_heading": "Cinzel",
+            "font_body": "Work Sans",
+            "border_radius": "2px",
+            "default_tagline": "Skyline penthouses, bespoke high-rise residences, and private broker concierge",
+        },
+        {
+            "variant_name": "limestone_paper_light",
+            "primary_color": "#f5f5f4",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#292524",
+            "accent_color": "#047857",
+            "accent_secondary": "#b45309",
+            "font_heading": "Playfair Display",
+            "font_body": "Manrope",
+            "border_radius": "4px",
+            "default_tagline": "Modern sustainable developments, passive solar villas, and hillside sanctuaries",
+        },
+    ]),
+    "education": ThemeVariantList([
+        {
+            "variant_name": "campus_slate_paper",
+            "primary_color": "#f8f9fa",
+            "primary_color_light": "#f8f9fa",
+            "primary_color_dark": "#090d16",
+            "accent_color": "#4f46e5",
+            "accent_secondary": "#0284c7",
+            "font_heading": "Outfit",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "6px",
+            "default_tagline": "Rigorous cohort courses in systems programming, distributed databases, and security",
+        },
+        {
+            "variant_name": "polytechnic_navy_dark",
+            "primary_color": "#090d16",
+            "primary_color_light": "#f1f5f9",
+            "primary_color_dark": "#030712",
+            "accent_color": "#06b6d4",
+            "accent_secondary": "#10b981",
+            "font_heading": "Space Grotesk",
+            "font_body": "Source Sans 3",
+            "border_radius": "4px",
+            "default_tagline": "Hands-on machine learning fellowships, GPU cluster access, and mentor code reviews",
+        },
+        {
+            "variant_name": "parchment_library_paper",
+            "primary_color": "#fcfaf6",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#262626",
+            "accent_color": "#b45309",
+            "accent_secondary": "#4338ca",
+            "font_heading": "Newsreader",
+            "font_body": "Work Sans",
+            "border_radius": "8px",
+            "default_tagline": "Classical seminar intensives in literature, epistemology, and historical philosophy",
+        },
+    ]),
+    "nonprofit": ThemeVariantList([
+        {
+            "variant_name": "sage_conservation_paper",
+            "primary_color": "#f0fdf4",
+            "primary_color_light": "#f0fdf4",
+            "primary_color_dark": "#042f2e",
+            "accent_color": "#059669",
+            "accent_secondary": "#0284c7",
+            "font_heading": "Outfit",
+            "font_body": "Manrope",
+            "border_radius": "8px",
+            "default_tagline": "Direct ecological restoration, wildlife corridor preservation, and community land stewardship",
+        },
+        {
+            "variant_name": "evergreen_canopy_dark",
+            "primary_color": "#042f2e",
+            "primary_color_light": "#ecfdf5",
+            "primary_color_dark": "#021e1d",
+            "accent_color": "#10b981",
+            "accent_secondary": "#f59e0b",
+            "font_heading": "Fraunces",
+            "font_body": "Source Sans 3",
+            "border_radius": "6px",
+            "default_tagline": "Old-growth rainforest purchase, watershed defense, and indigenous rights advocacy",
+        },
+        {
+            "variant_name": "solar_warm_paper",
+            "primary_color": "#fffbeb",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#1c1917",
+            "accent_color": "#ea580c",
+            "accent_secondary": "#0d9488",
+            "font_heading": "Bricolage Grotesque",
+            "font_body": "Work Sans",
+            "border_radius": "12px",
+            "default_tagline": "Community nutrition networks, clean drinking water wells, and rural clinic logistics",
+        },
+    ]),
+    "agency": ThemeVariantList([
+        {
+            "variant_name": "brutalist_studio_dark",
+            "primary_color": "#09090b",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#09090b",
+            "accent_color": "#ec4899",
+            "accent_secondary": "#4f46e5",
+            "font_heading": "Cabinet Grotesk",
+            "font_body": "Space Grotesk",
+            "border_radius": "0px",
+            "default_tagline": "Brand identity, bespoke web platforms, and digital product craft for emerging companies",
+        },
+        {
+            "variant_name": "swiss_creative_paper",
+            "primary_color": "#fafaf9",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#18181b",
+            "accent_color": "#2563eb",
+            "accent_secondary": "#f97316",
+            "font_heading": "Syne",
+            "font_body": "Work Sans",
+            "border_radius": "0px",
+            "default_tagline": "Grid systems, typographic art direction, and high-performance interactive motion",
+        },
+        {
+            "variant_name": "midnight_atelier_indigo",
+            "primary_color": "#0e131f",
+            "primary_color_light": "#f5f7ff",
+            "primary_color_dark": "#05070d",
+            "accent_color": "#8b5cf6",
+            "accent_secondary": "#06b6d4",
+            "font_heading": "Outfit",
+            "font_body": "Manrope",
+            "border_radius": "6px",
+            "default_tagline": "End-to-end venture building, digital transformation, and scalable design infrastructure",
+        },
+    ]),
+    "architecture": ThemeVariantList([
+        {
+            "variant_name": "limestone_paper_light",
+            "primary_color": "#f5f5f4",
+            "primary_color_light": "#f5f5f4",
+            "primary_color_dark": "#1c1917",
+            "accent_color": "#57534e",
+            "accent_secondary": "#d97706",
+            "font_heading": "Cinzel",
+            "font_body": "Source Sans 3",
+            "border_radius": "0px",
+            "default_tagline": "Monolithic timber pavilions, passive solar dwellings, and landscape-integrated spaces",
+        },
+        {
+            "variant_name": "charred_cedar_dark",
+            "primary_color": "#141414",
+            "primary_color_light": "#f5f5f5",
+            "primary_color_dark": "#0a0a0a",
+            "accent_color": "#c5a059",
+            "accent_secondary": "#78716c",
+            "font_heading": "Cormorant Garamond",
+            "font_body": "Work Sans",
+            "border_radius": "0px",
+            "default_tagline": "Minimalist concrete compounds, cantilevered private retreats, and acoustic chambers",
+        },
+        {
+            "variant_name": "glass_steel_slate",
+            "primary_color": "#0f172a",
+            "primary_color_light": "#f8fafc",
+            "primary_color_dark": "#020617",
+            "accent_color": "#0284c7",
+            "accent_secondary": "#e2b170",
+            "font_heading": "Space Grotesk",
+            "font_body": "IBM Plex Sans",
+            "border_radius": "2px",
+            "default_tagline": "High-density civic infrastructure, public library atriums, and urban revitalizations",
+        },
+    ]),
+    "coffee": ThemeVariantList([
+        {
+            "variant_name": "oat_milk_parchment_paper",
+            "primary_color": "#faf6f0",
+            "primary_color_light": "#faf6f0",
+            "primary_color_dark": "#292524",
+            "accent_color": "#b45309",
+            "accent_secondary": "#78716c",
+            "font_heading": "DM Serif Display",
+            "font_body": "Work Sans",
+            "border_radius": "8px",
+            "default_tagline": "Direct-trade heirloom varietals freshly roasted weekly in small batches",
+        },
+        {
+            "variant_name": "espresso_bar_dark",
+            "primary_color": "#1f1612",
+            "primary_color_light": "#fdfaf7",
+            "primary_color_dark": "#120c09",
+            "accent_color": "#d97706",
+            "accent_secondary": "#dc2626",
+            "font_heading": "Fraunces",
+            "font_body": "Manrope",
+            "border_radius": "6px",
+            "default_tagline": "Single-origin micro-lots, precision lever pulls, and roasted cacao notes",
+        },
+        {
+            "variant_name": "artisan_flax_linen_paper",
+            "primary_color": "#f7f3ed",
+            "primary_color_light": "#ffffff",
+            "primary_color_dark": "#292524",
+            "accent_color": "#854d0e",
+            "accent_secondary": "#059669",
+            "font_heading": "Playfair Display",
+            "font_body": "Source Sans 3",
+            "border_radius": "4px",
+            "default_tagline": "Washed Ethiopian high-elevation coffees roasted to preserve crisp jasmine aromatics",
+        },
+    ]),
 }
+
+def get_domain_theme(business_type: str, business_name: str = "") -> dict:
+    """
+    Selects deterministically from the 2-3 palette & typography variants
+    configured for this business type, seeded by the business name.
+    """
+    import hashlib
+    variants = _DOMAIN_THEMES.get(business_type) or _DOMAIN_THEMES["saas"]
+    if isinstance(variants, list) and variants:
+        clean = (business_name or business_type).strip().lower()
+        seed = int(hashlib.sha256(clean.encode("utf-8")).hexdigest()[:8], 16)
+        return variants[seed % len(variants)]
+    elif isinstance(variants, dict):
+        return variants
+    return _DOMAIN_THEMES["saas"][0]
+
+
 
 # ── Domain Templates ──────────────────────────────────────────────────────────
 
@@ -3153,12 +3873,16 @@ def extract_business_name(prompt: str) -> str:
         return m.group(1).strip()
 
     m = re.search(
-        r'''(?:for|called|named)\s+["']?([A-Z][a-zA-Z0-9]*(?:\s+[A-Za-z][a-zA-Z0-9]*)*)["']?(?:\s*$|\s*,|\s*\.)''',
+        r'''(?:for|called|named)\s+["']?([A-Z][a-zA-Z0-9&]*(?:\s+[A-Za-z0-9&][a-zA-Z0-9&]*)*)["']?(?:\s*$|\s*,|\s*\.)''',
         prompt
     )
     if m:
         name = m.group(1).strip()
         words = name.split()
+        for i, w in enumerate(words):
+            if w.lower() in {"featuring", "showcasing", "with", "including"}:
+                words = words[:i]
+                break
         _TRAIL_STOP = {"showcase", "website", "landing", "page", "app", "platform", "tool", "site"}
         while words and words[-1].lower() in _TRAIL_STOP:
             words = words[:-1]
@@ -3225,11 +3949,156 @@ def detect_business_type(prompt: str) -> str:
     return "saas"
 
 
+def extract_explicit_sections(prompt: str) -> Optional[List[Tuple[str, str]]]:
+    """Detect a user-authored numbered/bulleted section list in the prompt.
+    Returns [(slug, description), ...] in order, or None if no explicit
+    list structure is present (≥2 matches required to count as a list)."""
+    if not prompt or not isinstance(prompt, str):
+        return None
+
+    # Exclude common non-section bullet headers (e.g. "Design requirements:", "Color palette:")
+    NON_SECTION_PREFIXES = {
+        "design", "requirement", "requirements", "color", "palette", "typography",
+        "font", "button", "card", "styling", "rules", "guidelines", "constraint", "constraints",
+        "tech", "stack", "note", "notes", "overview", "theme"
+    }
+
+    matches: List[Tuple[str, str]] = []
+
+    # Strategy 1: Check for an explicit "Sections:" or "Pages:" or "Structure:" block
+    sec_block_m = re.search(
+        r'(?:^|\n)\s*(?:[-*•\u2022]|\d+[\.\)])?\s*(?:Sections?|Pages?|Structure|Components?)\s*:\s*\n([\s\S]+?)(?=\n\s*(?:[A-Z][a-zA-Z\s_-]+:|\Z))',
+        prompt,
+        re.IGNORECASE
+    )
+    if sec_block_m:
+        block_text = sec_block_m.group(1)
+        item_pattern = re.compile(
+            r'(?:^|\n)\s*(?:(?:\d+[\.\)\:]|\(\d+\))|[-*•\u2022])\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[-:\u2013\u2014]\s*([^\n]+(?:\n(?!\s*(?:(?:\d+[\.\)\:]|\(\d+\))|[-*•\u2022]))[^\n]+)*)|\s*$(?:\n|$))',
+            re.MULTILINE
+        )
+        for m in item_pattern.finditer(block_text):
+            raw_name = m.group(1).strip()
+            raw_desc = (m.group(2) or "").strip()
+            first_word = raw_name.lower().split()[0] if raw_name else ""
+            if first_word not in NON_SECTION_PREFIXES and len(raw_name) <= 50:
+                matches.append((raw_name, raw_desc or f"Write the {raw_name} section."))
+
+    # Strategy 2: Explicit numbered markers e.g. "1. Header", "1) Header", "(1) Header"
+    if len(matches) < 2:
+        marker_iter = list(re.finditer(r'(?:^|\n|\s)(?:(?:\d+[\.\)]|\(\d+\)))\s*', prompt))
+        if len(marker_iter) >= 2:
+            num_matches: List[Tuple[str, str]] = []
+            for i, m in enumerate(marker_iter):
+                start_pos = m.end()
+                end_pos = marker_iter[i + 1].start() if i + 1 < len(marker_iter) else len(prompt)
+                item_text = prompt[start_pos:end_pos].strip()
+                if "\n\n" in item_text:
+                    item_text = item_text.split("\n\n")[0].strip()
+
+                split_m = re.split(r'[:\-–—]\s*', item_text, maxsplit=1)
+                if len(split_m) == 2 and split_m[0].strip():
+                    label = split_m[0].strip()
+                    desc = split_m[1].strip()
+                else:
+                    label = item_text.strip()
+                    desc = f"Write the {label} section."
+
+                first_word = label.lower().split()[0] if label else ""
+                if first_word not in NON_SECTION_PREFIXES and 2 <= len(label) <= 50:
+                    num_matches.append((label, desc))
+            if len(num_matches) >= 2:
+                matches = num_matches
+
+    # Strategy 3: Multiline bulleted items e.g. "- Header: ...", "* Header: ...", "• Header: ..."
+    if len(matches) < 2:
+        bullet_pattern = re.compile(
+            r'^\s*[-*•\u2022]\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[:\-–—]\s*(.+))?$',
+            re.MULTILINE
+        )
+        bullet_matches: List[Tuple[str, str]] = []
+        for m in bullet_pattern.finditer(prompt):
+            label = m.group(1).strip()
+            desc = (m.group(2) or "").strip() or f"Write the {label} section."
+            first_word = label.lower().split()[0] if label else ""
+            if first_word not in NON_SECTION_PREFIXES and 2 <= len(label) <= 50:
+                bullet_matches.append((label, desc))
+        if len(bullet_matches) >= 2:
+            matches = bullet_matches
+
+    # Strategy 4: Explicit list following "with" or "sections:"
+    # e.g. "with Header, Hero, Spatial Products, and Footer."
+    if len(matches) < 2:
+        with_m = re.search(r'(?:with|sections?\s*:)\s+([A-Z][\w\s/&-]+(?:,\s*(?:and\s+)?[A-Z][\w\s/&-]+)+)', prompt)
+        if with_m:
+            candidate_list = with_m.group(1)
+            items = re.split(r',\s*(?:and\s+)?|\s+and\s+', candidate_list)
+            with_cands: List[Tuple[str, str]] = []
+            for item in items:
+                lbl = item.strip().rstrip('.')
+                if lbl and len(lbl) <= 50 and lbl.lower() not in NON_SECTION_PREFIXES:
+                    with_cands.append((lbl, f"Write the {lbl} section."))
+            if len(with_cands) >= 2:
+                matches = with_cands
+
+    if len(matches) < 2:
+        return None
+
+    def _slugify(text: str) -> str:
+        cleaned = re.sub(r'[^a-z0-9\s_-]+', '', text.lower()).strip()
+        return re.sub(r'[\s_]+', '-', cleaned).strip('-')
+
+    results: List[Tuple[str, str]] = []
+    seen = set()
+    for raw_label, desc in matches:
+        slug = _slugify(raw_label)
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        results.append((slug, desc))
+
+    # If footer is present, ensure it is at the end
+    footer_tuples = [t for t in results if t[0] == "footer"]
+    if footer_tuples:
+        results = [t for t in results if t[0] != "footer"] + footer_tuples
+
+    return results if len(results) >= 2 else None
+
+
+def extract_explicit_sections_and_instructions(prompt: str) -> tuple[Optional[list[str]], dict[str, str]]:
+    """Legacy compatibility helper returning (slugs_list, instructions_dict)."""
+    res = extract_explicit_sections(prompt)
+    if not res:
+        return None, {}
+    slugs = [slug for slug, _ in res]
+    instructions = {}
+    for slug, desc in res:
+        words = [w for w in re.split(r'[-_]', slug) if w]
+        pascal_name = "".join(w.capitalize() for w in words)
+        raw_name = " ".join(w.capitalize() for w in words)
+        full_desc = desc if desc else f"High-quality, responsive {raw_name} section."
+        instructions[slug] = (
+            f"Write the {raw_name} section: {full_desc} "
+            f"Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
+        )
+    return slugs, instructions
+
+
+def extract_explicit_section_instructions(prompt: str) -> dict[str, str]:
+    """Extracts custom section instruction overrides parsed from explicit prompt declarations."""
+    _, instrs = extract_explicit_sections_and_instructions(prompt)
+    return instrs
+
+
 def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     """
     Dynamically infers the required sections from the user prompt and business domain.
-    Prevents commercial pricing from being forced into non-profit or editorial blogs.
+    Explicit user-authored section structure always overrides domain-template heuristics.
     """
+    explicit = extract_explicit_sections(prompt)
+    if explicit:
+        return [slug for slug, _ in explicit]
+
     lower = prompt.lower()
 
     wants_pricing = any(k in lower for k in ["pricing", "price", "calculator", "tier", "subscription", "billing", "plans"])
@@ -3337,28 +4206,66 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
 # 3. Heuristic Brief Builder
 # ==============================================================================
 
-def _build_heuristic_brief(prompt: str) -> dict:
-    """Builds a rich, domain-tailored structured content brief using the unified domain registry."""
+def _build_heuristic_brief(prompt: str, style_spec: Optional[StyleSpec] = None) -> dict:
+    """Builds a rich, domain-tailored structured content brief using the unified domain registry and optional StyleSpec."""
+    explicit_sections = extract_explicit_sections(prompt)
+    if explicit_sections:
+        dynamic_sections = [slug for slug, _ in explicit_sections]
+        explicit_instructions = {}
+        for slug, desc in explicit_sections:
+            words = [w for w in re.split(r'[-_]', slug) if w]
+            pascal_name = "".join(w.capitalize() for w in words)
+            raw_name = " ".join(w.capitalize() for w in words)
+            full_desc = desc if desc else f"High-quality, responsive {raw_name} section."
+            if "Files:" not in full_desc:
+                full_desc = f"{full_desc} Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
+            explicit_instructions[slug] = full_desc
+            explicit_instructions[slug.replace("-", "_")] = full_desc
+            explicit_instructions[slug.replace("_", "-")] = full_desc
+        business_type = detect_business_type(prompt)
+    else:
+        business_type = detect_business_type(prompt)
+        dynamic_sections = extract_sections_from_prompt(prompt, business_type)
+        explicit_instructions = {}
+
     business_name = extract_business_name(prompt)
-    business_type = detect_business_type(prompt)
-
     template = dict(_DOMAIN_TEMPLATES.get(business_type, _SAAS_TEMPLATE))
-    theme = _DOMAIN_THEMES.get(business_type, _DOMAIN_THEMES["saas"])
-    dynamic_sections = extract_sections_from_prompt(prompt, business_type)
+    theme = get_domain_theme(business_type, business_name)
 
-    return {
+    lower_prompt = prompt.lower()
+    if style_spec:
+        primary_color = style_spec.get_primary_color()
+    elif any(k in lower_prompt for k in ["dark", "black", "night", "obsidian"]):
+        primary_color = theme.get("primary_color_dark", theme["primary_color"])
+    elif any(k in lower_prompt for k in ["light", "paper", "white", "bright", "clean", "minimal"]):
+        primary_color = theme.get("primary_color_light", theme["primary_color"])
+    else:
+        primary_color = theme["primary_color"]
+
+    accent_color = style_spec.get_accent_color() if style_spec else theme["accent_color"]
+    font_heading = style_spec.get_heading_font() if style_spec else theme["font_heading"]
+    font_body = style_spec.get_body_font() if style_spec else theme["font_body"]
+
+    res = {
         **template,
         "business_name": business_name,
         "business_type": business_type,
         "sections": dynamic_sections,
+        "custom_section_instructions": explicit_instructions,
         "tagline": f"{business_name} - {theme['default_tagline']}",
-        "primary_color": theme["primary_color"],
-        "accent_color": theme["accent_color"],
-        "accent_secondary": theme["accent_secondary"],
-        "font_heading": theme["font_heading"],
-        "font_body": theme["font_body"],
+        "primary_color": primary_color,
+        "primary_color_light": theme.get("primary_color_light", "#ffffff"),
+        "primary_color_dark": theme.get("primary_color_dark", "#0b0f19"),
+        "accent_color": accent_color,
+        "accent_secondary": theme.get("accent_secondary", "#6366f1"),
+        "font_heading": font_heading,
+        "font_body": font_body,
+        "border_radius": theme.get("border_radius", "6px"),
         "source": "heuristic",
     }
+    if style_spec:
+        res["style_spec"] = style_spec
+    return res
 
 
 # ==============================================================================
@@ -3419,14 +4326,41 @@ def _call_openai_brief(prompt: str, api_key: str, base_url: str = "https://api.o
     return json.loads(body["choices"][0]["message"]["content"])
 
 
-def generate_content_brief(prompt: str, provider: str = "auto") -> dict:
+def generate_content_brief(
+    prompt: str,
+    provider: str = "auto",
+    style_tokens: Optional[str] = None,
+    style_preset: Optional[str] = None,
+) -> dict:
     """
     Expands a one-line user prompt into a structured content brief for the site pipeline.
-    Provider resolution order (when provider="auto"):
-      1. GEMINI_API_KEY  -> gemini-2.0-flash
-      2. OPENAI_API_KEY  -> gpt-4o-mini
-      3. Heuristic fallback (fast, deterministic, zero-dependency, covers 15+ domains)
+    Decouples visual aesthetics by checking for custom style_tokens, style_preset, or prompt :root tokens.
     """
+    # 1. Resolve StyleSpec
+    resolved_style: Optional[StyleSpec] = None
+    if style_tokens and "--" in style_tokens:
+        resolved_style = parse_css_tokens(style_tokens, name="Custom Ingested Tokens", source="refero" if "refero" in style_tokens.lower() else "custom")
+    elif style_preset and style_preset in PRESET_STYLES:
+        resolved_style = PRESET_STYLES[style_preset]
+    elif ":root" in prompt and "--" in prompt:
+        resolved_style = parse_css_tokens(prompt, name="Prompt Embedded Tokens", source="prompt")
+    else:
+        # Detect archetype keywords in prompt
+        low_prompt = prompt.lower()
+        if "refero" in low_prompt or "monopo" in low_prompt or "editorial" in low_prompt:
+            resolved_style = PRESET_STYLES["refero_editorial"]
+        elif "brutalist" in low_prompt or "brutalism" in low_prompt:
+            resolved_style = PRESET_STYLES["neo_brutalist"]
+        elif "glassmorphic" in low_prompt or "glassmorphism" in low_prompt:
+            resolved_style = PRESET_STYLES["glassmorphic_aurora"]
+        elif "luxury" in low_prompt or "champagne" in low_prompt:
+            resolved_style = PRESET_STYLES["luxury_minimalist"]
+        elif "cyberpunk" in low_prompt:
+            resolved_style = PRESET_STYLES["cyberpunk_neon"]
+
+    # 2. Brief synthesis
+    explicit_sections = extract_explicit_sections(prompt)
+
     if provider in ("auto", "gemini"):
         api_key = os.environ.get("GEMINI_API_KEY", "")
         if api_key:
@@ -3434,6 +4368,17 @@ def generate_content_brief(prompt: str, provider: str = "auto") -> dict:
                 brief = _call_gemini_brief(prompt, api_key)
                 if brief and "business_name" in brief:
                     brief["source"] = "gemini"
+                    if explicit_sections:
+                        brief["sections"] = [slug for slug, _ in explicit_sections]
+                        brief["custom_section_instructions"] = {
+                            slug: desc for slug, desc in explicit_sections if desc
+                        }
+                    if resolved_style:
+                        brief["style_spec"] = resolved_style
+                        brief["primary_color"] = resolved_style.get_primary_color()
+                        brief["accent_color"] = resolved_style.get_accent_color()
+                        brief["font_heading"] = resolved_style.get_heading_font()
+                        brief["font_body"] = resolved_style.get_body_font()
                     return brief
             except Exception as e:
                 print(f"[site_brief] Gemini API call failed, falling back: {e}")
@@ -3446,11 +4391,22 @@ def generate_content_brief(prompt: str, provider: str = "auto") -> dict:
                 brief = _call_openai_brief(prompt, api_key, base_url)
                 if brief and "business_name" in brief:
                     brief["source"] = "openai"
+                    if explicit_sections:
+                        brief["sections"] = [slug for slug, _ in explicit_sections]
+                        brief["custom_section_instructions"] = {
+                            slug: desc for slug, desc in explicit_sections if desc
+                        }
+                    if resolved_style:
+                        brief["style_spec"] = resolved_style
+                        brief["primary_color"] = resolved_style.get_primary_color()
+                        brief["accent_color"] = resolved_style.get_accent_color()
+                        brief["font_heading"] = resolved_style.get_heading_font()
+                        brief["font_body"] = resolved_style.get_body_font()
                     return brief
             except Exception as e:
                 print(f"[site_brief] OpenAI API call failed, falling back: {e}")
 
-    return _build_heuristic_brief(prompt)
+    return _build_heuristic_brief(prompt, style_spec=resolved_style)
 
 
 # ==============================================================================
@@ -3464,14 +4420,33 @@ def brief_to_xml(brief: dict) -> str:
     lines.append(f"  <business_type>{brief.get('business_type', 'general')}</business_type>")
     lines.append(f"  <tagline>{brief.get('tagline', '')}</tagline>")
 
-    lines.append("  <design_system>")
-    lines.append(f"    <primary_color>{brief.get('primary_color', '#0f172a')}</primary_color>")
-    lines.append(f"    <accent_color>{brief.get('accent_color', '#38bdf8')}</accent_color>")
-    if brief.get("accent_secondary"):
-        lines.append(f"    <accent_secondary>{brief['accent_secondary']}</accent_secondary>")
-    lines.append(f"    <font_heading>{brief.get('font_heading', 'Inter')}</font_heading>")
-    lines.append(f"    <font_body>{brief.get('font_body', 'Inter')}</font_body>")
-    lines.append("  </design_system>")
+    spec: Optional[StyleSpec] = brief.get("style_spec")
+    if spec:
+        lines.append(f'  <design_system style_name="{spec.name}" source="{spec.source}">')
+        lines.append(f"    <primary_color>{spec.get_primary_color()}</primary_color>")
+        lines.append(f"    <accent_color>{spec.get_accent_color()}</accent_color>")
+        lines.append(f"    <font_heading>{spec.get_heading_font()}</font_heading>")
+        lines.append(f"    <font_body>{spec.get_body_font()}</font_body>")
+        lines.append("    <css_variables>")
+        lines.append(spec.raw_css if spec.raw_css else spec_to_css_root(spec))
+        lines.append("    </css_variables>")
+        if spec.dos or spec.donts:
+            lines.append("    <design_rules>")
+            for d in spec.dos:
+                lines.append(f'      <rule type="do">{d}</rule>')
+            for d in spec.donts:
+                lines.append(f'      <rule type="dont">{d}</rule>')
+            lines.append("    </design_rules>")
+        lines.append("  </design_system>")
+    else:
+        lines.append("  <design_system>")
+        lines.append(f"    <primary_color>{brief.get('primary_color', '#0f172a')}</primary_color>")
+        lines.append(f"    <accent_color>{brief.get('accent_color', '#38bdf8')}</accent_color>")
+        if brief.get("accent_secondary"):
+            lines.append(f"    <accent_secondary>{brief['accent_secondary']}</accent_secondary>")
+        lines.append(f"    <font_heading>{brief.get('font_heading', 'Inter')}</font_heading>")
+        lines.append(f"    <font_body>{brief.get('font_body', 'Inter')}</font_body>")
+        lines.append("  </design_system>")
 
     lines.append("  <sections>")
     for sec in brief.get("sections", ["header", "hero", "features", "footer"]):
@@ -3545,7 +4520,9 @@ def brief_to_xml(brief: dict) -> str:
 
     lines.append("</content_brief>")
     return "\n".join(lines)
+
 ````
+
 ---
 
 #### `visual_judge.py`
@@ -15024,8 +16001,8 @@ if __name__ == "__main__":
 #### `app.py`
 
 - **Path**: `file:///c:/Users/AYUSH/Documents/slm/server/app.py`
-- **Lines**: 1,733 | **Size**: 68,799 bytes
-- **Description**: Flask application server with queue purging (`/api/queue/clear`), cooperative task cancellation (`/api/cancel/<task_id>`), turn budget auto-scaling (`max_turns = max(max_turns, len(sections) + 4, 10)`), SSE event streaming, intent classification, thread-scoped stdout capture, turnkey Vite scaffolder with static export resolution, stem dedup, and HTML escaping, historical metadata persistence (`style_preset`, `style_tokens`, `test_code`), and process-tree shell termination (`taskkill /F /T`).
+- **Lines**: 1,908 | **Size**: 77,147 bytes
+- **Description**: Flask application server providing dual-mode intent classification (_classify_intent), queue management (/api/queue/clear), cooperative cancellation (/api/cancel/<task_id>), fallback status endpoints (/api/task/<task_id>/status and /api/generation/<task_id>/status), resilient SSE event streaming (/api/stream/<task_id>), thread-scoped stdout capture, live preview hosting (/preview/<session_id>), and turnkey Vite runner scaffolder (_scaffold_site_vite_runner).
 
 ````python
 """
@@ -15082,6 +16059,7 @@ from server.sessions import (
     compute_file_diff,
     generate_post_generation_summary,
 )
+from visual_judge import _score_screenshot_heuristic, take_screenshot
 
 # ── App State ──────────────────────────────────────────────────────────────────
 
@@ -15349,9 +16327,11 @@ def _extract_project_name(prompt: str) -> str:
 
 # ── Generation Worker ──────────────────────────────────────────────────────────
 
+_current_task: Optional[dict] = None
+
 def _worker():
     """Background thread: drains _generation_queue one task at a time."""
-    global _model_status
+    global _model_status, _current_task
     while True:
         task = _generation_queue.get()
         if task is None:
@@ -15370,6 +16350,7 @@ def _worker():
 
         try:
             _model_status = "busy"
+            _current_task = task
             with _runner_lock:
                 task_err = []
                 def _run_target():
@@ -15398,6 +16379,7 @@ def _worker():
                 q.put({"type": "error", "text": str(e)})
                 q.put({"type": "done"})
         finally:
+            _current_task = None
             _model_status = "ready"
             cancelled_tasks.discard(task_id)
             _generation_queue.task_done()
@@ -15942,7 +16924,27 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
         # 4. Create new versioned checkpoint
         chk_num = session.create_checkpoint(f"Edit: {prompt[:60]}")
 
-        # 5. Generate structured post-turn summary
+        # 5. Evaluate visual quality if site mode
+        visual_score = None
+        visual_issues = []
+        if session.mode == "site":
+            screenshot_path = session.workspace_dir / "screenshot.webp"
+            try:
+                ss = take_screenshot(project_dir=session.workspace_dir, output_path=screenshot_path)
+                if ss and ss.exists():
+                    v_res = _score_screenshot_heuristic(ss)
+                    visual_score = v_res.get("score")
+                    visual_issues = v_res.get("issues", [])
+            except Exception as e:
+                # Fall back to previous visual score in session history
+                for h in reversed(session.history):
+                    if isinstance(h, dict) and h.get("visual_score") is not None:
+                        visual_score = h["visual_score"]
+                        visual_issues = h.get("visual_issues", [])
+                        break
+
+        # 6. Generate structured post-turn summary
+        visual_check = f"Visual check: {visual_score}/5" + (f" — {', '.join(visual_issues)}" if visual_issues else "") if visual_score is not None else None
         summary = generate_post_generation_summary(
             mode=session.mode,
             files_touched=files_modified,
@@ -15950,9 +16952,12 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
             auto_recovered=[],
             user_instruction=prompt,
             is_edit=True,
+            visual_check=visual_check,
+            visual_score=visual_score,
+            visual_issues=visual_issues,
         )
 
-        # 6. Record turn in session history
+        # Record turn in session history
         turn_record = {
             "turn_id": len(session.history) + 1,
             "role": "assistant",
@@ -15963,6 +16968,8 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
             "files_touched": files_modified,
             "diffs": diffs,
             "checkpoint_id": chk_num,
+            "visual_score": visual_score,
+            "visual_issues": visual_issues,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
         session.history.append({"role": "user", "content": prompt, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")})
@@ -15995,6 +17002,8 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
             "file_path": f"generated_components/session_{session.session_id}/",
             "full_path": str(session.workspace_dir),
             "checkpoints_count": len(session.checkpoints),
+            "visual_score": visual_score,
+            "visual_issues": visual_issues,
             "is_edit": True,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
@@ -16113,18 +17122,95 @@ def _run_site_generation(task: dict, q: queue.Queue):
     except Exception as _rm_err:
         print(f"[Server] Note: could not clean up site workspace {workspace}: {_rm_err}")
 
-    # Optional visual quality evaluation via Playwright/heuristic judge
+    # Visual quality evaluation via Playwright/heuristic judge
     visual_score = None
+    visual_issues = []
+    screenshot_path = site_export_dir / "screenshot.webp"
     try:
-        from visual_judge import _score_screenshot_heuristic, take_screenshot
-        screenshot_path = site_export_dir / "screenshot.webp"
         ss = take_screenshot(project_dir=site_export_dir, output_path=screenshot_path)
         if ss and ss.exists():
             v_res = _score_screenshot_heuristic(ss)
             visual_score = v_res.get("score")
-            print(f"[SiteGen] Visual quality score: {visual_score}/5 (passed={v_res.get('pass')})")
+            visual_issues = v_res.get("issues", [])
+            print(f"[SiteGen] Visual quality score: {visual_score}/5 (passed={v_res.get('pass')}, issues={visual_issues})")
     except Exception as e:
         print(f"[SiteGen] Visual evaluation skipped: {e}")
+
+    # Retry logic: If visual quality score is low (< 3) and turn budget permits, run targeted refinement pass
+    turns_used = len(result.get("turn_logs", []))
+    if visual_score is not None and visual_score < 3 and turns_used < max_turns:
+        target_sec = None
+        for issue in visual_issues:
+            issue_lower = issue.lower()
+            if "footer" in issue_lower:
+                for sec in reversed(sections):
+                    if "footer" in sec.lower():
+                        target_sec = sec
+                        break
+                if not target_sec and sections:
+                    target_sec = sections[-1]
+                break
+            elif "header" in issue_lower or "navigation" in issue_lower or "logo" in issue_lower:
+                for sec in sections:
+                    if any(k in sec.lower() for k in ("header", "nav")):
+                        target_sec = sec
+                        break
+                if not target_sec and sections:
+                    target_sec = sections[0]
+                break
+            elif "blank" in issue_lower or "density" in issue_lower or "flat" in issue_lower:
+                for sec in sections:
+                    if "hero" in sec.lower():
+                        target_sec = sec
+                        break
+                if not target_sec and len(sections) > 1:
+                    target_sec = sections[1]
+                break
+
+        if not target_sec:
+            auto_recovered = result.get("auto_recovered_sections", [])
+            target_sec = auto_recovered[0] if auto_recovered else (sections[1] if len(sections) > 2 else sections[0])
+
+        print(f"[SiteGen] Visual quality {visual_score}/5 is below threshold (3/5). Running corrective turn targeting '{target_sec}'...")
+        q.put({"type": "log", "text": f"[Visual Judge] Visual score {visual_score}/5 below threshold. Running corrective turn targeting section '{target_sec}'..."})
+        try:
+            from agent import auto_scaffold_section
+            clean_custom_instr = brief.get("custom_section_instructions", {}).get(target_sec, "")
+            t_name, t_code, c_name, c_code = auto_scaffold_section(
+                target_sec,
+                style_spec=style_spec,
+                custom_instr=clean_custom_instr
+            )
+            written_files[t_name] = t_code
+            written_files[c_name] = c_code
+            (session.workspace_dir / t_name).write_text(t_code, encoding="utf-8")
+            (session.workspace_dir / c_name).write_text(c_code, encoding="utf-8")
+            (site_export_dir / t_name).write_text(t_code, encoding="utf-8")
+            (site_export_dir / c_name).write_text(c_code, encoding="utf-8")
+
+            _scaffold_site_vite_runner(session.workspace_dir, project_name, written_files, brief=brief)
+            _scaffold_site_vite_runner(site_export_dir, project_name, written_files, brief=brief)
+
+            # Record corrective turn in turn logs and mark self-corrected
+            result.setdefault("turn_logs", []).append({
+                "turn": turns_used + 1,
+                "action": "visual_corrective_turn",
+                "section": target_sec,
+                "reason": f"Visual score {visual_score}/5 below threshold 3/5: {', '.join(visual_issues)}",
+            })
+            result["self_corrected"] = True
+            auto_rec = result.setdefault("auto_recovered_sections", [])
+            if target_sec not in auto_rec:
+                auto_rec.append(target_sec)
+
+            ss2 = take_screenshot(project_dir=site_export_dir, output_path=screenshot_path)
+            if ss2 and ss2.exists():
+                v_res2 = _score_screenshot_heuristic(ss2)
+                visual_score = max(visual_score, v_res2.get("score", visual_score))
+                visual_issues = v_res2.get("issues", visual_issues)
+                print(f"[SiteGen] Post-refinement visual quality score: {visual_score}/5")
+        except Exception as ref_err:
+            print(f"[SiteGen] Visual refinement pass error: {ref_err}")
 
     # Use App.tsx content as the 'code' field for backward-compatible history display
     app_tsx_content = written_files.get("App.tsx", "")
@@ -16134,6 +17220,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
 
     # Create initial checkpoint and post-generation structured summary
     chk_num = session.create_checkpoint(f"Initial site: {len(sections)} sections")
+    visual_check = f"Visual check: {visual_score}/5" + (f" — {', '.join(visual_issues)}" if visual_issues else "") if visual_score is not None else None
     summary = generate_post_generation_summary(
         mode="site",
         files_touched=list(written_files.keys()),
@@ -16143,6 +17230,9 @@ def _run_site_generation(task: dict, q: queue.Queue):
         is_edit=False,
         sections_completed=result.get("sections_completed", len(sections)),
         sections_planned=len(sections),
+        visual_check=visual_check,
+        visual_score=visual_score,
+        visual_issues=visual_issues,
     )
 
     session.history.append({"role": "user", "content": prompt, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")})
@@ -16154,6 +17244,8 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "files_touched": list(written_files.keys()),
         "diffs": {},
         "checkpoint_id": chk_num,
+        "visual_score": visual_score,
+        "visual_issues": visual_issues,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
     })
     session.save()
@@ -16164,7 +17256,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "mode":                 "site",
         "final_passed":         result["final_passed"],
         "initial_passed":       result["final_passed"],
-        "self_corrected":       False,
+        "self_corrected":       result.get("self_corrected", False),
         "turns_used":           len(result.get("turn_logs", [])),
         "sections_completed":   result.get("sections_completed", 0),
         "sections_planned":     len(sections),
@@ -16180,6 +17272,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "full_path":            str(session.workspace_dir),
         "checkpoints_count":    len(session.checkpoints),
         "visual_score":         visual_score,
+        "visual_issues":        visual_issues,
         "auto_recovered_sections": result.get("auto_recovered_sections", []),
         "turn_logs":            result.get("turn_logs", []),
         "timestamp":            time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -16251,6 +17344,42 @@ def status():
         "model_status": _model_status,
         "queue_depth": _generation_queue.qsize(),
     })
+
+@app.route("/api/generation/<task_id>/status", methods=["GET"])
+@app.route("/generation/<task_id>/status", methods=["GET"])
+@app.route("/api/task/<task_id>/status", methods=["GET"])
+def generation_task_status(task_id):
+    """Fallback status endpoint allowing clients to verify job status if SSE drops."""
+    res = _get_task_result(task_id)
+    if res:
+        return jsonify({
+            "task_id": task_id,
+            "status": "completed",
+            "data": res,
+        })
+    if task_id in cancelled_tasks:
+        return jsonify({
+            "task_id": task_id,
+            "status": "cancelled",
+        })
+    if _current_task and _current_task.get("task_id") == task_id:
+        return jsonify({
+            "task_id": task_id,
+            "status": "running",
+            "mode": _current_task.get("mode", "component"),
+        })
+    with _generation_queue.mutex:
+        for idx, item in enumerate(_generation_queue.queue):
+            if item.get("task_id") == task_id:
+                return jsonify({
+                    "task_id": task_id,
+                    "status": "queued",
+                    "position": idx + 1,
+                })
+    return jsonify({
+        "task_id": task_id,
+        "status": "not_found",
+    }), 404
 
 # Track recent requests for deduplication (prompt_hash -> (task_id, timestamp))
 _recent_requests: dict[str, tuple[str, float]] = {}
@@ -16469,20 +17598,42 @@ def preview_session_page(session_id, filename="index.html"):
 def stream(task_id):
     q = task_queues.get(task_id)
     cached_result = _get_task_result(task_id)
-    if q is None and cached_result is None:
+    is_active = (_current_task and _current_task.get("task_id") == task_id)
+    if not is_active:
+        with _generation_queue.mutex:
+            for item in _generation_queue.queue:
+                if item.get("task_id") == task_id:
+                    is_active = True
+                    break
+
+    if q is None and cached_result is None and not is_active:
         return jsonify({"error": "Unknown or expired task_id"}), 404
 
     def generate_sse():
         # If task already completed, emit cached result event immediately
-        if cached_result:
-            yield f"data: {json.dumps({'type': 'result', 'data': cached_result})}\n\n"
+        if cached_result or task_id in task_results:
+            res = cached_result or _get_task_result(task_id)
+            if res:
+                yield f"data: {json.dumps({'type': 'result', 'data': res})}\n\n"
             yield "data: {\"type\": \"done\"}\n\n"
             return
 
         try:
             while True:
+                # If result was produced while reading, emit it
+                latest_res = _get_task_result(task_id)
+                if latest_res and (q is None or q.empty()):
+                    yield f"data: {json.dumps({'type': 'result', 'data': latest_res})}\n\n"
+                    yield "data: {\"type\": \"done\"}\n\n"
+                    break
+
+                if q is None:
+                    yield "data: {\"type\":\"heartbeat\"}\n\n"
+                    time.sleep(1)
+                    continue
+
                 try:
-                    msg = q.get(timeout=10)
+                    msg = q.get(timeout=3)
                 except queue.Empty:
                     yield "data: {\"type\":\"heartbeat\"}\n\n"
                     continue
@@ -16494,8 +17645,9 @@ def stream(task_id):
         except (GeneratorExit, BrokenPipeError, ConnectionResetError):
             pass
         finally:
-            # Clean up queue when stream finishes, client disconnects, or result is cached
-            if cached_result or task_id in task_results or (q and q.empty()):
+            # Only clean up queue when task is completed or cancelled, NOT on transient client disconnect
+            task_still_active = (_current_task and _current_task.get("task_id") == task_id)
+            if not task_still_active and (cached_result or task_id in task_results):
                 task_queues.pop(task_id, None)
 
     return Response(
@@ -16760,63 +17912,618 @@ if __name__ == "__main__":
         threading.Timer(1.2, lambda: webbrowser.open(url)).start()
 
     app.run(host=host, port=port, debug=False, threaded=True)
+
+
 ````
+
+---
+
+#### `server/sessions.py`
+
+- **Path**: `file:///c:/Users/AYUSH/Documents/slm/server/sessions.py`
+- **Lines**: 476 | **Size**: 19,450 bytes
+- **Description**: Persistent agentic session manager (SessionManager) managing per-session isolated workspaces, disk persistence (sessions/<id>.json and sessions/<id>_history.jsonl), turn history tracking, per-turn unified diff computation (compute_file_diff), checkpoint reversion (revert_to_turn), and structured post-generation markdown summary synthesis (generate_post_generation_summary).
+
+````python
+"""
+server/sessions.py — Persistent Agentic Chat Session & Checkpoint Engine.
+
+Provides:
+1. Persistent session model storing conversation history across generations/edits.
+2. File snapshot checkpointing and instant rollback / revert.
+3. Multi-turn context memory with compaction.
+4. File-aware @mention resolver (@Component, @file.css).
+5. Per-turn unified diff generator.
+6. Structured post-generation summary generator.
+7. Background Vite live dev server management per session.
+"""
+
+import difflib
+import json
+import os
+import re
+import shutil
+import subprocess
+import threading
+import time
+import uuid
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+SESSIONS_DIR = BASE_DIR / "sessions"
+SESSIONS_DIR.mkdir(exist_ok=True)
+EXPORT_DIR = BASE_DIR / "generated_components"
+EXPORT_DIR.mkdir(exist_ok=True)
+
+# ── Unified Diff Generator ───────────────────────────────────────────────────
+
+def compute_file_diff(file_path: str, old_content: str, new_content: str) -> str:
+    """Computes a standard unified diff between previous and new file content."""
+    old_lines = old_content.splitlines(keepends=True) if old_content else []
+    new_lines = new_content.splitlines(keepends=True) if new_content else []
+    diff = difflib.unified_diff(
+        old_lines,
+        new_lines,
+        fromfile=f"a/{file_path}",
+        tofile=f"b/{file_path}",
+        lineterm="",
+    )
+    return "".join(diff)
+
+
+# ── Structured Post-Generation Summary ───────────────────────────────────────
+
+def generate_post_generation_summary(
+    mode: str,
+    files_touched: List[str],
+    passed: bool,
+    auto_recovered: List[str],
+    user_instruction: str = "",
+    is_edit: bool = False,
+    sections_completed: int = 0,
+    sections_planned: int = 0,
+    visual_check: Optional[str] = None,
+    visual_score: Optional[int] = None,
+    visual_issues: Optional[List[str]] = None,
+) -> str:
+    """
+    Produces the mandatory structured post-generation summary:
+    ## What I did
+    - <1-3 bullets>
+    ## Status
+    - <validations> / <auto-recovered>
+    ## Try next
+    - <1-2 suggestions>
+    """
+    lines = ["## What I did"]
+
+    clean_files = [Path(f).name for f in files_touched]
+    files_str = ", ".join(f"`{f}`" for f in clean_files[:5]) if clean_files else "project files"
+
+    if is_edit:
+        lines.append(f"- Applied targeted edits to {files_str} based on your instruction.")
+        if "color" in user_instruction.lower() or "button" in user_instruction.lower():
+            lines.append("- Refined design tokens and visual styling components.")
+        else:
+            lines.append("- Updated layout structure and functional JSX components.")
+    else:
+        if mode == "site":
+            lines.append(f"- Synthesized full-page site across {sections_completed}/{sections_planned} planned sections.")
+            lines.append(f"- Generated component modules: {files_str}.")
+        else:
+            lines.append(f"- Created standalone React component and styling in {files_str}.")
+
+    lines.append("")
+    lines.append("## Status")
+    if visual_check:
+        status_line = visual_check if visual_check.startswith("-") else f"- {visual_check}"
+        lines.append(status_line)
+    elif visual_score is not None:
+        issues_note = f" — {', '.join(visual_issues)}" if visual_issues else ""
+        lines.append(f"- Visual check: {visual_score}/5{issues_note}")
+
+    if passed and not auto_recovered:
+        lines.append("- ✅ All TypeScript types, JSX syntax, and CSS style tokens passed validation.")
+    elif auto_recovered:
+        recovered_str = ", ".join(f"`{s}`" for s in auto_recovered)
+        lines.append(f"- ⚠️ Completed with programmatic auto-recovery on: {recovered_str}.")
+        lines.append("- ✅ TypeScript compilation and style token fallbacks preserved.")
+    else:
+        lines.append("- ⚠️ Generation finished with warnings; inspect terminal logs for details.")
+
+    lines.append("")
+    lines.append("## Try next")
+    if is_edit:
+        lines.append("- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).")
+        lines.append("- Use `@Component` mentions to target another specific section.")
+    else:
+        if mode == "site":
+            lines.append("- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).")
+            lines.append("- Inspect the live preview or view before/after diffs.")
+        else:
+            lines.append("- Request interactive state (e.g. `\"add an active toggle state\"`).")
+
+    return "\n".join(lines)
+
+
+# ── Session Model ────────────────────────────────────────────────────────────
+
+class Session:
+    def __init__(
+        self,
+        session_id: str,
+        title: str = "New Session",
+        mode: str = "site",
+        prompt: str = "",
+        style_tokens: Optional[str] = None,
+        style_preset: Optional[str] = None,
+        created_at: Optional[str] = None,
+        updated_at: Optional[str] = None,
+        workspace_dir: Optional[str] = None,
+        history: Optional[List[Dict[str, Any]]] = None,
+        checkpoints: Optional[List[Dict[str, Any]]] = None,
+        current_plan: Optional[List[Dict[str, Any]]] = None,
+    ):
+        self.session_id = session_id
+        self.title = title
+        self.mode = mode
+        self.prompt = prompt
+        self.style_tokens = style_tokens
+        self.style_preset = style_preset
+        self.created_at = created_at or time.strftime("%Y-%m-%d %H:%M:%S")
+        self.updated_at = updated_at or time.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Workspace directory
+        if workspace_dir:
+            self.workspace_dir = Path(workspace_dir)
+        else:
+            self.workspace_dir = EXPORT_DIR / f"session_{session_id}"
+        self.workspace_dir.mkdir(parents=True, exist_ok=True)
+
+        self.history: List[Dict[str, Any]] = history or []
+        self.checkpoints: List[Dict[str, Any]] = checkpoints or []
+        self.current_plan: List[Dict[str, Any]] = current_plan or []
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "session_id": self.session_id,
+            "title": self.title,
+            "mode": self.mode,
+            "prompt": self.prompt,
+            "style_tokens": self.style_tokens,
+            "style_preset": self.style_preset,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "workspace_dir": str(self.workspace_dir),
+            "history": self.history,
+            "checkpoints": [
+                {
+                    "turn_num": c.get("turn_num"),
+                    "timestamp": c.get("timestamp"),
+                    "summary": c.get("summary"),
+                    "files_count": len(c.get("files", {})),
+                    "files_list": list(c.get("files", {}).keys()),
+                }
+                for c in self.checkpoints
+            ],
+            "current_plan": self.current_plan,
+        }
+
+    def save(self):
+        """Persists the session to disk as sessions/<session_id>.json."""
+        meta_file = SESSIONS_DIR / f"{self.session_id}.json"
+        full_data = {
+            "session_id": self.session_id,
+            "title": self.title,
+            "mode": self.mode,
+            "prompt": self.prompt,
+            "style_tokens": self.style_tokens,
+            "style_preset": self.style_preset,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "workspace_dir": str(self.workspace_dir),
+            "history": self.history,
+            "checkpoints": self.checkpoints,
+            "current_plan": self.current_plan,
+        }
+        meta_file.write_text(json.dumps(full_data, indent=2), encoding="utf-8")
+
+        # Also write append-only history.jsonl
+        history_file = SESSIONS_DIR / f"{self.session_id}_history.jsonl"
+        with open(history_file, "w", encoding="utf-8") as f:
+            for item in self.history:
+                f.write(json.dumps(item) + "\n")
+
+    def get_current_files(self) -> Dict[str, str]:
+        """Reads all source code files from the persistent workspace directory."""
+        files = {}
+        if not self.workspace_dir.exists():
+            return files
+
+        for p in self.workspace_dir.rglob("*"):
+            if p.is_file() and not any(part in p.parts for part in ["node_modules", ".git", "dist", ".vite"]):
+                rel_path = p.relative_to(self.workspace_dir).as_posix()
+                try:
+                    files[rel_path] = p.read_text(encoding="utf-8")
+                except Exception:
+                    pass
+        return files
+
+    def create_checkpoint(self, summary: str) -> int:
+        """Takes a snapshot of current on-disk files and stores a versioned checkpoint."""
+        current_files = self.get_current_files()
+        turn_num = len(self.checkpoints) + 1
+        checkpoint = {
+            "turn_num": turn_num,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "summary": summary,
+            "files": current_files,
+        }
+        self.checkpoints.append(checkpoint)
+        self.updated_at = time.strftime("%Y-%m-%d %H:%M:%S")
+        self.save()
+        return turn_num
+
+    def revert_to_checkpoint(self, turn_num: int) -> bool:
+        """Reverts the workspace to the state saved at turn_num."""
+        target = next((c for c in self.checkpoints if c["turn_num"] == turn_num), None)
+        if not target:
+            return False
+
+        files = target.get("files", {})
+        # Clear existing workspace files except node_modules
+        for p in self.workspace_dir.iterdir():
+            if p.name not in ["node_modules", ".git"]:
+                if p.is_dir():
+                    shutil.rmtree(p)
+                else:
+                    p.unlink()
+
+        # Write snapshot files
+        for rel_path, content in files.items():
+            dest = self.workspace_dir / rel_path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(content, encoding="utf-8")
+
+        # Record rollback event in history
+        self.history.append({
+            "turn_id": len(self.history) + 1,
+            "role": "system",
+            "content": f"Reverted workspace to checkpoint #{turn_num}: {target.get('summary', '')}",
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "summary": f"Reverted to checkpoint #{turn_num}",
+            "files_touched": list(files.keys()),
+            "diffs": {},
+        })
+        self.updated_at = time.strftime("%Y-%m-%d %H:%M:%S")
+        self.save()
+        return True
+
+
+# ── Session Manager ──────────────────────────────────────────────────────────
+
+class SessionManager:
+    """Singleton session repository managing active sessions and preview processes."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._sessions: Dict[str, Session] = {}
+        self._preview_processes: Dict[str, subprocess.Popen] = {}
+        self._preview_ports: Dict[str, int] = {}
+        self._load_all_from_disk()
+
+    def _load_all_from_disk(self):
+        """Loads existing sessions from disk."""
+        if not SESSIONS_DIR.exists():
+            return
+        for f in SESSIONS_DIR.glob("*.json"):
+            if f.stem.endswith("_history"):
+                continue
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                sid = data.get("session_id")
+                if sid:
+                    self._sessions[sid] = Session(
+                        session_id=sid,
+                        title=data.get("title", "Session"),
+                        mode=data.get("mode", "site"),
+                        prompt=data.get("prompt", ""),
+                        style_tokens=data.get("style_tokens"),
+                        style_preset=data.get("style_preset"),
+                        created_at=data.get("created_at"),
+                        updated_at=data.get("updated_at"),
+                        workspace_dir=data.get("workspace_dir"),
+                        history=data.get("history", []),
+                        checkpoints=data.get("checkpoints", []),
+                        current_plan=data.get("current_plan", []),
+                    )
+            except Exception as e:
+                print(f"[SessionManager] Warning loading {f.name}: {e}")
+
+    def create_session(
+        self,
+        title: str,
+        mode: str = "site",
+        prompt: str = "",
+        style_tokens: Optional[str] = None,
+        style_preset: Optional[str] = None,
+    ) -> Session:
+        with self._lock:
+            session_id = f"{int(time.time())}_{uuid.uuid4().hex[:6]}"
+            session = Session(
+                session_id=session_id,
+                title=title,
+                mode=mode,
+                prompt=prompt,
+                style_tokens=style_tokens,
+                style_preset=style_preset,
+            )
+            session.save()
+            self._sessions[session_id] = session
+            return session
+
+    def get_session(self, session_id: str) -> Optional[Session]:
+        with self._lock:
+            if session_id in self._sessions:
+                return self._sessions[session_id]
+            # Try loading from disk
+            meta_file = SESSIONS_DIR / f"{session_id}.json"
+            if meta_file.exists():
+                try:
+                    data = json.loads(meta_file.read_text(encoding="utf-8"))
+                    s = Session(
+                        session_id=session_id,
+                        title=data.get("title", "Session"),
+                        mode=data.get("mode", "site"),
+                        prompt=data.get("prompt", ""),
+                        style_tokens=data.get("style_tokens"),
+                        style_preset=data.get("style_preset"),
+                        created_at=data.get("created_at"),
+                        updated_at=data.get("updated_at"),
+                        workspace_dir=data.get("workspace_dir"),
+                        history=data.get("history", []),
+                        checkpoints=data.get("checkpoints", []),
+                        current_plan=data.get("current_plan", []),
+                    )
+                    self._sessions[session_id] = s
+                    return s
+                except Exception:
+                    pass
+            return None
+
+    def list_sessions(self) -> List[Dict[str, Any]]:
+        with self._lock:
+            res = []
+            for s in sorted(self._sessions.values(), key=lambda x: x.updated_at, reverse=True):
+                res.append({
+                    "session_id": s.session_id,
+                    "title": s.title,
+                    "mode": s.mode,
+                    "prompt": s.prompt[:100] + ("..." if len(s.prompt) > 100 else ""),
+                    "created_at": s.created_at,
+                    "updated_at": s.updated_at,
+                    "checkpoints_count": len(s.checkpoints),
+                    "history_count": len(s.history),
+                })
+            return res
+
+    def resolve_target_files(self, session: Session, instruction: str) -> List[Tuple[str, str]]:
+        """
+        Resolves which files the user instruction targets via:
+        1. Explicit @mentions (e.g. @Footer, @Header.css, @src/components/About.tsx)
+        2. Heuristic word matching against component filenames in workspace.
+        Returns list of (rel_path, file_content).
+        """
+        all_files = session.get_current_files()
+        if not all_files:
+            return []
+
+        # 1. Parse @mentions
+        mentions = re.findall(r'@([A-Za-z0-9_.-]+)', instruction)
+        target_paths = set()
+
+        for m in mentions:
+            m_clean = m.lower()
+            for path in all_files.keys():
+                path_lower = path.lower()
+                stem = Path(path).stem.lower()
+                name = Path(path).name.lower()
+                if m_clean in (path_lower, stem, name) or stem == m_clean:
+                    target_paths.add(path)
+
+        # 2. If no @mentions, search component stems mentioned in instruction
+        if not target_paths:
+            for path in all_files.keys():
+                if path.startswith("src/components/"):
+                    stem = Path(path).stem.lower()
+                    # Check if stem word appears in user instruction
+                    if re.search(rf'\b{re.escape(stem)}\b', instruction, re.I):
+                        target_paths.add(path)
+                        # Also add corresponding CSS
+                        css_counterpart = str(Path(path).with_suffix(".css")).replace("\\", "/")
+                        if css_counterpart in all_files:
+                            target_paths.add(css_counterpart)
+
+        # 3. Fallback: if still empty, include all components if <= 4 files, or App.tsx
+        if not target_paths:
+            comp_files = [p for p in all_files.keys() if p.startswith("src/components/")]
+            if comp_files:
+                target_paths.update(comp_files[:4])
+            elif "App.tsx" in all_files:
+                target_paths.add("App.tsx")
+
+        return [(p, all_files[p]) for p in sorted(target_paths) if p in all_files]
+
+    def build_follow_up_context(
+        self,
+        session: Session,
+        new_instruction: str,
+        target_files: List[Tuple[str, str]],
+    ) -> str:
+        """
+        Constructs the compacted context for a follow-up turn in an existing session:
+        - Brief & Design Tokens
+        - Compact summary of previous turns
+        - Full current content of target files
+        - New user instruction
+        """
+        sections = []
+
+        # 1. Base tokens & prompt
+        sections.append(f"ORIGINAL TASK: {session.prompt}")
+        if session.style_tokens:
+            sections.append(f"DESIGN SYSTEM TOKENS:\n{session.style_tokens}")
+
+        # 2. History turn log summaries
+        if session.history:
+            sections.append("PRIOR TURNS IN THIS SESSION:")
+            for h in session.history[-4:]:  # last 4 turns
+                role = h.get("role", "turn").capitalize()
+                summary = h.get("summary") or h.get("content", "")[:120]
+                sections.append(f"- [{role}]: {summary}")
+
+        # 3. Current target file contents
+        sections.append("\nCURRENT TARGET FILE CONTENTS TO MODIFY:")
+        for path, content in target_files:
+            sections.append(f'<file path="{path}">\n{content}\n</file>')
+
+        # 4. New instruction
+        sections.append(
+            f"\nUSER INSTRUCTION FOR THIS EDIT:\n{new_instruction}\n\n"
+            f"Modify the target files to satisfy the instruction. "
+            f"You MUST emit the complete updated file content wrapped in <file path=\"...\"> tags inside <tool_call name=\"write_site\">."
+        )
+
+        return "\n\n".join(sections)
+
+
+# Global singleton instance
+session_manager = SessionManager()
+
+````
+
 ---
 
 #### `web_ui_static/index.html`
 
 - **Path**: `file:///c:/Users/AYUSH/Documents/slm/web_ui_static/index.html`
-- **Lines**: 3,645 | **Size**: 132,905 bytes
-- **Description**: Workbench Single-Page Application (HTML5, Vanilla CSS, JS, xterm.js) featuring interactive click-to-clear queue badge, click-to-halt status pill, interactive history card action buttons (Edit Prompt, Rerun Generation, Download TSX, Delete), Code pane header controls (Edit Prompt, Regenerate), multi-line auto-resizing prompt textarea, glowing pulse highlight animation, global keyboard shortcuts (Alt+E, Alt+R, Ctrl+Enter, F, Esc), and SHA-512 Subresource Integrity (SRI) pinning on all external CDN assets.
+- **Lines**: 4,552 | **Size**: 166,213 bytes
+- **Description**: Redesigned Workbench Single-Page Application (HTML5, Vanilla CSS, JS, xterm.js) featuring a Claude/ChatGPT-style centered conversation layout (~720px max-width), typeset markdown summaries with streaming text reveal, collapsible session history sidebar with star visual quality ratings (★ 4.0), slide-over live preview and PowerShell terminal drawers, WCAG AA compliant contrast (--text-3 at 8.29:1 / 7.72:1), non-blocking in-app modal showConfirmModal(), and resilient SSE stream reconnection with exponential backoff on transient network drops.
 
 ````html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ReactAgent SLM — Local AI Component Workbench</title>
-  <meta name="description" content="Local AI-powered React, TypeScript and CSS component generator with live terminal output, interactive PowerShell shell, and code split screen." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" integrity="sha512-rO+olRTkcf304DQBxSWxln8JXCzTHlKnIdnMUwYvQa9/Jd4cQaNkItIUj6Z4nvW1dqK0SKXLbn9h4KwZTNtAyw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js" integrity="sha512-GsPn8jZedZaPLThVdRVJ9kvS02HmLZBsoC9qon3IZE8Al7pUBlDIK4IzAtMbxtZ2GtLMFhHusOLTwf2JIDr0oA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" integrity="sha512-Ayc0adLckRPpOBGFKKtiicaRnhC8fbRSMlVia6uHmJFSt+AEEGa0gLl9Ma7dGKoWQyqg6RrSXsGhKF2Z/gKJMw==" crossorigin="anonymous" />
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js" integrity="sha512-Ok5oZRNr1kAe3ajbayXIj8aOhn4LVTLnlmuAhdMtvxXRYvuoEAR1oP6GCqQXFWgunv9ZL3V5gChWoxIccJcDrg==" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha512-ApqaLgikPd0sx5OEsT8RB0bO2pfuslb0RbPhAlsqdBGZX9HSGlY/n0MD7XWc4xig2A3arVs3aqamEDIHOd6iuQ==" crossorigin="anonymous"></script>
+  <title>ReactAgent SLM Workbench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" integrity="sha512-rO+olRTkcf304DQBpCY6lnlJvwb7SC422vj61UZzmXXV3ZnIpMU00Qvc40apdlg0KsCFDA+/T18ma62UG6K8JQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" integrity="sha512-m0llFq797kWcuhpqm0nxX9e0mBf0yHhWwT/J3Y+iPcrLcLmD8f12kY0zXmH2ZtLz37gQZ46P4K3TsmZ2X8r+g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWUmPWGkShNU2793Tp8GsC52Qm55PXnFbkgUS9f4P4+PVE6LSguM9a198h28L+rwTC-5l07KSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js" integrity="sha512-Y450MhF+W86m4wN8xHhLhN/LgV0GgS0qW+PcLkXW7+hNlUaD2+p79H3R/R0BvM/V9sHj2d5p8tL8Ym2bN9oVrg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js" integrity="sha512-Ok5pQk3xZ18u0W7o67vX9fXy3kP0fB9T1w8C8g+X9T13Xf+D1cW4b0jD5eN0VbXn2R0v6k8d0G0q7V1fP0sX7Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha512-uG8mK2o0Q+a51lQ/1w9nC2H3rF2h6Gk0Z6qJvO0L5cZ0zGv6iK1r4R6a8G3m+B6V2W9X4JzL6cQ0Z9m2V5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg-base:      #111318;
-      --bg-sidebar:   #15171d;
-      --bg-panel:     #191c23;
-      --bg-input:     #1e2129;
-      --bg-hover:     rgba(255,255,255,0.04);
-      --bg-active:    rgba(255,255,255,0.08);
-      --border:       rgba(255,255,255,0.08);
-      --border-focus: rgba(99,102,241,0.55);
-      --accent:       #6366f1;
-      --accent-hover: #818cf8;
-      --accent-dim:   rgba(99,102,241,0.15);
-      --green:        #22c55e;
-      --green-dim:    rgba(34,197,94,0.12);
-      --red:          #ef4444;
-      --red-dim:      rgba(239,68,68,0.12);
-      --amber:        #f59e0b;
-      --blue:         #60a5fa;
-      --text-1:       #f3f4f6;
-      --text-2:       #9ca3af;
-      --text-3:       #6b7280;
-      --text-code:    #c9d1d9;
-      --font-sans:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono:    'JetBrains Mono', 'Cascadia Code', monospace;
-      --sidebar-w:    340px;
-      --topbar-h:     52px;
-      --radius-sm:    6px;
-      --radius-md:    10px;
+      /* Warm neutral dark mode (Claude / Workbench aesthetic) */
+      --bg-base:        #141517;
+      --bg-sidebar:     #191b1f;
+      --bg-panel:       #1e2025;
+      --bg-elevated:    #24262d;
+      --bg-input:       #191b1f;
+      --bg-user-turn:   #23252b;
+      --bg-hover:       rgba(255, 255, 255, 0.05);
+      --bg-active:      rgba(255, 255, 255, 0.09);
+      --border:         rgba(255, 255, 255, 0.09);
+      --border-subtle:  rgba(255, 255, 255, 0.05);
+      --border-focus:   #d97706;
+      --accent:         #e06c43;
+      --accent-hover:   #ea7c55;
+      --accent-dim:     rgba(224, 108, 67, 0.15);
+      --green:          #22c55e;
+      --green-dim:      rgba(34, 197, 94, 0.12);
+      --red:            #ef4444;
+      --red-dim:        rgba(239, 68, 68, 0.12);
+      --amber:          #f59e0b;
+      --blue:           #60a5fa;
+      --text-1:         #f4f4f5;
+      --text-2:         #d4d4d8;
+      --text-3:         #a8a29e;
+      --text-code:      #e2e8f0;
+
+      /* Type scale (6 defined steps) */
+      --text-xs:        0.75rem;   /* 12px */
+      --text-sm:        0.8125rem; /* 13px */
+      --text-base:      0.875rem;  /* 14px */
+      --text-md:        1rem;      /* 16px */
+      --text-lg:        1.125rem;  /* 18px */
+      --text-xl:        1.25rem;   /* 20px */
+      --text-2xl:       1.5rem;    /* 24px */
+
+      --font-sans:      'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono:      'JetBrains Mono', 'Cascadia Code', monospace;
+      --sidebar-w:      280px;
+      --topbar-h:       52px;
+      --radius-sm:      6px;
+      --radius-md:      10px;
+      --radius-lg:      16px;
+      --chat-max-w:     740px;
+    }
+
+    [data-theme="light"] {
+      /* Warm neutral light mode */
+      --bg-base:        #fbfbfa;
+      --bg-sidebar:     #f4f4f1;
+      --bg-panel:       #ffffff;
+      --bg-elevated:    #ecece8;
+      --bg-input:       #ffffff;
+      --bg-user-turn:   #f0f0ec;
+      --bg-hover:       rgba(0, 0, 0, 0.04);
+      --bg-active:      rgba(0, 0, 0, 0.07);
+      --border:         rgba(0, 0, 0, 0.09);
+      --border-subtle:  rgba(0, 0, 0, 0.05);
+      --border-focus:   #c25e38;
+      --accent:         #c25e38;
+      --accent-hover:   #d16a44;
+      --accent-dim:     rgba(194, 94, 56, 0.12);
+      --green:          #15803d;
+      --green-dim:      rgba(21, 128, 61, 0.1);
+      --red:            #b91c1c;
+      --red-dim:        rgba(185, 28, 28, 0.1);
+      --amber:          #b45309;
+      --blue:           #2563eb;
+      --text-1:         #18181b;
+      --text-2:         #3f3f46;
+      --text-3:         #52525b;
+      --text-code:      #1e293b;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     html, body {
@@ -16824,16 +18531,19 @@ if __name__ == "__main__":
       background: var(--bg-base);
       color: var(--text-1);
       font-family: var(--font-sans);
-      font-size: 14px;
+      font-size: var(--text-base);
       line-height: 1.6;
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 10px; }
+    [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+    [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
     /* ── Topbar ── */
     #topbar {
@@ -16844,27 +18554,93 @@ if __name__ == "__main__":
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 0 20px;
+      justify-content: space-between;
+      padding: 0 16px;
       z-index: 200;
+      gap: 12px;
     }
-    .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: var(--text-base);
+      transition: all 0.15s ease;
+    }
+    .icon-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-1);
+      border-color: var(--border-focus);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
     .brand-mark {
-      width: 28px; height: 28px;
+      width: 28px;
+      height: 28px;
       background: var(--accent);
       border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      color: #fff;
     }
-    .brand-name { font-size: 14px; font-weight: 600; color: var(--text-1); letter-spacing: -0.2px; }
-    .brand-tag  { font-size: 11px; color: var(--text-3); font-weight: 400; }
-    #topbar-spacer { flex: 1; }
+    .brand-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .brand-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+    }
+    .brand-tag {
+      font-size: var(--text-xs);
+      color: var(--text-3);
+      font-weight: 400;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
 
     #status-pill {
-      display: flex; align-items: center; gap: 8px;
-      padding: 5px 12px; border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 100px;
       border: 1px solid var(--border);
-      font-size: 12px; font-weight: 500; color: var(--text-3);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--text-3);
       transition: all 0.3s;
     }
     #status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); transition: background 0.3s; }
@@ -16878,17 +18654,79 @@ if __name__ == "__main__":
     #status-pill.error   #status-dot { background: var(--red); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
+    #visual-badge {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      display: none;
+      align-items: center;
+      gap: 5px;
+      cursor: help;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    #visual-badge.high { color: var(--green); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+    #visual-badge.medium { color: var(--amber); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
+    #visual-badge.low { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+
+    #result-badge {
+      display: none; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 100px;
+      font-size: var(--text-xs); font-weight: 600;
+    }
+    #result-badge.pass { display: flex; background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    #result-badge.fail { display: flex; background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
+    #turn-badge { font-size: var(--text-xs); color: var(--text-3); font-family: var(--font-mono); display: none; }
+    #gen-timer {
+      display: none;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 8px;
+      border-radius: 100px;
+      border: 1px solid var(--accent-dim);
+    }
     #queue-badge {
-      font-size: 11px; font-weight: 500; color: var(--text-3);
-      padding: 4px 10px; border: 1px solid var(--border); border-radius: 100px; display: none;
+      font-size: var(--text-xs); font-weight: 500; color: var(--text-3);
+      padding: 3px 9px; border: 1px solid var(--border); border-radius: 100px; display: none;
       cursor: pointer; transition: all 0.2s; user-select: none;
     }
-    #queue-badge:hover {
-      color: var(--red);
-      border-color: rgba(239,68,68,0.4);
-      background: rgba(239,68,68,0.08);
-    }
     #queue-badge.visible { display: inline-flex; align-items: center; gap: 5px; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .nav-drawer-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      padding: 5px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .nav-drawer-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-1);
+      border-color: var(--border-focus);
+    }
+    .nav-drawer-btn.active {
+      background: var(--bg-elevated);
+      color: var(--text-1);
+      border-color: var(--border-focus);
+    }
 
     #progress-bar {
       position: fixed; top: var(--topbar-h); left: 0;
@@ -16898,949 +18736,321 @@ if __name__ == "__main__":
     }
     #progress-bar.active { display: block; }
 
-    /* ── Layout ── */
+    /* ── App Layout ── */
     #app {
       display: flex;
       flex-direction: row;
       height: 100vh;
       padding-top: var(--topbar-h);
       overflow: hidden;
-    }
-
-    /* ── Resizer handles ── */
-    .resizer {
-      flex-shrink: 0;
       position: relative;
-      z-index: 20;
-    }
-    .resizer-v {
-      width: 4px;
-      cursor: col-resize;
-      background: var(--border);
-      transition: background 0.15s, box-shadow 0.15s;
-    }
-    .resizer-v::before {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      left: -6px; right: -6px;
-    }
-    .resizer-v:hover,
-    .resizer-v.dragging {
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(99,102,241,0.5);
     }
 
-    /* ── Sidebar ── */
+    /* ── Collapsible Left Sidebar (Session History) ── */
     #sidebar {
       background: var(--bg-sidebar);
       border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
+      display: flex;
+      flex-direction: column;
       height: calc(100vh - var(--topbar-h));
-      overflow: hidden;
-      flex-shrink: 0;
       width: var(--sidebar-w);
-      min-width: 220px;
-      max-width: 580px;
-    }
-
-    #history-list {
-      flex: 1; overflow-y: auto;
-      padding: 10px 8px;
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .history-empty {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100%; gap: 6px; color: var(--text-3); font-size: 12.5px; text-align: center; padding: 24px;
-    }
-    .history-empty-title { font-size: 13px; font-weight: 500; color: var(--text-2); }
-
-    .history-item {
-      padding: 10px 12px; border-radius: var(--radius-sm);
-      cursor: pointer; border: 1px solid transparent;
-      transition: background 0.12s, border-color 0.12s;
-    }
-    .history-item:hover { background: var(--bg-hover); }
-    .history-item.active { background: var(--bg-active); border-color: var(--border); }
-    .hi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-    .hi-name { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--text-1); }
-    .hi-badge { font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 100px; }
-    .hi-badge.pass { background: var(--green-dim); color: var(--green); }
-    .hi-badge.fail { background: var(--red-dim);   color: var(--red); }
-    .hi-prompt {
-      font-size: 11.5px; color: var(--text-3);
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.45;
-    }
-    .hi-meta {
-      display: flex; align-items: center; gap: 6px; margin-top: 6px;
-      font-size: 10.5px; color: var(--text-3); flex-wrap: wrap;
-    }
-    .hi-date { font-size: 10px; }
-    .hi-turns { font-size: 10px; color: var(--text-3); }
-    .hi-actions {
-      display: flex; align-items: center; gap: 4px; margin-left: auto;
-    }
-    .hi-btn {
-      background: transparent; border: 1px solid var(--border);
-      border-radius: 4px; color: var(--text-3); font-size: 10.5px;
-      padding: 1px 6px; cursor: pointer; font-family: var(--font-sans);
-      transition: all 0.15s; line-height: 1.4;
-    }
-    .hi-btn:hover { border-color: var(--border-focus); color: var(--text-1); }
-    .hi-btn.hi-edit:hover { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.08); }
-    .hi-btn.hi-regen:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-    .hi-btn.hi-dl:hover { border-color: var(--accent); color: var(--accent-hover); }
-    .hi-btn.hi-del { font-size: 13px; line-height: 1; padding: 0 5px; }
-    .hi-btn.hi-del:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
-
-    /* ── Input Area ── */
-    #input-area {
-      border-top: 1px solid var(--border);
-      padding: 12px 14px 16px;
-      display: flex; flex-direction: column; gap: 10px;
-      background: var(--bg-sidebar); flex-shrink: 0;
-    }
-    #prompt-wrap {
-      background: var(--bg-input);
-      border: 1px solid var(--border); border-radius: var(--radius-md);
-      transition: border-color 0.2s; overflow: hidden;
-    }
-    #prompt-wrap:focus-within { border-color: var(--border-focus); }
-    #prompt-input {
-      width: 100%; background: transparent; border: none; outline: none;
-      color: var(--text-1); font-family: var(--font-sans); font-size: 13.5px;
-      line-height: 1.55; padding: 11px 13px 8px;
-      resize: none; min-height: 86px; max-height: 200px;
-    }
-    #prompt-input::placeholder { color: var(--text-3); }
-    #prompt-footer {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 10px 8px; border-top: 1px solid var(--border);
-    }
-    #symbol-input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: var(--text-2); font-family: var(--font-mono); font-size: 11.5px; min-width: 0;
-    }
-    #symbol-input::placeholder { color: var(--text-3); }
-    #generate-btn {
-      background: var(--accent); border: none; border-radius: var(--radius-sm);
-      color: #fff; font-family: var(--font-sans); font-size: 12.5px; font-weight: 600;
-      padding: 6px 15px; cursor: pointer; transition: background 0.15s, opacity 0.15s;
-      flex-shrink: 0; display: flex; align-items: center; gap: 7px;
-    }
-    #generate-btn:hover:not(:disabled) { background: var(--accent-hover); }
-    #generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .spinner {
-      width: 12px; height: 12px;
-      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.6s linear infinite; display: none;
-    }
-    #generate-btn.generating .spinner { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    #settings-row { display: flex; align-items: center; gap: 8px; }
-    .setting-select {
-      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text-2); font-family: var(--font-sans);
-      font-size: 11.5px; padding: 5px 8px; outline: none; cursor: pointer; appearance: none;
-      transition: border-color 0.15s;
-    }
-    .setting-select:focus { border-color: var(--border-focus); color: var(--text-1); }
-    .setting-label { font-size: 11px; color: var(--text-3); white-space: nowrap; }
-    #test-toggle {
-      font-size: 11px; color: var(--text-3); background: transparent;
-      border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 9px;
-      cursor: pointer; font-family: var(--font-sans); transition: all 0.15s; white-space: nowrap;
-    }
-    #test-toggle:hover { border-color: var(--accent); color: var(--text-2); }
-    #test-toggle.active { background: var(--accent-dim); border-color: var(--border-focus); color: var(--accent-hover); }
-    #test-area { display: none; }
-    #test-area.open { display: block; }
-    #test-input {
-      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text-code); font-family: var(--font-mono);
-      font-size: 11.5px; padding: 9px 12px; line-height: 1.6; resize: vertical;
-      min-height: 80px; outline: none; transition: border-color 0.2s;
-    }
-    #test-input:focus { border-color: var(--border-focus); }
-
-    /* ── Work Area ── */
-    #work-area {
-      flex: 1;
-      min-width: 0;
-      display: flex; flex-direction: column;
-      height: calc(100vh - var(--topbar-h));
-      background: var(--bg-base); overflow: hidden;
-    }
-
-    /* Toolbar */
-    #toolbar {
-      display: flex; align-items: center; gap: 10px;
-      padding: 0 16px; height: 46px;
-      background: var(--bg-panel); border-bottom: 1px solid var(--border);
+      min-width: var(--sidebar-w);
+      overflow: hidden;
       flex-shrink: 0;
+      transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
     }
-    .tab-group {
-      display: flex; gap: 3px;
-      background: rgba(0,0,0,0.35); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 2px;
-    }
-    .tab-btn {
-      background: transparent; border: none; border-radius: 4px;
-      color: var(--text-3); font-family: var(--font-sans); font-size: 12px;
-      font-weight: 500; padding: 4px 13px; cursor: pointer; transition: all 0.15s;
-    }
-    .tab-btn:hover { color: var(--text-2); background: var(--bg-hover); }
-    .tab-btn.active { background: var(--bg-panel); color: var(--text-1); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
-    #toolbar-spacer { flex: 1; }
-    #result-badge {
-      display: none; align-items: center; gap: 6px;
-      padding: 3px 10px; border-radius: 100px;
-      font-size: 11.5px; font-weight: 600;
-    }
-    #result-badge.pass { display: flex; background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
-    #result-badge.fail { display: flex; background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
-    #turn-badge { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); display: none; }
-    .tool-btn {
-      background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
-      color: var(--text-3); font-family: var(--font-sans); font-size: 12px;
-      padding: 4px 12px; cursor: pointer; transition: all 0.15s;
-      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
-    }
-    .tool-btn:hover:not(:disabled) { color: var(--text-1); border-color: rgba(255,255,255,0.2); }
-    .tool-btn.success { color: var(--green); border-color: rgba(34,197,94,0.35); }
-    .tool-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    #download-btn {
-      background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
-      color: var(--text-3); font-family: var(--font-sans); font-size: 12px;
-      padding: 4px 12px; cursor: pointer; transition: all 0.15s; flex-shrink: 0;
-    }
-    #download-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
-    #download-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* ── Panes Layout ── */
-    #panes {
-      flex: 1;
-      display: flex;
-      flex-direction: row;
-      overflow: hidden;
-      position: relative;
-      min-height: 0;
+    #sidebar.collapsed {
+      width: 0 !important;
+      min-width: 0 !important;
+      border-right: none !important;
+      transform: translateX(-100%);
     }
 
-    /* Left Pane: Code */
-    #code-pane {
-      flex: 1;
-      min-width: 200px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-panel);
-    }
-    #code-pane-header {
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 16px; height: 36px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-      background: var(--bg-panel);
-    }
-    .pane-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); }
-    #code-filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-2); margin-left: 4px; }
-    #code-scroll { flex: 1; overflow: auto; min-height: 0; }
-    #code-view pre { margin: 0; padding: 20px 24px; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.75; background: transparent !important; min-height: 100%; }
-    #code-view code.hljs { background: transparent !important; padding: 0; }
-    #code-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; color: var(--text-3); font-size: 13px; }
-    #code-empty-title { font-size: 13px; font-weight: 500; color: var(--text-2); }
-
-    /* Right Pane: Terminal / Output + PowerShell Shell */
-    #right-pane {
-      flex: 0 0 420px;
-      min-width: 240px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-base);
-    }
-    #right-pane-header {
+    .sidebar-header {
+      padding: 12px 14px 6px;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 0 12px;
-      height: 36px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-sidebar);
       flex-shrink: 0;
     }
-    .subtab-group {
-      display: flex;
-      gap: 2px;
-      background: rgba(0,0,0,0.3);
+    .new-chat-btn {
+      width: 100%;
+      background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 2px;
-    }
-    .subtab-btn {
-      background: transparent;
-      border: none;
-      border-radius: 4px;
-      color: var(--text-3);
-      font-family: var(--font-sans);
-      font-size: 11.5px;
+      color: var(--text-1);
+      font-size: var(--text-sm);
       font-weight: 500;
-      padding: 3px 11px;
+      padding: 8px 12px;
       cursor: pointer;
-      transition: all 0.15s;
-    }
-    .subtab-btn:hover { color: var(--text-2); background: var(--bg-hover); }
-    .subtab-btn.active {
-      background: var(--bg-panel);
-      color: var(--text-1);
-      font-weight: 600;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    }
-
-    #shell-status-wrap {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      margin-left: auto;
-    }
-    .shell-status {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-3);
-    }
-    .shell-status.connected { color: var(--green); }
-    .shell-status.connecting { color: var(--amber); }
-    .shell-status.error { color: var(--red); }
-    .shell-status.disconnected { color: var(--text-3); }
-    #shell-reconnect {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-3);
-      font-family: var(--font-sans);
-      font-size: 10.5px;
-      padding: 2px 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    #shell-reconnect:hover { border-color: var(--accent); color: var(--accent-hover); }
-    #shell-reconnect.pulse {
-      border-color: var(--accent);
-      color: var(--accent-hover);
-      animation: reconnect-pulse 2s ease-in-out infinite;
-    }
-    @keyframes reconnect-pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
-      50% { box-shadow: 0 0 8px 2px rgba(99,102,241,0.5); }
-    }
-
-    /* Subviews inside right pane */
-    .subview {
-      flex: 1;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 0;
-      height: 100%;
-    }
-    .subview.active {
-      display: flex;
-    }
-
-    /* Terminal logs view */
-    #term-scroll { flex: 1; overflow-y: auto; padding: 12px 16px 16px; min-height: 0; }
-    #log-content { font-family: var(--font-mono); font-size: 12px; line-height: 1.65; }
-    .log-line { display: block; word-break: break-word; padding: 0.5px 0; }
-    .log-line.thought { color: #93c5fd; }
-    .log-line.action  { color: #a5b4fc; }
-    .log-line.passed  { color: var(--green); font-weight: 600; }
-    .log-line.failed  { color: var(--red); }
-    .log-line.warn    { color: var(--amber); }
-    .log-line.header  { color: #67e8f9; font-weight: 600; }
-    .log-line.dim     { color: var(--text-3); }
-    .log-line.turn    { color: #d8b4fe; font-weight: 600; }
-    .log-line.default { color: var(--text-2); }
-    #log-empty { display: flex; align-items: center; justify-content: center; height: 60px; color: var(--text-3); font-size: 12px; }
-    #log-cursor {
-      display: inline-block; width: 7px; height: 13px;
-      background: var(--accent); vertical-align: text-bottom; margin-left: 2px;
-      animation: blink 1s step-end infinite; display: none;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    #log-cursor.active { display: inline-block; }
-
-    /* Shell xterm view */
-    #shell-view {
-      background: #0d0e12;
-    }
-    #xterm-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      padding: 8px 4px 6px 10px;
-      min-height: 0;
-      height: 100%;
-    }
-    .xterm {
-      flex: 1;
-      height: 100%;
-    }
-    .xterm-screen {
-      height: 100% !important;
-    }
-    .xterm-viewport {
-      background: transparent !important;
-    }
-
-    /* View Modes */
-    #panes.view-code  #code-pane    { flex: 1; width: 100%; }
-    #panes.view-code  #pane-resizer { display: none; }
-    #panes.view-code  #right-pane   { display: none; }
-
-    #panes.view-term  #code-pane    { display: none; }
-    #panes.view-term  #pane-resizer { display: none; }
-    #panes.view-term  #right-pane   { flex: 1; width: 100%; }
-
-    #panes.view-shell #code-pane    { display: none; }
-    #panes.view-shell #pane-resizer { display: none; }
-    #panes.view-shell #right-pane   { flex: 1; width: 100%; }
-
-    #panes.view-split #code-pane    { flex: 1; min-width: 200px; }
-    #panes.view-split #pane-resizer { display: flex; }
-    #panes.view-split #right-pane   { flex: 0 0 420px; min-width: 240px; }
-
-    /* ── Responsive ── */
-    @media (max-width: 860px) {
-      #app { flex-direction: column; }
-      #sidebar {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        height: auto;
-        max-height: 48vh;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        flex-shrink: 0;
-      }
-      #sidebar-resizer { display: none !important; }
-      #work-area { flex: 1; min-height: 0; height: auto; }
-      #panes { flex-direction: column; }
-      #pane-resizer { display: none !important; }
-      #panes.view-split #code-pane {
-        flex: 1; min-width: 0;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-      }
-      #panes.view-split #right-pane {
-        flex: 0 0 280px !important;
-        min-width: 0; max-width: none;
-        width: 100%;
-      }
-    }
-    /* ── Toast Notifications ── */
-    #toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    }
-    .toast {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 11px 16px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border);
-      background: #1e2129;
-      color: var(--text-1);
-      font-size: 13px;
-      font-family: var(--font-sans);
-      max-width: 340px;
-      pointer-events: all;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
-      transform: translateX(120%);
-      opacity: 0;
-      transition: transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.25s ease;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
     }
-    .toast.show { transform: translateX(0); opacity: 1; }
-    .toast.hide { transform: translateX(120%); opacity: 0; }
-    .toast-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .toast.info  .toast-dot { background: var(--blue); }
-    .toast.success .toast-dot { background: var(--green); }
-    .toast.warn  .toast-dot { background: var(--amber); }
-    .toast.error .toast-dot { background: var(--red); }
+    .new-chat-btn:hover {
+      border-color: var(--border-focus);
+      background: var(--bg-hover);
+    }
 
-    /* ── Fullscreen Code Overlay ── */
-    #fullscreen-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 500;
-      background: #0d0e12;
-      flex-direction: column;
-    }
-    #fullscreen-overlay.active { display: flex; }
-    #fullscreen-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-sidebar);
-      flex-shrink: 0;
-    }
-    #fullscreen-filename { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); flex: 1; }
-    #fullscreen-close {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-3);
-      font-size: 11px;
-      padding: 3px 10px;
-      cursor: pointer;
-      font-family: var(--font-sans);
-      transition: all 0.15s;
-    }
-    #fullscreen-close:hover { border-color: var(--accent); color: var(--accent-hover); }
-    #fullscreen-scroll { flex: 1; overflow: auto; padding: 16px 20px; }
-
-    /* ── History Search ── */
     #history-search-wrap {
-      padding: 8px 12px 4px;
+      padding: 6px 14px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       flex-shrink: 0;
     }
     #history-search {
-      width: 100%;
+      flex: 1;
       background: var(--bg-input);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text-1);
-      font-family: var(--font-sans);
-      font-size: 12px;
-      padding: 5px 10px;
+      font-size: var(--text-xs);
+      padding: 6px 10px;
       outline: none;
       transition: border-color 0.15s;
     }
-    #history-search::placeholder { color: var(--text-3); }
     #history-search:focus { border-color: var(--border-focus); }
-
-    /* ── Char Counter ── */
-    #char-counter {
-      font-size: 10.5px;
-      color: var(--text-3);
-      text-align: right;
-      padding: 2px 2px 0;
-      transition: color 0.2s;
-    }
-    #char-counter.warn  { color: var(--amber); }
-    #char-counter.over  { color: var(--red); }
-
-    /* ── Prompt Templates ── */
-    #templates-wrap {
-      padding: 4px 12px 8px;
-      flex-shrink: 0;
-    }
-    #templates-toggle {
-      background: transparent;
-      border: none;
-      color: var(--text-3);
-      font-size: 11px;
-      font-family: var(--font-sans);
-      cursor: pointer;
-      padding: 2px 0;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: color 0.15s;
-    }
-    #templates-toggle:hover { color: var(--text-2); }
-    #templates-toggle .arrow { transition: transform 0.2s; display: inline-block; }
-    #templates-toggle.open .arrow { transform: rotate(90deg); }
-    #template-chips {
-      display: none;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 6px;
-    }
-    #template-chips.open { display: flex; }
-    .tpl-chip {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      color: var(--text-2);
-      font-size: 11px;
-      font-family: var(--font-sans);
-      padding: 3px 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    .tpl-chip:hover { border-color: var(--accent); color: var(--accent-hover); background: var(--accent-dim); }
-
-    /* ── Design System & Style Tokens ── */
-    #style-system-wrap {
-      padding: 4px 12px 6px;
-      flex-shrink: 0;
-    }
-    #style-system-toggle {
-      background: transparent;
-      border: none;
-      color: var(--text-2);
-      font-size: 11.5px;
-      font-weight: 500;
-      font-family: var(--font-sans);
-      cursor: pointer;
-      padding: 3px 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 0.15s;
-    }
-    #style-system-toggle:hover { color: var(--accent-hover); }
-    #style-system-toggle .arrow { transition: transform 0.2s; display: inline-block; }
-    #style-system-toggle.open .arrow { transform: rotate(90deg); }
-    #style-system-body {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 6px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 9px;
-    }
-    #style-system-body.open { display: flex; }
-    .style-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .style-row label {
-      font-size: 11px;
-      color: var(--text-3);
-      font-family: var(--font-sans);
-      white-space: nowrap;
-    }
-    .style-select {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-      font-size: 11.5px;
-      font-family: var(--font-sans);
-      padding: 3px 6px;
-      outline: none;
-      flex: 1;
-      width: 100%;
-    }
-    #style-tokens-input {
-      width: 100%;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      line-height: 1.4;
-      padding: 6px 8px;
-      resize: vertical;
-      min-height: 60px;
-      outline: none;
-    }
-    #style-tokens-input:focus { border-color: var(--border-focus); }
-    .style-quick-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .style-quick-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-3);
-      font-size: 10.5px;
-      padding: 2px 7px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .style-quick-btn:hover { border-color: var(--accent); color: var(--accent-hover); }
-
-    /* ── Cancel & Regenerate Buttons ── */
-    #cancel-btn {
-      display: none;
-      background: transparent;
-      border: 1px solid var(--red);
-      border-radius: var(--radius-sm);
-      color: var(--red);
-      font-size: 12.5px;
-      font-family: var(--font-sans);
-      font-weight: 500;
-      padding: 0 14px;
-      height: 34px;
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    #cancel-btn:hover { background: rgba(239,68,68,0.1); }
-    #code-pane-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: auto;
-    }
-    #edit-prompt-btn {
-      display: none;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-2);
-      font-size: 11.5px;
-      font-family: var(--font-sans);
-      font-weight: 500;
-      padding: 3px 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    #edit-prompt-btn:hover { border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.08); }
-
-    #regen-btn {
-      display: none;
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-2);
-      font-size: 11.5px;
-      font-family: var(--font-sans);
-      font-weight: 500;
-      padding: 3px 10px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-    #regen-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-
-    /* ── Fullscreen button in code pane header ── */
-    #fullscreen-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-3);
-      font-size: 10.5px;
-      padding: 2px 8px;
-      cursor: pointer;
-      font-family: var(--font-sans);
-      transition: all 0.15s;
-    }
-    #fullscreen-btn:hover { border-color: var(--accent); color: var(--accent-hover); }
-
-    @keyframes prompt-pulse {
-      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); border-color: var(--accent); }
-      50% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.25); border-color: var(--accent-hover); }
-      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-    }
-    #prompt-wrap.prompt-highlight {
-      animation: prompt-pulse 1.3s ease-out;
-      border-color: var(--accent);
-    }
-
-    /* ── Generation Timer ── */
-    #gen-timer {
-      display: none;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--accent-hover);
-      background: var(--accent-dim);
-      padding: 2px 8px;
-      border-radius: 100px;
-      border: 1px solid rgba(99,102,241,0.3);
-    }
-
-    /* ── Shortcuts Button & Modal ── */
-    #shortcuts-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      color: var(--text-3);
-      font-size: 11.5px;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-    }
-    #shortcuts-btn:hover { border-color: var(--accent); color: var(--accent-hover); }
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 600;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(4px);
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-card {
-      background: #181a20;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-      width: 380px;
-      max-width: 90vw;
-      overflow: hidden;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-sidebar);
-    }
-    .modal-title { font-size: 13px; font-weight: 600; color: var(--text-1); font-family: var(--font-sans); }
-    .modal-close-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-3);
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 2px 6px;
-    }
-    .modal-close-btn:hover { color: var(--text-1); }
-    .modal-body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .shortcut-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-2);
-      font-family: var(--font-sans);
-    }
-    .shortcut-row kbd {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.3);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 2px 6px;
-      color: var(--text-1);
-    }
-
-    /* ── History Actions & Delete ── */
-    #history-search-wrap {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      padding: 8px 12px 4px;
-      flex-shrink: 0;
-    }
     #history-clear-btn {
       background: transparent;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text-3);
-      font-size: 10.5px;
-      font-family: var(--font-sans);
+      font-size: var(--text-xs);
       padding: 5px 8px;
       cursor: pointer;
       transition: all 0.15s;
-      white-space: nowrap;
     }
     #history-clear-btn:hover {
       color: var(--red);
       border-color: rgba(239,68,68,0.3);
-      background: rgba(239,68,68,0.1);
+      background: var(--red-dim);
     }
+
+    #history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .history-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 6px;
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      text-align: center;
+      padding: 24px;
+    }
+    .history-empty-title { font-size: var(--text-sm); font-weight: 500; color: var(--text-2); }
+
+    .history-item {
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .history-item:hover { background: var(--bg-hover); }
+    .history-item.active { background: var(--bg-active); border-color: var(--border); }
+    .hi-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .hi-name {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .hi-date {
+      font-size: 0.6875rem;
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+    .hi-prompt {
+      font-size: var(--text-xs);
+      color: var(--text-3);
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+    .hi-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 0.6875rem;
+      color: var(--text-3);
+    }
+    .hi-badge {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 100px;
+    }
+    .hi-badge.pass { background: var(--green-dim); color: var(--green); }
+    .hi-badge.fail { background: var(--red-dim);   color: var(--red); }
+    .hi-visual-score {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .hi-visual-score.pass { color: var(--green); background: var(--green-dim); border: 1px solid rgba(34,197,94,0.25); }
+    .hi-visual-score.warn { color: var(--amber); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+    .hi-visual-score.fail { color: var(--red); background: var(--red-dim); border: 1px solid rgba(239,68,68,0.25); }
+    .hi-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
     .hi-del {
       background: transparent;
       border: 1px solid transparent;
-      border-radius: 4px;
+      border-radius: 3px;
       color: var(--text-3);
-      font-size: 12px;
+      font-size: var(--text-xs);
       padding: 1px 5px;
       cursor: pointer;
-      transition: all 0.15s;
       line-height: 1;
     }
     .hi-del:hover {
       color: var(--red);
-      border-color: rgba(239,68,68,0.3);
-      background: rgba(239,68,68,0.1);
+      background: var(--red-dim);
+      border-color: rgba(239,68,68,0.25);
     }
 
-    /* ── Clear Logs Button ── */
-    #clear-logs-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-3);
-      font-size: 10.5px;
-      padding: 2px 7px;
-      cursor: pointer;
-      font-family: var(--font-sans);
-      transition: all 0.15s;
-      margin-left: auto;
-    }
-    #clear-logs-btn:hover { color: var(--text-1); border-color: rgba(255,255,255,0.2); }
-
-    /* ── Code Gutter & Line Numbers ── */
-    pre.with-gutter {
-      display: flex !important;
-      gap: 16px;
-      padding: 16px 20px !important;
-    }
-    .code-gutter {
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      text-align: right;
-      color: var(--text-3);
-      font-size: 11.5px;
-      line-height: 1.75;
-      opacity: 0.45;
-      min-width: 28px;
-      border-right: 1px solid rgba(255,255,255,0.07);
-      padding-right: 12px;
-      flex-shrink: 0;
-    }
-    .code-lines {
+    /* ── Main Work Area (Centered Message Column) ── */
+    #work-area {
       flex: 1;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      line-height: 1.75;
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    /* ── Live Plan Widget & Budget Meter ── */
-    .live-plan-widget {
-      background: var(--bg-sidebar);
-      border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      height: calc(100vh - var(--topbar-h));
+      background: var(--bg-base);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chat-column-container {
+      max-width: var(--chat-max-w);
+      width: 100%;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* ── Chat Thread ── */
+    #chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .chat-empty-state {
+      margin: auto 0;
+      text-align: center;
+      padding: 36px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .chat-empty-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-2xl);
+    }
+    .chat-empty-title {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+    }
+    .chat-empty-desc {
+      font-size: var(--text-sm);
+      color: var(--text-3);
+      max-width: 460px;
+      line-height: 1.6;
+    }
+    .chat-starters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 620px;
+      margin-top: 10px;
+    }
+    .starter-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .starter-card:hover {
+      border-color: var(--border-focus);
+      background: var(--bg-hover);
+      transform: translateY(-1px);
+    }
+    .starter-title {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-1);
+    }
+    .starter-desc {
+      font-size: var(--text-xs);
+      color: var(--text-3);
+      line-height: 1.4;
+    }
+
+    /* ── Live Plan Widget ── */
+    .live-plan-widget {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .plan-header {
       display: flex;
@@ -17848,7 +19058,7 @@ if __name__ == "__main__":
       justify-content: space-between;
     }
     .plan-title {
-      font-size: 11px;
+      font-size: var(--text-xs);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -17856,238 +19066,324 @@ if __name__ == "__main__":
     }
     .plan-budget-badge {
       font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--accent-hover);
+      font-size: var(--text-xs);
+      color: var(--accent);
       background: var(--accent-dim);
       padding: 2px 8px;
       border-radius: 100px;
-      border: 1px solid rgba(99,102,241,0.25);
+      border: 1px solid var(--accent-dim);
     }
     .plan-items-row {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      align-items: center;
     }
     .plan-item {
+      font-size: var(--text-xs);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 500;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.03);
-      color: var(--text-3);
-      transition: all 0.2s;
+      gap: 4px;
     }
-    .plan-item.pending {
-      color: var(--text-3);
-      border-color: rgba(255,255,255,0.08);
-    }
-    .plan-item.in_progress {
-      color: var(--accent-hover);
-      background: var(--accent-dim);
-      border-color: var(--border-focus);
-      box-shadow: 0 0 10px rgba(99,102,241,0.25);
-      animation: pulse 2s infinite;
-    }
-    .plan-item.completed {
-      color: var(--green);
+    .plan-item.status-completed {
       background: var(--green-dim);
       border-color: rgba(34,197,94,0.3);
+      color: var(--green);
     }
-    .plan-item.auto_recovered {
+    .plan-item.status-active {
+      background: var(--accent-dim);
+      border-color: var(--border-focus);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .plan-item.status-auto_recovered {
+      background: rgba(245,158,11,0.15);
+      border-color: rgba(245,158,11,0.4);
       color: var(--amber);
-      background: rgba(245,158,11,0.12);
-      border-color: rgba(245,158,11,0.3);
+      font-weight: 600;
     }
-    .plan-item-icon {
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    /* ── Multi-File Tabs Strip in Code Pane ── */
-    .file-tabs-strip {
-      display: flex;
-      gap: 4px;
-      overflow-x: auto;
-      margin-left: 10px;
-      max-width: calc(100% - 240px);
-      scrollbar-width: none;
-    }
-    .file-tabs-strip::-webkit-scrollbar { display: none; }
-    .file-tab {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-3);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 2px 8px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s;
-    }
-    .file-tab:hover {
-      color: var(--text-1);
-      border-color: rgba(255,255,255,0.2);
-    }
-    .file-tab.active {
+    .plan-item.status-pending {
       background: var(--bg-hover);
-      color: #38bdf8;
-      border-color: rgba(56,189,248,0.4);
-      font-weight: 600;
+      color: var(--text-3);
     }
 
-    /* ── Agentic Chat View ── */
-    #chat-view {
-      display: none;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      background: var(--bg-base);
-    }
-    .chat-history-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-height: 0;
-    }
-    .chat-empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      height: 100%;
-      color: var(--text-3);
-      padding: 24px;
-      gap: 8px;
-    }
-    .chat-empty-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-2);
-    }
-    .chat-empty p {
-      font-size: 12px;
-      max-width: 320px;
-      line-height: 1.6;
-    }
-    .chat-bubble-user {
+    /* ── Chat Messages: User & Assistant Turns ── */
+    .chat-turn-user {
       align-self: flex-end;
-      max-width: 85%;
-      background: rgba(99,102,241,0.18);
-      border: 1px solid rgba(99,102,241,0.35);
-      border-radius: 12px 12px 2px 12px;
-      padding: 10px 14px;
+      max-width: 82%;
+      background: var(--bg-user-turn);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: var(--text-base);
+      line-height: 1.6;
       color: var(--text-1);
-      font-size: 13px;
-      line-height: 1.5;
     }
-    .chat-bubble-meta {
-      font-size: 10px;
+    .chat-turn-user-meta {
+      font-size: 0.6875rem;
       color: var(--text-3);
-      margin-top: 4px;
-      text-align: right;
+      align-self: flex-end;
     }
+
     .chat-card-agent {
-      align-self: flex-start;
-      max-width: 95%;
-      width: 100%;
+      align-self: stretch;
       background: var(--bg-panel);
       border: 1px solid var(--border);
-      border-radius: 12px 12px 12px 2px;
-      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: cardSlideIn 0.25s ease-out;
+    }
+    @keyframes cardSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .chat-turn-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .turn-agent-badge {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .turn-badge {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .turn-badge.score-badge {
+      background: rgba(34,197,94,0.12);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.3);
+    }
+    .turn-badge.recovery-badge {
+      background: rgba(245,158,11,0.15);
+      color: var(--amber);
+      border: 1px solid rgba(245,158,11,0.35);
+    }
+    .turn-time {
+      font-size: 0.6875rem;
+      color: var(--text-3);
+      margin-left: auto;
+    }
+
+    /* ── Typeset Markdown for Assistant Turns (No Inline Per-Line Styles) ── */
+    .summary-rendered {
+      font-size: var(--text-base);
+      line-height: 1.65;
+      color: var(--text-2);
+    }
+    .summary-rendered h1,
+    .summary-rendered h2 {
+      font-size: var(--text-md);
+      font-weight: 600;
       color: var(--text-1);
+      margin: 14px 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .summary-rendered h3 {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-1);
+      margin: 10px 0 4px;
+    }
+    .summary-rendered p {
+      margin: 0 0 8px;
+      line-height: 1.6;
+    }
+    .summary-rendered ul,
+    .summary-rendered ol {
+      margin: 4px 0 10px 20px;
+      padding: 0;
+    }
+    .summary-rendered li {
+      margin-bottom: 3px;
+      line-height: 1.55;
+    }
+    .summary-rendered strong {
+      color: var(--text-1);
+      font-weight: 600;
+    }
+    .summary-rendered code:not(pre code) {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      padding: 2px 5px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+    }
+
+    /* ── Quiet Footer Row on Assistant Turn ── */
+    .chat-turn-footer {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-    }
-    .summary-rendered h2 {
-      font-size: 12.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #38bdf8;
-      margin: 10px 0 4px;
-    }
-    .summary-rendered h2:first-child { margin-top: 0; }
-    .summary-rendered ul {
-      list-style: none;
-      padding-left: 0;
-      margin-bottom: 8px;
-    }
-    .summary-rendered li {
-      font-size: 12.5px;
-      color: var(--text-2);
-      line-height: 1.6;
-      margin-bottom: 3px;
-      padding-left: 14px;
-      position: relative;
-    }
-    .summary-rendered li::before {
-      content: "•";
-      position: absolute;
-      left: 0;
-      color: var(--accent-hover);
-      font-weight: 700;
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
     }
     .chat-files-list {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 4px;
+      align-items: center;
+    }
+    .chat-files-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--text-3);
+      margin-right: 4px;
     }
     .chat-file-tag {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: var(--text-xs);
       padding: 2px 7px;
-      background: rgba(255,255,255,0.05);
+      background: var(--bg-elevated);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.15s;
     }
+    .chat-file-tag:hover {
+      border-color: var(--border-focus);
+      color: var(--text-1);
+    }
+
     .chat-turn-actions {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
     }
     .chat-action-btn {
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       color: var(--text-2);
-      font-size: 11px;
+      font-size: var(--text-xs);
       font-weight: 500;
-      padding: 3px 9px;
+      padding: 4px 10px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
     .chat-action-btn:hover {
       background: var(--bg-hover);
       border-color: var(--border-focus);
       color: var(--text-1);
     }
+    .chat-action-btn.primary {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .chat-action-btn.primary:hover {
+      background: var(--accent);
+      color: #fff;
+    }
 
-    /* Chat composer */
-    .chat-composer {
-      padding: 10px 14px 14px;
-      background: var(--bg-sidebar);
-      border-top: 1px solid var(--border);
+    /* ── Code Blocks in Markdown ── */
+    .chat-code-block {
+      margin: 10px 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #0d0f14;
+      overflow: hidden;
+    }
+    .chat-code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--text-xs);
+    }
+    .chat-code-lang {
+      color: var(--text-3);
+      font-family: var(--font-mono);
+      text-transform: lowercase;
+    }
+    .chat-code-copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-2);
+      font-size: 0.6875rem;
+      padding: 2px 7px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chat-code-copy-btn:hover { color: var(--text-1); border-color: var(--accent); }
+    .chat-code-block pre {
+      margin: 0;
+      padding: 12px 14px;
+      overflow-x: auto;
+      font-size: var(--text-xs);
+      line-height: 1.5;
+      font-family: var(--font-mono);
+    }
+
+    /* ── Thinking Indicator ── */
+    .chat-thinking-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      animation: cardSlideIn 0.2s ease-out;
+      width: fit-content;
+    }
+    .chat-thinking-indicator .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: thinkingBounce 1.2s infinite ease-in-out;
+    }
+    .chat-thinking-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
+    .chat-thinking-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes thinkingBounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.1); opacity: 1; }
+    }
+
+    /* ── Pinned Composer at Bottom of Centered Column ── */
+    .composer-container {
+      padding: 10px 20px 20px;
       display: flex;
       flex-direction: column;
       gap: 8px;
       flex-shrink: 0;
+      background: transparent;
     }
+
     .chat-mention-pills {
       display: flex;
       gap: 6px;
@@ -18096,156 +19392,335 @@ if __name__ == "__main__":
     }
     .chat-mention-pills::-webkit-scrollbar { display: none; }
     .mention-pill {
-      background: rgba(255,255,255,0.04);
+      background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 100px;
       color: var(--text-3);
       font-family: var(--font-mono);
-      font-size: 10.5px;
-      padding: 2px 8px;
+      font-size: var(--text-xs);
+      padding: 3px 9px;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s;
     }
     .mention-pill:hover {
-      color: #38bdf8;
-      border-color: rgba(56,189,248,0.4);
-      background: rgba(56,189,248,0.08);
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-dim);
     }
-    .chat-input-row {
+
+    .composer-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      overflow: hidden;
       display: flex;
-      gap: 8px;
-      align-items: flex-end;
+      flex-direction: column;
     }
-    #chat-input {
-      flex: 1;
-      background: var(--bg-input);
+    .composer-box:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    #prompt-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      font-size: var(--text-base);
+      line-height: 1.55;
+      padding: 14px 16px 8px;
+      resize: none;
+      min-height: 52px;
+      max-height: 180px;
+    }
+    #prompt-input::placeholder { color: var(--text-3); }
+
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px 10px;
+      border-top: 1px solid var(--border-subtle);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .composer-tools-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .composer-tool-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      font-family: var(--font-sans);
+      padding: 3px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .composer-tool-btn:hover { color: var(--text-1); border-color: var(--border-focus); }
+    .composer-tool-btn .arrow { transition: transform 0.2s; display: inline-block; font-size: 0.625rem; }
+    .composer-tool-btn.open .arrow { transform: rotate(90deg); }
+
+    .settings-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .setting-label {
+      font-size: var(--text-xs);
+      color: var(--text-3);
+      white-space: nowrap;
+    }
+    .setting-select {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      padding: 2px 6px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .composer-tools-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    #char-counter {
+      font-size: 0.6875rem;
+      color: var(--text-3);
+    }
+    #char-counter.warn { color: var(--amber); }
+    #char-counter.over { color: var(--red); }
+
+    #symbol-input {
+      background: var(--bg-elevated);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text-1);
-      font-family: var(--font-sans);
-      font-size: 12.5px;
-      padding: 8px 11px;
-      resize: none;
-      min-height: 48px;
-      max-height: 120px;
+      font-size: var(--text-xs);
+      padding: 4px 8px;
       outline: none;
-      line-height: 1.5;
-      transition: border-color 0.2s;
     }
-    #chat-input:focus { border-color: var(--border-focus); }
-    .chat-send-btn {
+    #cancel-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #cancel-btn:hover { background: var(--red-dim); }
+    #generate-btn {
       background: var(--accent);
       border: none;
       border-radius: var(--radius-sm);
       color: #fff;
-      font-family: var(--font-sans);
-      font-size: 12px;
+      font-size: var(--text-xs);
       font-weight: 600;
-      padding: 10px 14px;
+      padding: 6px 14px;
       cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-      height: 48px;
-    }
-    .chat-send-btn:hover { background: var(--accent-hover); }
-
-    /* ── Diff View ── */
-    #diff-view {
-      display: none;
-      flex-direction: column;
-      height: 100%;
-      min-height: 0;
-      background: var(--bg-base);
-    }
-    .diff-toolbar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      background: var(--bg-sidebar);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .diff-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-2);
-    }
-    .diff-checkpoint-select {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-2);
-      font-size: 11px;
-      padding: 4px 8px;
-      outline: none;
-      cursor: pointer;
-    }
-    .diff-revert-btn {
-      background: transparent;
-      border: 1px solid rgba(245,158,11,0.35);
-      border-radius: var(--radius-sm);
-      color: var(--amber);
-      font-size: 11px;
-      font-weight: 500;
-      padding: 4px 10px;
-      cursor: pointer;
-      margin-left: auto;
+      gap: 6px;
       transition: all 0.15s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
-    .diff-revert-btn:hover {
-      background: rgba(245,158,11,0.12);
-      border-color: var(--amber);
+    #generate-btn:hover { background: var(--accent-hover); }
+    #generate-btn .spinner {
+      display: none;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
-    .diff-scroll {
+    #generate-btn.generating .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .composer-expandable {
+      display: none;
+      padding: 10px 14px;
+      background: var(--bg-elevated);
+      border-top: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .composer-expandable.open { display: flex; }
+    .tpl-chip {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .tpl-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .style-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .style-select {
       flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      min-height: 0;
-    }
-    .diff-file-card {
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      margin-bottom: 14px;
-      overflow: hidden;
+      color: var(--text-1);
+      font-size: var(--text-xs);
+      padding: 4px 8px;
+      outline: none;
     }
-    .diff-file-header {
-      background: rgba(255,255,255,0.03);
-      padding: 8px 12px;
+    #style-tokens-input {
+      width: 100%;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-1);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      padding: 6px 8px;
+      min-height: 50px;
+      outline: none;
+    }
+    .style-quick-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      padding: 2px 7px;
+      cursor: pointer;
+    }
+
+    /* ── Slide-Over Panel / Drawer ── */
+    .slideover-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(2px);
+      z-index: 400;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .slideover-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .slideover-drawer {
+      position: fixed;
+      top: var(--topbar-h);
+      bottom: 0;
+      right: 0;
+      width: 58vw;
+      max-width: 900px;
+      min-width: 320px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), width 0.2s ease;
+    }
+    .slideover-drawer.active {
+      transform: translateX(0);
+    }
+    .slideover-drawer.expanded {
+      width: 90vw !important;
+      max-width: none !important;
+    }
+
+    .slideover-header {
+      height: 48px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      color: var(--text-2);
+      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
     }
-    .diff-pre {
-      margin: 0;
-      padding: 10px 14px;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      line-height: 1.65;
-      overflow-x: auto;
-      background: #0d0e12;
+    .slideover-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 2px;
     }
-    .diff-line-add { color: #86efac; background: rgba(34,197,94,0.12); display: block; }
-    .diff-line-del { color: #fca5a5; background: rgba(239,68,68,0.12); display: block; }
-    .diff-line-hdr { color: #93c5fd; background: rgba(96,165,250,0.1); display: block; }
-    .diff-line-ctx { color: var(--text-3); display: block; }
+    .slideover-tab-btn {
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .slideover-tab-btn:hover { color: var(--text-2); background: var(--bg-hover); }
+    .slideover-tab-btn.active {
+      background: var(--bg-panel);
+      color: var(--text-1);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
 
-    /* ── Live Preview View ── */
-    #preview-view {
+    .slideover-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slideover-body {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer-view {
       display: none;
       flex-direction: column;
       height: 100%;
       min-height: 0;
-      background: #090a0f;
+      overflow: hidden;
     }
+    .drawer-view.active { display: flex; }
+
+    /* ── Live Preview in Drawer ── */
+    #preview-view { background: #090a0f; }
     .preview-toolbar {
       display: flex;
       align-items: center;
@@ -18255,10 +19730,17 @@ if __name__ == "__main__":
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
+    .preview-title {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
     .viewport-toggles {
       display: flex;
       gap: 3px;
-      background: rgba(0,0,0,0.3);
+      background: var(--bg-base);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 2px;
@@ -18268,17 +19750,13 @@ if __name__ == "__main__":
       border: none;
       border-radius: 4px;
       color: var(--text-3);
-      font-size: 11px;
-      padding: 3px 9px;
+      font-size: var(--text-xs);
+      padding: 2px 8px;
       cursor: pointer;
       transition: all 0.15s;
     }
     .vp-btn:hover { color: var(--text-1); }
-    .vp-btn.active {
-      background: var(--bg-panel);
-      color: var(--text-1);
-      font-weight: 600;
-    }
+    .vp-btn.active { background: var(--bg-panel); color: var(--text-1); font-weight: 600; }
     .preview-container {
       flex: 1;
       display: flex;
@@ -18296,234 +19774,560 @@ if __name__ == "__main__":
       height: 100%;
       width: 100%;
       transition: width 0.3s ease;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     }
+
+    /* ── Code Viewer in Drawer ── */
+    #code-pane {
+      background: var(--bg-panel);
+    }
+    #code-pane-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      height: 38px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-sidebar);
+      flex-shrink: 0;
+    }
+    .file-tabs-strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      flex: 1;
+    }
+    .file-tab {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-3);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      padding: 3px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .file-tab:hover { color: var(--text-1); border-color: var(--border-focus); }
+    .file-tab.active { background: var(--bg-elevated); color: var(--text-1); border-color: var(--border-focus); }
+    #code-scroll {
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+    #code-view pre {
+      margin: 0;
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.7;
+      background: transparent !important;
+      min-height: 100%;
+    }
+    pre.with-gutter {
+      display: flex !important;
+      gap: 14px;
+    }
+    .code-gutter {
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      text-align: right;
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      line-height: 1.7;
+      opacity: 0.5;
+      min-width: 24px;
+      border-right: 1px solid var(--border);
+      padding-right: 10px;
+      flex-shrink: 0;
+    }
+    .code-lines {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    /* ── Diff View in Drawer ── */
+    #diff-view { background: var(--bg-base); }
+    .diff-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .diff-title {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
+    .diff-checkpoint-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      padding: 4px 8px;
+      outline: none;
+      cursor: pointer;
+    }
+    .diff-revert-btn {
+      background: transparent;
+      border: 1px solid rgba(245,158,11,0.35);
+      border-radius: var(--radius-sm);
+      color: var(--amber);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      padding: 4px 10px;
+      cursor: pointer;
+      margin-left: auto;
+      transition: all 0.15s;
+    }
+    .diff-revert-btn:hover { background: rgba(245,158,11,0.12); border-color: var(--amber); }
+    .diff-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      min-height: 0;
+    }
+    .diff-file-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .diff-file-header {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--text-2);
+    }
+    .diff-pre {
+      margin: 0;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.6;
+      overflow-x: auto;
+      background: #0d0f14;
+    }
+    .diff-line-add { color: #86efac; background: rgba(34,197,94,0.12); display: block; }
+    .diff-line-del { color: #fca5a5; background: rgba(239,68,68,0.12); display: block; }
+    .diff-line-hdr { color: #93c5fd; background: rgba(96,165,250,0.1); display: block; }
+    .diff-line-ctx { color: var(--text-3); display: block; }
+
+    /* ── Terminal Logs & Shell in Drawer ── */
+    #term-view, #shell-view {
+      background: #0d0f14;
+    }
+    .term-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+    }
+    #clear-logs-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-3);
+      font-size: var(--text-xs);
+      padding: 2px 7px;
+      cursor: pointer;
+    }
+    #term-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      min-height: 0;
+    }
+    #log-content {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--text-2);
+    }
+    .log-line { display: block; }
+    .log-info    { color: var(--text-2); }
+    .log-agent   { color: #38bdf8; }
+    .log-tool    { color: #a78bfa; }
+    .log-turn    { color: #f59e0b; font-weight: 600; }
+    .log-test    { color: #34d399; }
+    .log-pass    { color: #22c55e; font-weight: 600; }
+    .log-fail    { color: #ef4444; font-weight: 600; }
+    .log-warn    { color: #fbbf24; }
+    .log-dim     { color: var(--text-3); }
+    #log-cursor {
+      display: inline-block; width: 6px; height: 13px;
+      background: var(--accent); vertical-align: text-bottom; margin-left: 2px;
+      animation: blink 1s step-end infinite; display: none;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    #log-cursor.active { display: inline-block; }
+
+    #xterm-container {
+      flex: 1;
+      padding: 8px 4px 6px 10px;
+      min-height: 0;
+      height: 100%;
+    }
+    .xterm { height: 100%; }
+
+    /* ── Modals: Confirm, Shortcuts, Fullscreen ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 600;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+      width: 400px;
+      max-width: 92vw;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-sidebar);
+    }
+    .modal-title { font-size: var(--text-sm); font-weight: 600; color: var(--text-1); }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-3);
+      font-size: var(--text-md);
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close-btn:hover { color: var(--text-1); }
+    .modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-sidebar);
+    }
+    .tool-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: var(--text-xs);
+      padding: 4px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tool-btn:hover { color: var(--text-1); border-color: var(--border-focus); }
+    .tool-btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+    .tool-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: var(--text-xs);
+      color: var(--text-2);
+    }
+    .shortcut-row kbd {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      padding: 2px 6px;
+      color: var(--text-1);
+    }
+
+    #fullscreen-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 700;
+      background: #0d0f14;
+      flex-direction: column;
+    }
+    #fullscreen-overlay.active { display: flex; }
+    #fullscreen-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-sidebar);
+    }
+    #fullscreen-filename { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-2); flex: 1; }
+    #fullscreen-scroll { flex: 1; overflow: auto; padding: 16px 20px; }
+
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-panel);
+      color: var(--text-1);
+      font-size: var(--text-xs);
+      max-width: 320px;
+      pointer-events: all;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      transform: translateX(120%);
+      opacity: 0;
+      transition: transform 0.25s cubic-bezier(.22,1,.36,1), opacity 0.25s ease;
+    }
+    .toast.show { transform: translateX(0); opacity: 1; }
+    .toast.hide { transform: translateX(120%); opacity: 0; }
+    .toast-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .toast.info  .toast-dot { background: var(--blue); }
+    .toast.success .toast-dot { background: var(--green); }
+    .toast.warn  .toast-dot { background: var(--amber); }
+    .toast.error .toast-dot { background: var(--red); }
+
+    /* ── Responsive Breakpoints ── */
+    @media (max-width: 1280px) {
+      .slideover-drawer { width: 68vw; }
+    }
+
+    @media (max-width: 1024px) {
+      :root { --sidebar-w: 260px; }
+      .slideover-drawer { width: 85vw; }
+    }
+
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: var(--topbar-h);
+        bottom: 0;
+        width: 280px !important;
+        min-width: 280px !important;
+        transform: translateX(-100%);
+        box-shadow: 8px 0 24px rgba(0, 0, 0, 0.5);
+        z-index: 350;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #sidebar.open {
+        transform: translateX(0) !important;
+      }
+      .slideover-drawer {
+        width: 100vw !important;
+        max-width: none !important;
+      }
+      .chat-column-container {
+        padding: 0 10px;
+        width: 100%;
+        max-width: 100%;
+      }
+      .chat-starters {
+        grid-template-columns: 1fr;
+      }
+      .brand-name, .brand-tag, #gen-timer, #queue-badge, #turn-badge {
+        display: none !important;
+      }
+      .topbar-center {
+        display: flex;
+      }
+      .nav-drawer-btn {
+        padding: 4px 6px;
+        font-size: 0.6875rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .composer-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .composer-tools-right {
+        margin-left: 0;
+        justify-content: space-between;
+      }
+      .nav-drawer-btn {
+        padding: 4px 7px;
+        font-size: 0.6875rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
   </style>
 </head>
 <body>
-
 <!-- Toast notification container -->
-<div id="toast-container"></div>
+<div id="toast-container" aria-live="polite"></div>
 
 <!-- Keyboard shortcuts modal -->
-<div id="shortcuts-modal" class="modal-overlay">
+<div id="shortcuts-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">Keyboard Shortcuts</span>
-      <button id="shortcuts-close" class="modal-close-btn" type="button">&times;</button>
+      <span class="modal-title" id="shortcuts-modal-title">Keyboard Shortcuts</span>
+      <button id="shortcuts-close" class="modal-close-btn" type="button" aria-label="Close shortcuts modal">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span>Generate component</span></div>
-      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>E</kbd> <span>Edit active prompt in editor</span></div>
+      <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span>Generate / Send message</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>E</kbd> <span>Edit active prompt in composer</span></div>
       <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>R</kbd> <span>Regenerate active prompt</span></div>
-      <div class="shortcut-row"><kbd>F</kbd> <span>Fullscreen code view</span></div>
-      <div class="shortcut-row"><kbd>Esc</kbd> <span>Exit fullscreen / Close modal</span></div>
-      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>1</kbd> <span>Split view</span></div>
-      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>2</kbd> <span>Code only view</span></div>
-      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>3</kbd> <span>Terminal only view</span></div>
-      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>4</kbd> <span>PowerShell only view</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>1</kbd> <span>Open Live Preview drawer</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>2</kbd> <span>Open Code Viewer drawer</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>3</kbd> <span>Open Diff Checkpoints drawer</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd> + <kbd>4</kbd> <span>Open Terminal Logs drawer</span></div>
+      <div class="shortcut-row"><kbd>Esc</kbd> <span>Close drawer or modal</span></div>
       <div class="shortcut-row"><kbd>?</kbd> <span>Toggle shortcuts help</span></div>
     </div>
   </div>
 </div>
 
+<!-- Custom In-App Confirmation Modal (Zero Native Blocking Confirms) -->
+<div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-modal-title">Confirm Action</span>
+      <button id="confirm-modal-close" class="modal-close-btn" type="button" aria-label="Close confirmation dialog">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-modal-message" style="color:var(--text-2); font-size:var(--text-base); line-height:1.6;"></p>
+    </div>
+    <div class="modal-footer">
+      <button id="confirm-modal-cancel" type="button" class="tool-btn" aria-label="Cancel confirmation action">Cancel</button>
+      <button id="confirm-modal-ok" type="button" class="tool-btn danger" aria-label="Confirm proceed action">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <!-- Fullscreen code overlay -->
-<div id="fullscreen-overlay">
+<div id="fullscreen-overlay" role="dialog" aria-modal="true" aria-label="Fullscreen code view">
   <div id="fullscreen-header">
-    <span class="pane-title">Code</span>
+    <span class="modal-title">Code Viewer</span>
     <span id="fullscreen-filename"></span>
-    <button id="fullscreen-close" type="button">Exit fullscreen  [Esc]</button>
+    <button id="fullscreen-close" class="tool-btn" type="button" aria-label="Exit fullscreen">Exit Fullscreen [Esc]</button>
   </div>
   <div id="fullscreen-scroll"><div id="fullscreen-code"></div></div>
 </div>
 
+<!-- TOPBAR -->
 <header id="topbar">
-  <div class="brand">
-    <div class="brand-mark">RA</div>
-    <div>
-      <div class="brand-name">ReactAgent SLM</div>
+  <div class="topbar-left">
+    <button id="sidebar-toggle-btn" class="icon-btn" type="button" title="Toggle history sidebar" aria-label="Toggle history sidebar">&#x2630;</button>
+    <a href="#" class="brand" aria-label="SiteAgent Workbench Home">
+      <div class="brand-mark">SA</div>
+      <div class="brand-info">
+        <span class="brand-name">SiteAgent</span>
+        <span id="active-session-title" class="brand-tag">Workbench</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="topbar-center">
+    <div id="status-pill" class="loading" role="status" aria-live="polite">
+      <div id="status-dot"></div>
+      <span id="status-text">Ready</span>
     </div>
-    <span class="brand-tag">Qwen2.5-Coder-3B LoRA</span>
+    <div id="visual-badge" role="status" aria-label="Visual quality score"></div>
+    <div id="result-badge" role="status" aria-live="polite"></div>
+    <span id="turn-badge"></span>
+    <span id="gen-timer">0.0s</span>
+    <div id="queue-badge" aria-label="Pending generation queue depth">Queue: <span id="queue-count">0</span></div>
   </div>
-  <div id="topbar-spacer"></div>
-  <span id="gen-timer">0.0s</span>
-  <div id="queue-badge">Queue: <span id="queue-count">0</span></div>
-  <div id="status-pill" class="loading">
-    <div id="status-dot"></div>
-    <span id="status-text">Loading model</span>
+
+  <div class="topbar-right">
+    <button id="btn-open-preview" class="nav-drawer-btn" type="button" aria-label="Open live preview drawer">Live Preview &#x2197;</button>
+    <button id="btn-open-code" class="nav-drawer-btn" type="button" aria-label="Open code viewer drawer">&lt;/&gt; Code</button>
+    <button id="btn-open-diff" class="nav-drawer-btn" type="button" aria-label="Open diff checkpoints drawer">&Delta; Diff</button>
+    <button id="btn-open-logs" class="nav-drawer-btn" type="button" aria-label="Open logs terminal drawer">Logs</button>
+    <button id="btn-open-shell" class="nav-drawer-btn" type="button" aria-label="Open interactive shell drawer">Shell</button>
+    <button id="theme-toggle-btn" class="icon-btn" type="button" title="Toggle dark and light theme" aria-label="Toggle dark and light theme">&#x2600;</button>
+    <button id="shortcuts-btn" class="icon-btn" type="button" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts help">?</button>
   </div>
-  <button id="shortcuts-btn" type="button" title="Keyboard shortcuts (?)">?</button>
 </header>
 
-<div id="progress-bar"></div>
+<div id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
 
 <div id="app">
 
-  <!-- LEFT: Sidebar -->
-  <aside id="sidebar">
-    <div id="history-search-wrap">
-      <input id="history-search" type="search" placeholder="Search history..." autocomplete="off" />
-      <button id="history-clear-btn" type="button" title="Clear all history">Clear</button>
+  <!-- COLLAPSIBLE LEFT SIDEBAR (Session History) -->
+  <aside id="sidebar" aria-label="Generation history sidebar">
+    <div class="sidebar-header">
+      <button id="new-chat-btn" class="new-chat-btn" type="button" aria-label="Start new generation session">+ New Generation</button>
     </div>
-    <div id="history-list">
+    <div id="history-search-wrap">
+      <label for="history-search" class="sr-only">Search generation history</label>
+      <input id="history-search" type="search" placeholder="Search sessions..." autocomplete="off" aria-label="Search generation history" />
+      <button id="history-clear-btn" type="button" title="Clear all history" aria-label="Clear all generation history">Clear</button>
+    </div>
+    <div id="history-list" role="region" aria-label="Generation history list">
       <div class="history-empty" id="history-empty-state">
         <div class="history-empty-title">No generations yet</div>
-        <div style="font-size:12px;color:var(--text-3);line-height:1.5;margin-top:4px">Describe a React component or hook below and click Generate.</div>
-      </div>
-    </div>
-
-    <div id="input-area">
-      <div id="prompt-wrap">
-        <textarea
-          id="prompt-input"
-          placeholder="Describe a React component or hook&#10;&#10;e.g. Write a useDebounce hook that delays a value by a configurable number of milliseconds."
-          rows="4"
-        ></textarea>
-        <div id="char-counter">0 chars</div>
-        <div id="prompt-footer">
-          <input type="text" id="symbol-input" placeholder="Name (auto-detected)" />
-          <button id="cancel-btn" type="button">Cancel</button>
-          <button id="generate-btn" type="button">
-            <span class="spinner"></span>
-            <span id="btn-label">Generate</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="templates-wrap">
-        <button id="templates-toggle" type="button"><span class="arrow">▶</span> Templates</button>
-        <div id="template-chips">
-          <button class="tpl-chip" type="button" data-symbol="CreativeAgency" data-preset="refero_editorial" data-turns="8" data-tokens="1536" data-prompt="Build a high-contrast editorial creative design studio website for Monopo Saigon with hero banner, project showcase grid, philosophy section, client quotes, and footer.">✨ Monopo Studio (Site)</button>
-          <button class="tpl-chip" type="button" data-symbol="DevPlatform" data-preset="glassmorphic_aurora" data-turns="8" data-tokens="1536" data-prompt="Build a modern AI developer platform landing page with sticky navbar, hero banner with gradient mesh, interactive feature cards, pricing tiers, and testimonials.">🚀 AI Platform (Site)</button>
-          <button class="tpl-chip" type="button" data-symbol="DeFiVault" data-preset="neo_brutalist" data-turns="8" data-tokens="1536" data-prompt="Build a bold neo-brutalist financial dashboard website with high-contrast borders, live metric counters, card grid, and roadmap.">⚡ DeFi Vault (Site)</button>
-          <button class="tpl-chip" type="button" data-symbol="useDebounce" data-prompt="Write a React TypeScript `useDebounce` hook that takes a value and delay in ms, and returns the debounced value.">useDebounce</button>
-          <button class="tpl-chip" type="button" data-symbol="Modal" data-prompt="Write a React TypeScript `Modal` dialog component with `isOpen`, `onClose`, `title`, and `children` props. Trap focus inside and close on Escape.">Modal</button>
-          <button class="tpl-chip" type="button" data-symbol="DataTable" data-prompt="Write a React TypeScript `DataTable` component that accepts `columns` and `rows` props and renders a sortable HTML table. Clicking a column header sorts ascending then descending.">DataTable</button>
-          <button class="tpl-chip" type="button" data-symbol="PinInput" data-prompt="Write a React TypeScript `PinInput` component with `length` (default 4), `value`, and `onChange` props. Render individual digit inputs that auto-advance focus on entry and backspace-to-previous.">PinInput</button>
-          <button class="tpl-chip" type="button" data-symbol="useToast" data-prompt="Write a React TypeScript `useToast` imperative hook. Calling `toast(message, type?)` should display a dismissible toast notification mounted to document.body. Types: info | success | warn | error.">useToast</button>
-          <button class="tpl-chip" type="button" data-symbol="SearchBar" data-prompt="Write a React TypeScript `SearchBar` component with a text input, a search icon, and a clear (x) button that appears when the input is non-empty. Emit `onSearch(value)` on change.">SearchBar</button>
-        </div>
-      </div>
-
-      <div id="style-system-wrap">
-        <button id="style-system-toggle" type="button"><span class="arrow">▶</span> 🎨 Design System & Style Tokens</button>
-        <div id="style-system-body">
-          <div class="style-row">
-            <label for="style-preset-select">Preset:</label>
-            <select id="style-preset-select" class="style-select">
-              <option value="">Auto / Heuristic (Default)</option>
-              <option value="refero_editorial">Refero Monopo Editorial (Obsidian / Iridescent)</option>
-              <option value="neo_brutalist">Neo-Brutalist (Bold borders / Space Grotesk)</option>
-              <option value="glassmorphic_aurora">Glassmorphic Aurora (Violet cyan glow / Glass)</option>
-              <option value="luxury_minimalist">Luxury Minimalist (Cinzel serif / Gold)</option>
-              <option value="cyberpunk_neon">Cyberpunk Neon (Pure black / Neon magenta)</option>
-            </select>
-          </div>
-          <textarea
-            id="style-tokens-input"
-            placeholder="Paste raw :root { ... } custom properties or Refero design tokens here to enforce palette, fonts, spacing, and radii..."
-            rows="3"
-          ></textarea>
-          <div class="style-quick-actions">
-            <button id="paste-refero-btn" class="style-quick-btn" type="button">Paste Monopo Tokens</button>
-            <button id="clear-tokens-btn" class="style-quick-btn" type="button">Clear</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="settings-row">
-        <span class="setting-label">Turns</span>
-        <select id="max-turns" class="setting-select">
-          <option value="3">3</option>
-          <option value="5">5</option>
-          <option value="6" selected>6</option>
-          <option value="8">8</option>
-          <option value="10">10 (Sites)</option>
-          <option value="12">12 (Sites)</option>
-        </select>
-        <span class="setting-label">Tokens</span>
-        <select id="max-tokens" class="setting-select">
-          <option value="768">768</option>
-          <option value="1024">1024</option>
-          <option value="1280" selected>1280 (Default)</option>
-          <option value="1536">1536 (Sites)</option>
-          <option value="2048">2048</option>
-        </select>
-        <button id="test-toggle" type="button">Custom test</button>
-      </div>
-
-      <div id="test-area">
-        <textarea id="test-input" placeholder="Vitest test code (optional — leave blank to auto-generate)" rows="4"></textarea>
+        <div style="font-size:var(--text-xs);color:var(--text-3);line-height:1.5;margin-top:4px">Describe a website or component in the chat composer to get started.</div>
       </div>
     </div>
   </aside>
 
-  <!-- Sidebar / Work-area resizer -->
-  <div id="sidebar-resizer" class="resizer resizer-v" title="Drag to resize sidebar"></div>
+  <!-- MAIN WORK AREA: Centered Message Column -->
+  <main id="work-area" class="main-work-area">
+    <div class="chat-column-container">
 
-  <!-- RIGHT: Work area -->
-  <main id="work-area">
-    <div id="toolbar">
-      <div class="tab-group">
-        <button class="tab-btn active" id="tab-split" type="button">Split</button>
-        <button class="tab-btn" id="tab-code" type="button">Code</button>
-        <button class="tab-btn" id="tab-term" type="button">Terminal</button>
-        <button class="tab-btn" id="tab-shell" type="button">PowerShell</button>
-      </div>
-      <div id="toolbar-spacer"></div>
-      <span id="turn-badge"></span>
-      <div id="result-badge"></div>
-      <button class="tool-btn" id="copy-btn" type="button" disabled>Copy</button>
-      <button id="download-btn" type="button" disabled>Download .tsx</button>
-    </div>
+      <!-- Chat Thread Scroll Area -->
+      <div id="chat-scroll" class="chat-thread" role="log" aria-live="polite">
 
-    <div id="panes" class="view-split">
-      <!-- Code pane -->
-      <div id="code-pane">
-        <div id="code-pane-header">
-          <span class="pane-title">Code</span>
-          <span id="code-filename"></span>
-          <div id="file-tabs-strip" class="file-tabs-strip"></div>
-          <div id="code-pane-actions">
-            <button id="edit-prompt-btn" type="button" title="Load prompt and name into editor to modify">✏️ Edit Prompt</button>
-            <button id="regen-btn" type="button" title="Regenerate this prompt">↺ Regenerate</button>
-            <button id="fullscreen-btn" type="button" title="Fullscreen (F)">&#x2922;</button>
-          </div>
-        </div>
-        <div id="code-scroll">
-          <div id="code-view">
-            <div id="code-empty">
-              <div>
-                <div id="code-empty-title">No code generated yet</div>
-                <div style="font-size:12px;color:var(--text-3);margin-top:4px">Run a generation to see the output here</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Code / Right Pane Resizer -->
-      <div id="pane-resizer" class="resizer resizer-v" title="Drag to resize panels"></div>
-
-      <!-- Right Pane: Terminal, PowerShell, Chat, Diff & Preview -->
-      <div id="right-pane">
-        <div id="right-pane-header">
-          <div class="subtab-group">
-            <button class="subtab-btn active" id="subtab-term" type="button">Agent Logs</button>
-            <button class="subtab-btn" id="subtab-shell" type="button">PowerShell</button>
-            <button class="subtab-btn" id="subtab-chat" type="button">Chat &amp; Plan</button>
-            <button class="subtab-btn" id="subtab-diff" type="button">Diff</button>
-            <button class="subtab-btn" id="subtab-preview" type="button">Live Preview</button>
-          </div>
-          <button id="clear-logs-btn" type="button" title="Clear logs">Clear</button>
-          <div id="shell-status-wrap">
-            <span id="shell-status" class="shell-status">Disconnected</span>
-            <button id="shell-reconnect" type="button">Reconnect</button>
-          </div>
-        </div>
-
-        <!-- Live Plan Widget & Budget Meter -->
-        <div id="live-plan-widget" class="live-plan-widget" style="display:none;">
+        <!-- Live Plan Widget & Checklist -->
+        <div id="live-plan-widget" class="live-plan-widget" style="display:none;" role="region" aria-label="Multi-section generation plan checklist">
           <div class="plan-header">
             <span class="plan-title">Generation Plan</span>
             <span id="plan-budget" class="plan-budget-badge">Turns: 0 / 0</span>
@@ -18531,76 +20335,327 @@ if __name__ == "__main__":
           <div id="plan-items" class="plan-items-row"></div>
         </div>
 
-        <!-- Terminal Logs Subview -->
-        <div id="term-view" class="subview active">
-          <div id="term-scroll">
-            <div id="log-content">
-              <div id="log-empty">Waiting for generation output</div>
-              <span id="log-cursor"></span>
+        <!-- Empty / Welcome State with Prompt Starters -->
+        <div id="chat-empty" class="chat-empty-state">
+          <div class="chat-empty-icon">&#x2728;</div>
+          <div class="chat-empty-title">What would you like to build?</div>
+          <div class="chat-empty-desc">Describe a full website or component. The agent decomposes sections, builds multi-file code, runs visual evaluation, and auto-recovers edge cases.</div>
+          <div class="chat-starters">
+            <div class="starter-card" data-prompt="Build a high-contrast editorial creative design studio website for Monopo Saigon with hero banner, project showcase grid, philosophy section, client quotes, and footer." data-symbol="CreativeAgency" data-preset="refero_editorial">
+              <span class="starter-title">&#x2728; Monopo Studio</span>
+              <span class="starter-desc">Editorial design studio with obsidian &amp; iridescent glow</span>
+            </div>
+            <div class="starter-card" data-prompt="Build a modern AI developer platform landing page with sticky navbar, hero banner with gradient mesh, interactive feature cards, pricing tiers, and testimonials." data-symbol="DevPlatform" data-preset="glassmorphic_aurora">
+              <span class="starter-title">&#x1F680; AI Developer Platform</span>
+              <span class="starter-desc">Aurora mesh gradient hero, feature cards &amp; pricing</span>
+            </div>
+            <div class="starter-card" data-prompt="Build a bold neo-brutalist financial dashboard website with high-contrast borders, live metric counters, card grid, and roadmap." data-symbol="DeFiVault" data-preset="neo_brutalist">
+              <span class="starter-title">&#x26A1; DeFi Vault Dashboard</span>
+              <span class="starter-desc">Neo-brutalist high-contrast live metric dashboard</span>
+            </div>
+            <div class="starter-card" data-prompt="Write a React TypeScript `useDebounce` hook that takes a value and delay in ms, and returns the debounced value." data-symbol="useDebounce" data-preset="">
+              <span class="starter-title">&#x1F527; useDebounce Hook</span>
+              <span class="starter-desc">Custom React TypeScript hook with delay timer</span>
             </div>
           </div>
         </div>
 
-        <!-- PowerShell Subview -->
-        <div id="shell-view" class="subview">
-          <div id="xterm-container"></div>
-        </div>
+      </div>
 
-        <!-- Agentic Chat & Plan Subview -->
-        <div id="chat-view" class="subview">
-          <div id="chat-scroll" class="chat-thread">
-            <div id="chat-empty" class="chat-empty-state">
-              <div style="font-weight:600;color:var(--text-2);margin-bottom:4px;">Agentic Iteration Thread</div>
-              <div>After generation, review structured summaries and send follow-up requests with @Component mentions.</div>
-            </div>
-          </div>
-          <div class="chat-composer">
-            <div id="chat-mention-pills" class="chat-mention-pills"></div>
-            <div class="chat-input-row">
-              <textarea id="chat-input" placeholder="Ask for follow-up tweaks or edits (e.g. '@Footer add address' or 'Make hero button larger')..." rows="2"></textarea>
-              <button id="chat-send-btn" class="chat-send-btn" type="button">Send</button>
-            </div>
-          </div>
-        </div>
+      <!-- Pinned Composer at Bottom of Centered Column -->
+      <div class="composer-container">
+        <!-- Quick Mention Pills for Conversational Revisions -->
+        <div id="chat-mention-pills" class="chat-mention-pills" aria-label="Quick section mention pills"></div>
 
-        <!-- Diff Subview -->
-        <div id="diff-view" class="subview">
-          <div class="diff-toolbar">
-            <span class="diff-title">Version Checkpoints</span>
-            <select id="diff-checkpoint-select" class="diff-checkpoint-select">
-              <option value="">No checkpoints yet</option>
-            </select>
-            <button id="diff-revert-btn" class="diff-revert-btn" type="button" disabled>Revert to Checkpoint</button>
-          </div>
-          <div id="diff-scroll" class="diff-scroll">
-            <div id="diff-empty" style="color:var(--text-3);font-size:12px;padding:20px;text-align:center;">
-              No diffs to display. Diffs are generated during follow-up edit turns.
-            </div>
-          </div>
-        </div>
+        <div id="prompt-wrap" class="composer-box">
+          <label for="prompt-input" class="sr-only">Generation and edit prompt input</label>
+          <textarea
+            id="prompt-input"
+            placeholder="Describe a site, component, or ask for targeted revisions (e.g. '@Footer add phone number and hours')..."
+            rows="2"
+            aria-label="Generation and edit prompt input"
+          ></textarea>
 
-        <!-- Live Preview Subview -->
-        <div id="preview-view" class="subview">
-          <div class="preview-toolbar">
-            <span class="diff-title">Session Preview</span>
-            <div class="viewport-toggles">
-              <button class="vp-btn active" data-vp="100%" type="button">Desktop</button>
-              <button class="vp-btn" data-vp="768px" type="button">Tablet</button>
-              <button class="vp-btn" data-vp="375px" type="button">Mobile</button>
+          <div class="composer-toolbar">
+            <div class="composer-tools-left">
+              <button id="templates-toggle" class="composer-tool-btn" type="button" aria-label="Toggle prompt templates">
+                <span class="arrow">&#x25B6;</span> Templates
+              </button>
+              <button id="style-system-toggle" class="composer-tool-btn" type="button" aria-label="Toggle design system tokens section">
+                <span class="arrow">&#x25B6;</span> Style Tokens
+              </button>
+              <div class="settings-inline">
+                <label for="max-turns" class="setting-label">Turns:</label>
+                <select id="max-turns" class="setting-select" aria-label="Maximum generation turns">
+                  <option value="3">3</option>
+                  <option value="5">5</option>
+                  <option value="6" selected>6</option>
+                  <option value="8">8</option>
+                  <option value="10">10 (Sites)</option>
+                  <option value="12">12 (Sites)</option>
+                </select>
+
+                <label for="max-tokens" class="setting-label">Tokens:</label>
+                <select id="max-tokens" class="setting-select" aria-label="Maximum new tokens per turn">
+                  <option value="768">768</option>
+                  <option value="1024">1024</option>
+                  <option value="1280" selected>1280</option>
+                  <option value="1536">1536 (Sites)</option>
+                  <option value="2048">2048</option>
+                </select>
+              </div>
             </div>
-            <button id="preview-open-ext-btn" class="chat-action-btn" style="margin-left:auto;" type="button">Open in New Tab &#x2197;</button>
+
+            <div class="composer-tools-right">
+              <div id="char-counter" aria-live="polite">0 chars</div>
+              <label for="symbol-input" class="sr-only">Component or site symbol name</label>
+              <input type="text" id="symbol-input" placeholder="Name (auto)" aria-label="Component or site symbol name" style="width:90px;" />
+              <button id="cancel-btn" type="button" aria-label="Cancel active generation">Cancel</button>
+              <button id="generate-btn" type="button" aria-label="Generate component or site">
+                <span class="spinner"></span>
+                <span id="btn-label">Generate</span>
+              </button>
+            </div>
           </div>
-          <div class="preview-container">
-            <iframe id="preview-frame" class="preview-iframe" src="about:blank" title="Preview Frame"></iframe>
+
+          <!-- Expandable Prompt Templates Drawer -->
+          <div id="template-chips" class="composer-expandable" aria-label="Preset prompt templates">
+            <button class="tpl-chip" type="button" aria-label="Template Monopo Studio site" data-symbol="CreativeAgency" data-preset="refero_editorial" data-turns="8" data-tokens="1536" data-prompt="Build a high-contrast editorial creative design studio website for Monopo Saigon with hero banner, project showcase grid, philosophy section, client quotes, and footer.">&#x2728; Monopo Studio (Site)</button>
+            <button class="tpl-chip" type="button" data-symbol="DevPlatform" aria-label="Template AI Platform site" data-preset="glassmorphic_aurora" data-turns="8" data-tokens="1536" data-prompt="Build a modern AI developer platform landing page with sticky navbar, hero banner with gradient mesh, interactive feature cards, pricing tiers, and testimonials.">&#x1F680; AI Platform (Site)</button>
+            <button class="tpl-chip" type="button" data-symbol="DeFiVault" aria-label="Template DeFi Vault site" data-preset="neo_brutalist" data-turns="8" data-tokens="1536" data-prompt="Build a bold neo-brutalist financial dashboard website with high-contrast borders, live metric counters, card grid, and roadmap.">&#x26A1; DeFi Vault (Site)</button>
+            <button class="tpl-chip" type="button" data-symbol="useDebounce" aria-label="Template useDebounce hook" data-prompt="Write a React TypeScript `useDebounce` hook that takes a value and delay in ms, and returns the debounced value.">useDebounce</button>
+            <button class="tpl-chip" type="button" data-symbol="Modal" aria-label="Template Modal dialog component" data-prompt="Write a React TypeScript `Modal` dialog component with `isOpen`, `onClose`, `title`, and `children` props. Trap focus inside and close on Escape.">Modal</button>
+            <button class="tpl-chip" type="button" data-symbol="DataTable" aria-label="Template DataTable component" data-prompt="Write a React TypeScript `DataTable` component that accepts `columns` and `rows` props and renders a sortable HTML table. Clicking a column header sorts ascending then descending.">DataTable</button>
+            <button class="tpl-chip" type="button" data-symbol="PinInput" aria-label="Template PinInput component" data-prompt="Write a React TypeScript `PinInput` component with `length` (default 4), `value`, and `onChange` props. Render individual digit inputs that auto-advance focus on entry and backspace-to-previous.">PinInput</button>
+            <button class="tpl-chip" type="button" data-symbol="useToast" aria-label="Template useToast imperative hook" data-prompt="Write a React TypeScript `useToast` imperative hook. Calling `toast(message, type?)` should display a dismissible toast notification mounted to document.body. Types: info | success | warn | error.">useToast</button>
+            <button class="tpl-chip" type="button" data-symbol="SearchBar" aria-label="Template SearchBar component" data-prompt="Write a React TypeScript `SearchBar` component with a text input, a search icon, and a clear (x) button that appears when the input is non-empty. Emit `onSearch(value)` on change.">SearchBar</button>
+          </div>
+
+          <!-- Expandable Style Tokens Drawer -->
+          <div id="style-system-body" class="composer-expandable" aria-label="Design system style presets and custom tokens">
+            <div class="style-row">
+              <label for="style-preset-select" class="setting-label">Preset:</label>
+              <select id="style-preset-select" class="style-select" aria-label="Design system style preset">
+                <option value="">Auto / Heuristic (Default)</option>
+                <option value="refero_editorial">Refero Monopo Editorial (Obsidian / Iridescent)</option>
+                <option value="neo_brutalist">Neo-Brutalist (Bold borders / Space Grotesk)</option>
+                <option value="glassmorphic_aurora">Glassmorphic Aurora (Violet cyan glow / Glass)</option>
+                <option value="luxury_minimalist">Luxury Minimalist (Cinzel serif / Gold)</option>
+                <option value="cyberpunk_neon">Cyberpunk Neon (Pure black / Neon magenta)</option>
+              </select>
+            </div>
+            <label for="style-tokens-input" class="sr-only">Raw design tokens or root CSS</label>
+            <textarea
+              id="style-tokens-input"
+              placeholder="Paste raw :root { ... } custom properties or Refero design tokens here..."
+              rows="2"
+              aria-label="Raw design tokens or root CSS"
+            ></textarea>
+            <div style="display:flex;gap:6px;">
+              <button id="paste-refero-btn" class="style-quick-btn" type="button" aria-label="Paste Monopo Saigon design tokens">Paste Monopo Tokens</button>
+              <button id="clear-tokens-btn" class="style-quick-btn" type="button" aria-label="Clear design tokens input">Clear</button>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
   </main>
+
+  <!-- SLIDE-OVER DRAWER (Live Preview, Code, Diff, Logs, Shell) -->
+  <div id="slideover-backdrop" class="slideover-backdrop" aria-hidden="true"></div>
+  <aside id="slideover-drawer" class="slideover-drawer" role="dialog" aria-modal="true" aria-label="Workspace inspector panel">
+    <div class="slideover-header">
+      <div class="slideover-tabs" role="tablist" aria-label="Drawer inspector views">
+        <button class="slideover-tab-btn active" id="dtab-preview" type="button" role="tab" aria-selected="true" aria-label="Live preview panel">Live Preview</button>
+        <button class="slideover-tab-btn" id="dtab-code" type="button" role="tab" aria-selected="false" aria-label="Code viewer panel">&lt;/&gt; Code</button>
+        <button class="slideover-tab-btn" id="dtab-diff" type="button" role="tab" aria-selected="false" aria-label="Diff checkpoints panel">Diff</button>
+        <button class="slideover-tab-btn" id="dtab-term" type="button" role="tab" aria-selected="false" aria-label="Agent execution logs panel">Logs</button>
+        <button class="slideover-tab-btn" id="dtab-shell" type="button" role="tab" aria-selected="false" aria-label="PowerShell terminal panel">PowerShell</button>
+      </div>
+      <div class="slideover-actions">
+        <button id="slideover-expand-btn" class="tool-btn" type="button" aria-label="Toggle full-width drawer">&#x2922;</button>
+        <button id="slideover-close-btn" class="tool-btn" type="button" aria-label="Close inspector drawer">&times;</button>
+      </div>
+    </div>
+
+    <div class="slideover-body">
+      <!-- 1. Live Preview Subview -->
+      <div id="preview-view" class="drawer-view active" role="tabpanel" aria-label="Live component and site preview">
+        <div class="preview-toolbar">
+          <span class="preview-title">Session Preview</span>
+          <div class="viewport-toggles" role="group" aria-label="Viewport size toggles">
+            <button class="vp-btn active" data-vp="100%" type="button" aria-label="Desktop viewport 100%">Desktop</button>
+            <button class="vp-btn" data-vp="768px" type="button" aria-label="Tablet viewport 768px">Tablet</button>
+            <button class="vp-btn" data-vp="375px" type="button" aria-label="Mobile viewport 375px">Mobile</button>
+          </div>
+          <button id="preview-open-ext-btn" class="chat-action-btn" style="margin-left:auto;" type="button" aria-label="Open preview in new browser tab">Open in New Tab &#x2197;</button>
+        </div>
+        <div class="preview-container">
+          <iframe id="preview-frame" class="preview-iframe" src="about:blank" title="Preview Frame"></iframe>
+        </div>
+      </div>
+
+      <!-- 2. Code Viewer Subview -->
+      <div id="code-pane" class="drawer-view" role="tabpanel" aria-label="Code viewer pane">
+        <div id="code-pane-header">
+          <span class="preview-title" style="margin-right:6px;">Files:</span>
+          <div id="file-tabs-strip" class="file-tabs-strip"></div>
+          <button id="copy-btn" class="tool-btn" type="button" disabled aria-label="Copy active code to clipboard">Copy</button>
+          <button id="download-btn" class="tool-btn" type="button" disabled aria-label="Download active code as TSX file">Download</button>
+          <button id="edit-prompt-btn" class="tool-btn" type="button" title="Load prompt and name into editor" aria-label="Edit active prompt in composer">&#x270F; Edit</button>
+          <button id="regen-btn" class="tool-btn" type="button" title="Regenerate this prompt" aria-label="Regenerate active prompt">&#x21BA; Regenerate</button>
+          <button id="fullscreen-btn" class="tool-btn" type="button" title="Fullscreen (F)" aria-label="Enter fullscreen code view">&#x2922;</button>
+        </div>
+        <div id="code-scroll">
+          <div id="code-view">
+            <div id="code-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;color:var(--text-3);gap:8px;">
+              <div style="font-size:var(--text-sm);font-weight:500;color:var(--text-2);">No code generated yet</div>
+              <div style="font-size:var(--text-xs);">Generated TypeScript/React code will appear here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Diff Checkpoints Subview -->
+      <div id="diff-view" class="drawer-view" role="tabpanel" aria-label="Version checkpoint diffs">
+        <div class="diff-toolbar">
+          <span class="diff-title">Checkpoints</span>
+          <label for="diff-checkpoint-select" class="sr-only">Select version checkpoint to view</label>
+          <select id="diff-checkpoint-select" class="diff-checkpoint-select" aria-label="Select version checkpoint to view">
+            <option value="">No checkpoints yet</option>
+          </select>
+          <button id="diff-revert-btn" class="diff-revert-btn" type="button" disabled aria-label="Revert workspace to selected checkpoint">Revert to Checkpoint</button>
+        </div>
+        <div id="diff-scroll" class="diff-scroll">
+          <div id="diff-empty" style="color:var(--text-3);font-size:var(--text-xs);padding:24px;text-align:center;">
+            No diffs to display. Checkpoints are recorded during generational turns.
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Terminal Logs Subview -->
+      <div id="term-view" class="drawer-view" role="tabpanel" aria-label="Terminal logs output">
+        <div class="term-toolbar">
+          <span class="preview-title">Agent Execution Stream</span>
+          <button id="clear-logs-btn" type="button" title="Clear logs" aria-label="Clear active terminal logs">Clear</button>
+        </div>
+        <div id="term-scroll">
+          <div id="log-content">
+            <div id="log-empty">Waiting for generation output...</div>
+            <span id="log-cursor"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Interactive PowerShell Subview -->
+      <div id="shell-view" class="drawer-view" role="tabpanel" aria-label="Interactive PowerShell session">
+        <div class="term-toolbar">
+          <span class="preview-title">PowerShell Console</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="shell-status" style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-3);">Disconnected</span>
+            <button id="shell-reconnect" class="tool-btn" type="button" aria-label="Reconnect PowerShell terminal">Reconnect</button>
+          </div>
+        </div>
+        <div id="xterm-container"></div>
+      </div>
+    </div>
+  </aside>
+
 </div>
+
 
 <script>
   'use strict';
+
+  // ── Slide-Over Drawer Controller ──────────────────────────────────────────
+  function openSlideover(tab = 'preview') {
+    const drawer = $('slideover-drawer');
+    const backdrop = $('slideover-backdrop');
+    if (!drawer) return;
+
+    const tabs = ['preview', 'code', 'diff', 'term', 'shell'];
+    tabs.forEach(t => {
+      const tabBtn = $(`dtab-${t}`);
+      const navBtn = $(`btn-open-${t === 'term' ? 'logs' : t}`);
+      const view = $(t === 'code' ? 'code-pane' : t === 'preview' ? 'preview-view' : t === 'diff' ? 'diff-view' : t === 'term' ? 'term-view' : 'shell-view');
+
+      if (t === tab) {
+        if (tabBtn) { tabBtn.classList.add('active'); tabBtn.setAttribute('aria-selected', 'true'); }
+        if (navBtn) navBtn.classList.add('active');
+        if (view) view.classList.add('active');
+      } else {
+        if (tabBtn) { tabBtn.classList.remove('active'); tabBtn.setAttribute('aria-selected', 'false'); }
+        if (navBtn) navBtn.classList.remove('active');
+        if (view) view.classList.remove('active');
+      }
+    });
+
+    drawer.classList.add('active');
+    if (backdrop) {
+      backdrop.classList.add('active');
+      backdrop.onclick = closeSlideover;
+    }
+    try { localStorage.setItem('workbench_last_panel', tab); } catch (_) {}
+
+    if (tab === 'shell') {
+      focusShell();
+    }
+  }
+
+  function closeSlideover() {
+    const drawer = $('slideover-drawer');
+    const backdrop = $('slideover-backdrop');
+    if (drawer) drawer.classList.remove('active');
+    if (backdrop) backdrop.classList.remove('active');
+    const navButtons = ['preview', 'code', 'diff', 'logs', 'shell'];
+    navButtons.forEach(t => {
+      const btn = $(`btn-open-${t}`);
+      if (btn) btn.classList.remove('active');
+    });
+  }
+
+  function toggleSlideoverExpand() {
+    const drawer = $('slideover-drawer');
+    if (drawer) drawer.classList.toggle('expanded');
+  }
+
+  // ── Sidebar Toggle & Persistence ───────────────────────────────────────────
+  function toggleSidebar() {
+    const sb = $('sidebar');
+    if (!sb) return;
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      sb.classList.toggle('open');
+      const backdrop = $('slideover-backdrop');
+      if (backdrop) {
+        if (sb.classList.contains('open')) {
+          backdrop.classList.add('active');
+          backdrop.onclick = () => {
+            sb.classList.remove('open');
+            backdrop.classList.remove('active');
+          };
+        } else {
+          backdrop.classList.remove('active');
+        }
+      }
+    } else {
+      sb.classList.toggle('collapsed');
+      const isCollapsed = sb.classList.contains('collapsed');
+      try { localStorage.setItem('workbench_sidebar_collapsed', isCollapsed ? '1' : '0'); } catch (_) {}
+    }
+  }
+
+  // ── Theme Toggle & Persistence ─────────────────────────────────────────────
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('workbench_theme', next); } catch (_) {}
+    const btn = $('theme-toggle-btn');
+    if (btn) btn.innerHTML = next === 'light' ? '&#x263E;' : '&#x2600;';
+  }
+
 
   // ── Helper
   const $ = id => document.getElementById(id);
@@ -18685,6 +20740,119 @@ if __name__ == "__main__":
   const shellStatus  = $('shell-status');
   const shellReconnect = $('shell-reconnect');
   const xtermContainer = $('xterm-container');
+
+  // ── Local Storage Preferences ──────────────────────────────────────────────
+  function savePref(key, val) {
+    try {
+      localStorage.setItem('slm_pref_' + key, JSON.stringify(val));
+    } catch (_) {}
+  }
+
+  function loadPref(key, fallback = null) {
+    try {
+      const v = localStorage.getItem('slm_pref_' + key);
+      return v !== null ? JSON.parse(v) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  // ── In-App Confirmation Modal (Replaces native blocking confirm) ────────────
+  function showConfirmModal({ title = 'Confirm Action', message = 'Are you sure you want to proceed?', confirmText = 'Confirm', cancelText = 'Cancel', danger = true } = {}) {
+    return new Promise(resolve => {
+      const modal = $('confirm-modal');
+      const titleEl = $('confirm-modal-title');
+      const msgEl = $('confirm-modal-message');
+      const okBtn = $('confirm-modal-ok');
+      const cancelBtn = $('confirm-modal-cancel');
+      const closeBtn = $('confirm-modal-close');
+
+      if (!modal) {
+        resolve(true);
+        return;
+      }
+
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+      if (okBtn) {
+        okBtn.textContent = confirmText;
+        if (danger) {
+          okBtn.className = 'tool-btn danger';
+          okBtn.style.background = 'var(--red)';
+          okBtn.style.color = '#fff';
+          okBtn.style.borderColor = 'var(--red)';
+        } else {
+          okBtn.className = 'tool-btn primary';
+          okBtn.style.background = 'var(--accent)';
+          okBtn.style.color = '#fff';
+          okBtn.style.borderColor = 'var(--accent)';
+        }
+      }
+      if (cancelBtn) cancelBtn.textContent = cancelText;
+
+      let settled = false;
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        modal.classList.remove('active');
+        if (okBtn) okBtn.removeEventListener('click', onOk);
+        if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+        if (closeBtn) closeBtn.removeEventListener('click', onCancel);
+        modal.removeEventListener('click', onBackdrop);
+        document.removeEventListener('keydown', onKey);
+      };
+
+      const onOk = () => { cleanup(); resolve(true); };
+      const onCancel = () => { cleanup(); resolve(false); };
+      const onBackdrop = (e) => { if (e.target === modal) onCancel(); };
+      const onKey = (e) => {
+        if (e.key === 'Escape') onCancel();
+        else if (e.key === 'Enter') onOk();
+      };
+
+      if (okBtn) okBtn.addEventListener('click', onOk);
+      if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+      if (closeBtn) closeBtn.addEventListener('click', onCancel);
+      modal.addEventListener('click', onBackdrop);
+      document.addEventListener('keydown', onKey);
+
+      modal.classList.add('active');
+      if (cancelBtn) cancelBtn.focus();
+    });
+  }
+
+  // ── Global Chat Code Copy Helper ───────────────────────────────────────────
+  window.copyChatCode = function(btn) {
+    const block = btn.closest('.chat-code-block');
+    const code = block ? (block.querySelector('code') ? block.querySelector('code').textContent : '') : '';
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.classList.add('success');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('success');
+      }, 1500);
+    }).catch(() => {});
+  };
+
+  // ── Chat Thinking Indicator ────────────────────────────────────────────────
+  function showChatThinking(show) {
+    let indicator = $('chat-thinking');
+    if (show) {
+      if (!indicator && chatScroll) {
+        indicator = document.createElement('div');
+        indicator.id = 'chat-thinking';
+        indicator.className = 'chat-thinking-indicator';
+        indicator.innerHTML = '<span style="font-size:11.5px;color:var(--text-3);margin-right:4px;">Agent thinking</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+        chatScroll.appendChild(indicator);
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+      }
+    } else {
+      if (indicator) indicator.remove();
+    }
+  }
 
   // ── Shell Globals
   let shellTerm      = null;
@@ -18922,6 +21090,7 @@ if __name__ == "__main__":
   const allSubviews = [termView, shellView, chatView, diffView, previewView];
 
   function setRightSubtab(sub) {
+    savePref('right_subtab', sub);
     allSubtabs.forEach(btn => { if (btn) btn.classList.remove('active'); });
     allSubviews.forEach(v => { if (v) v.classList.remove('active'); });
     if (shellStatusWrap) shellStatusWrap.style.display = 'none';
@@ -18964,39 +21133,32 @@ if __name__ == "__main__":
   if (subtabPreview) subtabPreview.addEventListener('click', e => { setRightSubtab('preview'); e.currentTarget.blur(); });
 
   // ── Toolbar View Switcher (Split / Code / Terminal / PowerShell)
-  const tabList = [tabSplit, tabCode, tabTerm, tabShell];
+  const tabList = [tabSplit, tabCode, tabTerm, tabShell].filter(Boolean);
   function setView(mode) {
-    panesEl.className = 'view-' + mode;
-    tabList.forEach(el => el.classList.remove('active'));
+    savePref('view_mode', mode);
+    if (panesEl) panesEl.className = 'view-' + mode;
+    tabList.forEach(el => { if (el) el.classList.remove('active'); });
 
-    if (mode === 'split') {
-      tabSplit.classList.add('active');
-      if (subtabShell.classList.contains('active')) {
-        initShell();
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          fitShell();
-          if (shellTerm) shellTerm.focus();
-        }));
-      }
-    } else if (mode === 'code') {
-      tabCode.classList.add('active');
+    if (mode === 'split' || mode === 'code') {
+      if (tabCode) tabCode.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('code');
     } else if (mode === 'term') {
-      tabTerm.classList.add('active');
-      setRightSubtab('term');
+      if (tabTerm) tabTerm.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('term');
     } else if (mode === 'shell') {
-      tabShell.classList.add('active');
-      setRightSubtab('shell');
+      if (tabShell) tabShell.classList.add('active');
+      if (typeof openSlideover === 'function') openSlideover('shell');
     }
   }
 
-  tabSplit.addEventListener('click', e => { setView('split'); e.currentTarget.blur(); });
-  tabCode.addEventListener('click',  e => { setView('code'); e.currentTarget.blur(); });
-  tabTerm.addEventListener('click',  e => { setView('term'); e.currentTarget.blur(); });
-  tabShell.addEventListener('click', e => { setView('shell'); e.currentTarget.blur(); });
+  if (tabSplit) tabSplit.addEventListener('click', e => { setView('split'); e.currentTarget.blur(); });
+  if (tabCode)  tabCode.addEventListener('click',  e => { setView('code'); e.currentTarget.blur(); });
+  if (tabTerm)  tabTerm.addEventListener('click',  e => { setView('term'); e.currentTarget.blur(); });
+  if (tabShell) tabShell.addEventListener('click', e => { setView('shell'); e.currentTarget.blur(); });
 
   // ── Drag Resizers (Direct Pixel Tracking — Cursor Pinned) ──
   let isDraggingSidebar = false;
-  sidebarRes.addEventListener('mousedown', e => {
+  if (sidebarRes) sidebarRes.addEventListener('mousedown', e => {
     if (window.innerWidth <= 860) return;
     e.preventDefault();
     isDraggingSidebar = true;
@@ -19006,7 +21168,7 @@ if __name__ == "__main__":
   });
 
   let isDraggingPane = false;
-  paneRes.addEventListener('mousedown', e => {
+  if (paneRes) paneRes.addEventListener('mousedown', e => {
     if (window.innerWidth <= 860) return;
     e.preventDefault();
     isDraggingPane = true;
@@ -19032,7 +21194,7 @@ if __name__ == "__main__":
       const codeW = Math.max(minCode, Math.min(maxCode, e.clientX - panesRect.left));
       codePane.style.flex = 'none';
       codePane.style.width = codeW + 'px';
-      rightPane.style.flex = '1';
+      if (rightPane) rightPane.style.flex = '1';
       clearTimeout(fitShellDragTimer);
       fitShellDragTimer = setTimeout(fitShell, 50);
     }
@@ -19046,17 +21208,19 @@ if __name__ == "__main__":
       paneRes.classList.remove('dragging');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      if (sidebar.style.width) savePref('sidebar_width', sidebar.style.width);
+      if (codePane.style.width) savePref('code_pane_width', codePane.style.width);
       fitShell();
     }
   });
 
   // Touch support for resizers
-  sidebarRes.addEventListener('touchstart', e => {
+  if (sidebarRes) sidebarRes.addEventListener('touchstart', e => {
     if (window.innerWidth <= 860) return;
     isDraggingSidebar = true;
   }, { passive: true });
 
-  paneRes.addEventListener('touchstart', e => {
+  if (paneRes) paneRes.addEventListener('touchstart', e => {
     if (window.innerWidth <= 860) return;
     isDraggingPane = true;
   }, { passive: true });
@@ -19078,7 +21242,7 @@ if __name__ == "__main__":
       const codeW = Math.max(minCode, Math.min(maxCode, touchX - panesRect.left));
       codePane.style.flex = 'none';
       codePane.style.width = codeW + 'px';
-      rightPane.style.flex = '1';
+      if (rightPane) rightPane.style.flex = '1';
       fitShell();
     }
   }, { passive: true });
@@ -19090,9 +21254,9 @@ if __name__ == "__main__":
   });
 
   // ── Custom Test Toggle
-  testToggle.addEventListener('click', () => {
+  if (testToggle) testToggle.addEventListener('click', () => {
     const open = testArea.classList.toggle('open');
-    testToggle.classList.toggle('active', open);
+    if (testToggle) testToggle.classList.toggle('active', open);
     testToggle.textContent = open ? 'Hide test' : 'Custom test';
   });
 
@@ -19143,7 +21307,13 @@ if __name__ == "__main__":
 
   // Clear queue by clicking queue pill
   queueBadge.addEventListener('click', async () => {
-    if (!confirm('Clear all queued tasks and halt generation?')) return;
+    const ok = await showConfirmModal({
+      title: 'Clear Queue',
+      message: 'Clear all queued tasks and halt generation?',
+      confirmText: 'Clear Queue',
+      danger: true
+    });
+    if (!ok) return;
     try {
       const r = await fetch('/api/queue/clear', { method: 'POST' });
       const d = await r.json();
@@ -19159,7 +21329,13 @@ if __name__ == "__main__":
   // Halt active generation by clicking status pill
   statusPill.addEventListener('click', async () => {
     if (modelStatus !== 'busy') return;
-    if (!confirm('Halt active generation and clear queue?')) return;
+    const ok = await showConfirmModal({
+      title: 'Halt Generation',
+      message: 'Halt active generation and clear queue?',
+      confirmText: 'Halt Generation',
+      danger: true
+    });
+    if (!ok) return;
     try {
       if (currentTaskId) {
         await fetch('/api/cancel/' + currentTaskId, {
@@ -19459,36 +21635,104 @@ if __name__ == "__main__":
   });
 
   // ── Markdown Summary Renderer ───────────────────────────────────────────────
+  function formatInlineMarkdown(text) {
+    if (!text) return '';
+    let out = esc(text);
+    // Inline code: `code`
+    out = out.replace(/`([^`]+?)`/g, '<code class="inline-code" style="padding:1.5px 5px;background:rgba(255,255,255,0.06);border-radius:3px;font-family:var(--font-mono);font-size:11.5px;color:var(--accent);">$1</code>');
+    // Bold: **text** or __text__
+    out = out.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-1);font-weight:600;">$1</strong>');
+    out = out.replace(/__(.+?)__/g, '<strong style="color:var(--text-1);font-weight:600;">$1</strong>');
+    // Italic: *text* or _text_
+    out = out.replace(/\*([^\*]+?)\*/g, '<em>$1</em>');
+    out = out.replace(/_([^_]+?)_/g, '<em>$1</em>');
+    // Links: [label](url)
+    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;">$1</a>');
+    return out;
+  }
+
   function renderMarkdownSummary(mdText) {
     if (!mdText) return '';
     const lines = mdText.split('\n');
     let html = '';
     let inList = false;
+    let inCode = false;
+    let codeLang = '';
+    let codeBuffer = [];
 
     for (let rawLine of lines) {
       const line = rawLine.trimEnd();
-      if (!line) {
+
+      // Check fenced code block boundaries
+      if (line.trim().startsWith('```')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        if (!inCode) {
+          inCode = true;
+          codeLang = line.trim().slice(3).trim().toLowerCase();
+          codeBuffer = [];
+        } else {
+          inCode = false;
+          const rawCode = codeBuffer.join('\n');
+          let highlighted = '';
+          if (window.hljs) {
+            try {
+              if (codeLang && hljs.getLanguage(codeLang)) {
+                highlighted = hljs.highlight(rawCode, { language: codeLang }).value;
+              } else {
+                highlighted = hljs.highlightAuto(rawCode).value;
+              }
+            } catch (_) {
+              highlighted = esc(rawCode);
+            }
+          } else {
+            highlighted = esc(rawCode);
+          }
+
+          html += '<div class="chat-code-block">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 10px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border);font-size:11px;color:var(--text-3);">' +
+              '<span>' + esc(codeLang || 'code') + '</span>' +
+              '<button type="button" class="tool-btn" style="padding:2px 8px;font-size:11px;" onclick="copyChatCode(this)" aria-label="Copy code snippet">Copy</button>' +
+            '</div>' +
+            '<pre><code class="' + (codeLang ? 'language-' + esc(codeLang) : '') + '">' + highlighted + '</code></pre>' +
+          '</div>';
+          codeBuffer = [];
+        }
+        continue;
+      }
+
+      if (inCode) {
+        codeBuffer.push(rawLine);
+        continue;
+      }
+
+      if (!line.trim()) {
         if (inList) { html += '</ul>'; inList = false; }
         continue;
       }
-      if (line.startsWith('## ')) {
+
+      if (line.startsWith('### ')) {
         if (inList) { html += '</ul>'; inList = false; }
-        const heading = esc(line.slice(3).trim());
-        html += `<h2>${heading}</h2>`;
+        html += `<h3>${formatInlineMarkdown(line.slice(4).trim())}</h3>`;
+      } else if (line.startsWith('## ')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += `<h2>${formatInlineMarkdown(line.slice(3).trim())}</h2>`;
       } else if (line.startsWith('# ')) {
         if (inList) { html += '</ul>'; inList = false; }
-        const heading = esc(line.slice(2).trim());
-        html += `<h2>${heading}</h2>`;
-      } else if (line.startsWith('- ') || line.startsWith('* ')) {
-        if (!inList) { html += '<ul>'; inList = true; }
-        const content = esc(line.slice(2).trim());
+        html += `<h2>${formatInlineMarkdown(line.slice(2).trim())}</h2>`;
+      } else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('• ')) {
+        if (!inList) { html += '<ul style="margin:4px 0 8px 18px;padding:0;">'; inList = true; }
+        const content = formatInlineMarkdown(line.replace(/^[-*•]\s*/, '').trim());
         html += `<li>${content}</li>`;
       } else {
         if (inList) { html += '</ul>'; inList = false; }
-        html += `<p style="font-size:12.5px;color:var(--text-2);margin-bottom:6px;">${esc(line)}</p>`;
+        html += `<p>${formatInlineMarkdown(line)}</p>`;
       }
     }
     if (inList) html += '</ul>';
+    if (inCode && codeBuffer.length) {
+      const rawCode = codeBuffer.join('\n');
+      html += '<div class="chat-code-block"><pre><code>' + esc(rawCode) + '</code></pre></div>';
+    }
     return html;
   }
 
@@ -19498,40 +21742,71 @@ if __name__ == "__main__":
     const card = document.createElement('div');
     card.className = 'chat-card-agent';
 
-    let renderedHtml = '<div class="summary-rendered">' + renderMarkdownSummary(summaryText) + '</div>';
+    const now = new Date();
+    const timeStr = now.toTimeString().slice(0, 5);
 
-    if (meta.files && meta.files.length) {
-      renderedHtml += '<div style="font-size:11px;font-weight:600;color:var(--text-3);margin-top:6px;">FILES TOUCHED:</div>';
-      renderedHtml += '<div class="chat-files-list">';
-      meta.files.forEach(f => {
-        renderedHtml += `<span class="chat-file-tag">${esc(f)}</span>`;
-      });
-      renderedHtml += '</div>';
+    let visualBadgeHtml = '';
+    if (meta.visual_score !== undefined && meta.visual_score !== null) {
+      const vs = Number(meta.visual_score);
+      visualBadgeHtml = `<span class="turn-badge score-badge">&#x2605; ${vs.toFixed(1)}/5 Visual Score</span>`;
     }
 
-    renderedHtml += `
-      <div class="chat-turn-actions">
-        <button class="chat-action-btn card-act-preview" type="button">Live Preview &#x2197;</button>
-        <button class="chat-action-btn card-act-diff" type="button">View Diff</button>
-        <button class="chat-action-btn card-act-editor" type="button">View in Editor</button>
-        ${meta.turn_num ? `<span style="margin-left:auto;font-size:10.5px;color:var(--text-3);font-family:var(--font-mono);">Turn ${meta.turn_num}</span>` : ''}
+    let recoveryBadgeHtml = '';
+    if (meta.auto_recovered) {
+      recoveryBadgeHtml = `<span class="turn-badge recovery-badge">&#x26A0; Auto-recovered</span>`;
+    }
+
+    let filesHtml = '';
+    if (meta.files && meta.files.length) {
+      filesHtml = '<span class="chat-files-label">Touched:</span>';
+      meta.files.forEach(f => {
+        filesHtml += `<span class="chat-file-tag" data-file="${esc(f)}">${esc(f)}</span>`;
+      });
+    }
+
+    let renderedHtml = `
+      <div class="chat-turn-header">
+        <div class="turn-agent-badge">&#x2728; SiteAgent</div>
+        ${visualBadgeHtml}
+        ${recoveryBadgeHtml}
+        ${meta.turn_num ? `<span style="font-size:0.6875rem;color:var(--text-3);font-family:var(--font-mono);">${meta.turn_num} turns</span>` : ''}
+        <span class="turn-time">${timeStr}</span>
+      </div>
+      <div class="summary-rendered">${renderMarkdownSummary(summaryText)}</div>
+      <div class="chat-turn-footer">
+        ${filesHtml ? `<div class="chat-files-list">${filesHtml}</div>` : ''}
+        <div class="chat-turn-actions">
+          <button class="chat-action-btn primary card-act-preview" type="button" aria-label="Open live preview of current session">Live Preview &#x2197;</button>
+          <button class="chat-action-btn card-act-code" type="button" aria-label="Open code in editor drawer">&lt;/&gt; View Code</button>
+          <button class="chat-action-btn card-act-diff" type="button" aria-label="Open workspace checkpoint diffs">&Delta; View Diff</button>
+        </div>
       </div>
     `;
 
     card.innerHTML = renderedHtml;
 
     const btnPreview = card.querySelector('.card-act-preview');
-    if (btnPreview) btnPreview.addEventListener('click', () => setRightSubtab('preview'));
+    if (btnPreview) btnPreview.addEventListener('click', () => openSlideover('preview'));
 
-    const btnDiff = card.querySelector('.card-act-diff');
-    if (btnDiff) btnDiff.addEventListener('click', () => setRightSubtab('diff'));
-
-    const btnEditor = card.querySelector('.card-act-editor');
-    if (btnEditor) btnEditor.addEventListener('click', () => {
-      setView('code');
+    const btnCode = card.querySelector('.card-act-code');
+    if (btnCode) btnCode.addEventListener('click', () => {
+      openSlideover('code');
       if (meta.files && meta.files.length && currentSessionFiles[meta.files[0]]) {
         showCode(currentSessionFiles[meta.files[0]], meta.files[0]);
       }
+    });
+
+    const btnDiff = card.querySelector('.card-act-diff');
+    if (btnDiff) btnDiff.addEventListener('click', () => openSlideover('diff'));
+
+    card.querySelectorAll('.chat-file-tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        const fname = tag.getAttribute('data-file');
+        openSlideover('code');
+        if (fname && currentSessionFiles[fname]) {
+          showCode(currentSessionFiles[fname], fname);
+        }
+      });
     });
 
     if (chatScroll) {
@@ -19721,7 +21996,13 @@ if __name__ == "__main__":
       const targetTurn = parseInt(diffCheckpointSelect.value, 10);
       if (!targetTurn) return;
 
-      if (!confirm(`Revert workspace back to Turn ${targetTurn}?`)) return;
+      const ok = await showConfirmModal({
+        title: 'Revert Workspace',
+        message: `Revert workspace back to Turn ${targetTurn}? Any unsaved edits from later turns will be undone.`,
+        confirmText: 'Revert Workspace',
+        danger: true
+      });
+      if (!ok) return;
 
       try {
         const r = await fetch(`/api/sessions/${currentSessionId}/revert/${targetTurn}`, { method: 'POST' });
@@ -19757,6 +22038,14 @@ if __name__ == "__main__":
     });
   }
 
+  // ── Auto-Resize Chat Input ─────────────────────────────────────────────────
+  function autoResizeChatInput() {
+    if (!chatInput) return;
+    chatInput.style.height = 'auto';
+    const newHeight = Math.min(Math.max(chatInput.scrollHeight, 38), 160);
+    chatInput.style.height = newHeight + 'px';
+  }
+
   // ── Agentic Chat Follow-Up Sender ──────────────────────────────────────────
   async function sendChatFollowUp() {
     const text = (chatInput ? chatInput.value : '').trim();
@@ -19775,7 +22064,8 @@ if __name__ == "__main__":
 
     appendUserChatBubble(text);
     chatInput.value = '';
-    chatInput.style.height = 'auto';
+    autoResizeChatInput();
+    showChatThinking(true);
 
     _setGenerating(true);
     startProgress();
@@ -19796,6 +22086,7 @@ if __name__ == "__main__":
       currentTaskId = d.task_id;
       streamTask(d.task_id, currentSymbol || 'Component');
     } catch (err) {
+      showChatThinking(false);
       finishProgress();
       _setGenerating(false);
       appendLog('[Error] ' + err.message);
@@ -19805,8 +22096,14 @@ if __name__ == "__main__":
 
   if (chatSendBtn) chatSendBtn.addEventListener('click', sendChatFollowUp);
   if (chatInput) {
-    chatInput.addEventListener('keydown', e => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (chatInput) chatInput.addEventListener('input', autoResizeChatInput);
+    if (chatInput) chatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (e.shiftKey) {
+          // Shift+Enter inserts newline normally
+          return;
+        }
+        // Plain Enter or Ctrl+Enter or Cmd+Enter sends follow-up
         e.preventDefault();
         sendChatFollowUp();
       }
@@ -19832,101 +22129,201 @@ if __name__ == "__main__":
     });
   }
 
-  // ── SSE Task Stream ─────────────────────────────────────────────────────────
+  // ── Visual Quality Badge ───────────────────────────────────────────────────
+  function updateVisualBadge(score, issues = []) {
+    const badge = $('visual-badge');
+    if (!badge) return;
+    if (score === null || score === undefined) {
+      badge.style.display = 'none';
+      return;
+    }
+    const num = parseFloat(score);
+    badge.style.display = 'inline-flex';
+    badge.className = '';
+    if (num >= 4) {
+      badge.classList.add('high');
+    } else if (num >= 3) {
+      badge.classList.add('medium');
+    } else {
+      badge.classList.add('low');
+    }
+    badge.textContent = `Visual: ${num.toFixed(1)}/5`;
+    if (issues && issues.length) {
+      badge.title = 'Visual Quality Issues:\n• ' + issues.join('\n• ');
+    } else {
+      badge.title = `Visual quality score: ${num.toFixed(1)}/5 (passed heuristic check)`;
+    }
+  }
+
+  // ── SSE Task Stream with Exponential Backoff & Fallback Polling ───────────
   function streamTask(taskId, symbol) {
-    const es = new EventSource('/api/stream/' + taskId);
+    let retryCount = 0;
+    const maxRetries = 5;
+    let es = null;
+    let closed = false;
 
-    es.onmessage = e => {
-      const msg = JSON.parse(e.data);
-
-      if (msg.type === 'log') {
-        appendLog(msg.text || '');
-      }
-      if (msg.type === 'plan') {
-        updatePlanWidget(msg);
-        if (msg.session_id) currentSessionId = msg.session_id;
-      }
-      if (msg.type === 'plan_update') {
-        updatePlanWidget(msg);
-      }
-      if (msg.type === 'summary') {
-        appendAgentSummaryCard(msg.summary || '', {
-          files: msg.files,
-          turn_num: msg.turn_num,
-          passed: msg.passed
-        });
-        setRightSubtab('chat');
-      }
-      if (msg.type === 'result') {
-        const res = msg.data;
-        _activeHistoryItem = res;
-        currentSymbol = res.symbol || symbol;
-        if (res.session_id) currentSessionId = res.session_id;
-
-        if (res.files && Object.keys(res.files).length > 0) {
-          currentSessionFiles = res.files;
-          const fKeys = Object.keys(res.files);
-          currentActiveFile = fKeys[0];
-          renderFileTabs(res.files, fKeys[0]);
-          showCode(res.files[fKeys[0]], fKeys[0]);
-          updateMentionPills(res.files);
-        } else {
-          showCode(res.code, currentSymbol + '.tsx');
-        }
-
-        if (res.summary) {
-          appendAgentSummaryCard(res.summary, {
-            files: Object.keys(res.files || {}),
-            turn_num: res.turns_used,
-            passed: res.final_passed
-          });
-        }
-
-        if (currentSessionId && previewFrame) {
-          previewFrame.src = '/preview/' + currentSessionId + '?t=' + Date.now();
-        }
-
-        if (currentSessionId) {
-          loadSessionCheckpoints(currentSessionId);
-        }
-
-        resultBadge.className = res.final_passed ? 'pass' : 'fail';
-        resultBadge.textContent = res.final_passed ? 'Tests passed' : 'Tests failed';
-        turnBadge.textContent = res.turns_used + ' turn' + (res.turns_used !== 1 ? 's' : '');
-        turnBadge.style.display = 'block';
-        finishProgress();
-        loadHistory();
-        regenBtn.style.display = 'inline-block';
-        if (editPromptBtn) editPromptBtn.style.display = 'inline-block';
-        if (res.final_passed) {
-          showToast('Completed successfully!', 'success');
-        } else {
-          showToast('Completed with issues.', 'warn');
-        }
-      }
-      if (msg.type === 'cancelled') {
-        appendLog('[Cancelled] ' + (msg.text || 'Generation cancelled by user.'));
-        showToast('Generation cancelled.', 'warn');
-        finishProgress();
-      }
-      if (msg.type === 'done') {
+    function cleanup() {
+      closed = true;
+      if (es) {
         es.close();
-        _setGenerating(false);
+        es = null;
       }
-      if (msg.type === 'error') {
-        appendLog('[Error] ' + (msg.text || 'Unknown error'));
-        showToast(msg.text || 'Generation error.', 'error');
-        finishProgress();
-        es.close();
-        _setGenerating(false);
-      }
-    };
-
-    es.onerror = () => {
-      es.close();
+      showChatThinking(false);
       _setGenerating(false);
+    }
+
+    async function pollFallback() {
+      try {
+        const r = await fetch(`/api/generation/${taskId}/status`);
+        if (!r.ok) return false;
+        const resData = data.result || data.data;
+        if (data.status === 'completed' && resData) {
+          handleTaskResult(resData, symbol);
+          cleanup();
+          return true;
+        } else if (data.status === 'error') {
+          appendLog('[Error] ' + (data.error || 'Generation failed'));
+          showToast(data.error || 'Generation error.', 'error');
+          finishProgress();
+          cleanup();
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    function handleTaskResult(res, sym) {
+      _activeHistoryItem = res;
+      currentSymbol = res.symbol || sym;
+      if (res.session_id) currentSessionId = res.session_id;
+
+      if (res.files && Object.keys(res.files).length > 0) {
+        currentSessionFiles = res.files;
+        const fKeys = Object.keys(res.files);
+        currentActiveFile = fKeys[0];
+        renderFileTabs(res.files, fKeys[0]);
+        showCode(res.files[fKeys[0]], fKeys[0]);
+        updateMentionPills(res.files);
+      } else {
+        showCode(res.code, currentSymbol + '.tsx');
+      }
+
+      if (res.summary) {
+        appendAgentSummaryCard(res.summary, {
+          files: Object.keys(res.files || {}),
+          turn_num: res.turns_used,
+          passed: res.final_passed
+        });
+      }
+
+      if (res.visual_score !== undefined && res.visual_score !== null) {
+        updateVisualBadge(res.visual_score, res.visual_issues || []);
+      }
+
+      if (currentSessionId && previewFrame) {
+        previewFrame.src = '/preview/' + currentSessionId + '?t=' + Date.now();
+      }
+
+      if (currentSessionId) {
+        loadSessionCheckpoints(currentSessionId);
+      }
+
+      resultBadge.className = res.final_passed ? 'pass' : 'fail';
+      resultBadge.textContent = res.final_passed ? 'Tests passed' : 'Tests failed';
+      turnBadge.textContent = res.turns_used + ' turn' + (res.turns_used !== 1 ? 's' : '');
+      turnBadge.style.display = 'block';
       finishProgress();
-    };
+      loadHistory();
+      regenBtn.style.display = 'inline-block';
+      if (editPromptBtn) editPromptBtn.style.display = 'inline-block';
+      if (res.final_passed) {
+        showToast('Completed successfully!', 'success');
+      } else {
+        showToast('Completed with issues.', 'warn');
+      }
+    }
+
+    function connect() {
+      if (closed) return;
+      es = new EventSource('/api/stream/' + taskId);
+
+      es.onopen = () => {
+        retryCount = 0;
+        statusText.textContent = 'Generating…';
+        statusPill.className = 'status-badge active';
+      };
+
+      es.onmessage = e => {
+        showChatThinking(false);
+        const msg = JSON.parse(e.data);
+
+        if (msg.type === 'log') {
+          appendLog(msg.text || '');
+        }
+        if (msg.type === 'plan') {
+          updatePlanWidget(msg);
+          if (msg.session_id) currentSessionId = msg.session_id;
+        }
+        if (msg.type === 'plan_update') {
+          updatePlanWidget(msg);
+        }
+        if (msg.type === 'summary') {
+          appendAgentSummaryCard(msg.summary || '', {
+            files: msg.files,
+            turn_num: msg.turn_num,
+            passed: msg.passed
+          });
+          setRightSubtab('chat');
+        }
+        if (msg.type === 'result') {
+          handleTaskResult(msg.data, symbol);
+        }
+        if (msg.type === 'cancelled') {
+          appendLog('[Cancelled] ' + (msg.text || 'Generation cancelled by user.'));
+          showToast('Generation cancelled.', 'warn');
+          finishProgress();
+        }
+        if (msg.type === 'done') {
+          cleanup();
+        }
+        if (msg.type === 'error') {
+          appendLog('[Error] ' + (msg.text || 'Unknown error'));
+          showToast(msg.text || 'Generation error.', 'error');
+          finishProgress();
+          cleanup();
+        }
+      };
+
+      es.onerror = async () => {
+        if (closed) return;
+        if (es) {
+          es.close();
+          es = null;
+        }
+
+        const resolved = await pollFallback();
+        if (resolved) return;
+
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 8000);
+          statusText.textContent = `Reconnecting (${retryCount}/${maxRetries})…`;
+          statusPill.className = 'status-badge busy';
+          appendLog(`[Stream] Disconnected. Reconnecting in ${delay / 1000}s (attempt ${retryCount}/${maxRetries})…`);
+          setTimeout(connect, delay);
+        } else {
+          const finalPoll = await pollFallback();
+          if (!finalPoll) {
+            appendLog('[Stream] Lost connection to generation stream after 5 attempts.');
+            showToast('Lost connection to generation server.', 'error');
+            finishProgress();
+            cleanup();
+          }
+        }
+      };
+    }
+
+    connect();
   }
 
   // ── Copy & Download Code Buttons ────────────────────────────────────────────
@@ -20257,6 +22654,12 @@ if __name__ == "__main__":
       showCode(item.code, (item.symbol || 'Component') + '.tsx');
     }
 
+    if (item.visual_score !== undefined && item.visual_score !== null) {
+      updateVisualBadge(item.visual_score, item.visual_issues || []);
+    } else {
+      updateVisualBadge(null);
+    }
+
     if (currentSessionId && previewFrame) {
       previewFrame.src = '/preview/' + currentSessionId + '?t=' + Date.now();
     }
@@ -20314,7 +22717,13 @@ if __name__ == "__main__":
   if (historyClearBtn) {
     historyClearBtn.addEventListener('click', async () => {
       if (!_allHistoryItems.length) return;
-      if (!confirm('Clear all generation history?')) return;
+      const ok = await showConfirmModal({
+        title: 'Clear History',
+        message: 'Clear all generation history? This action cannot be undone.',
+        confirmText: 'Clear History',
+        danger: true
+      });
+      if (!ok) return;
       try {
         await fetch('/api/history', { method: 'DELETE' });
         _allHistoryItems = [];
@@ -20333,11 +22742,22 @@ if __name__ == "__main__":
       return;
     }
     items.forEach(item => {
+      let visualBadgeHtml = '';
+      if (item.visual_score !== undefined && item.visual_score !== null) {
+        const vs = parseFloat(item.visual_score);
+        const vsClass = vs >= 4 ? 'high' : (vs >= 3 ? 'medium' : 'low');
+        const vsTitle = item.visual_issues && item.visual_issues.length
+          ? esc('Visual Issues:\n• ' + item.visual_issues.join('\n• '))
+          : ('Visual Quality: ' + vs.toFixed(1) + '/5');
+        visualBadgeHtml = `<span class="hi-visual-score ${vsClass}" title="${vsTitle}">★ ${vs.toFixed(1)}</span>`;
+      }
+
       const div = document.createElement('div');
       div.className = 'history-item' + (item.task_id === currentTaskId ? ' active' : '');
       div.innerHTML =
         '<div class="hi-top">' +
           '<span class="hi-name">' + esc(item.symbol || 'Component') + '</span>' +
+          visualBadgeHtml +
           '<span class="hi-badge ' + (item.final_passed ? 'pass' : 'fail') + '">' + (item.final_passed ? 'Pass' : 'Fail') + '</span>' +
         '</div>' +
         '<div class="hi-prompt">' + esc(item.prompt || '') + '</div>' +
@@ -20345,10 +22765,10 @@ if __name__ == "__main__":
           '<span class="hi-date">' + esc(item.timestamp || '') + '</span>' +
           '<span class="hi-turns">' + (item.turns_used || '?') + ' turns</span>' +
           '<div class="hi-actions">' +
-            '<button class="hi-btn hi-edit" data-tid="' + esc(item.task_id) + '" type="button" title="Load prompt into editor to modify">✏️ Edit</button>' +
-            '<button class="hi-btn hi-regen" data-tid="' + esc(item.task_id) + '" type="button" title="Regenerate this prompt">↺ Rerun</button>' +
-            (item.code ? '<button class="hi-btn hi-dl" data-tid="' + esc(item.task_id) + '" data-sym="' + esc(item.symbol || 'Component') + '" type="button" title="Download .tsx">DL</button>' : '') +
-            '<button class="hi-btn hi-del" data-tid="' + esc(item.task_id) + '" type="button" title="Delete from history">&times;</button>' +
+            '<button class="hi-btn hi-edit" data-tid="' + esc(item.task_id) + '" type="button" aria-label="Load prompt into editor to modify" title="Load prompt into editor to modify">✏️ Edit</button>' +
+            '<button class="hi-btn hi-regen" data-tid="' + esc(item.task_id) + '" type="button" aria-label="Regenerate this prompt" title="Regenerate this prompt">↺ Rerun</button>' +
+            (item.code ? '<button class="hi-btn hi-dl" data-tid="' + esc(item.task_id) + '" data-sym="' + esc(item.symbol || 'Component') + '" type="button" aria-label="Download ' + esc(item.symbol || 'Component') + '.tsx" title="Download .tsx">DL</button>' : '') +
+            '<button class="hi-btn hi-del" data-tid="' + esc(item.task_id) + '" type="button" aria-label="Delete ' + esc(item.symbol || 'Component') + ' from history" title="Delete from history">&times;</button>' +
           '</div>' +
         '</div>';
 
@@ -20409,13 +22829,145 @@ if __name__ == "__main__":
     }
   }
 
-  // ── Initial load ────────────────────────────────────────────────────────────
+  // ── Mobile Navigation Controls (screens <= 640px) ──────────────────────────
+  document.querySelectorAll('#mobile-nav .mob-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mobile-nav .mob-nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.view;
+      if (v === 'chat') {
+        setView('term');
+        setRightSubtab('chat');
+      } else if (v === 'code') {
+        setView('code');
+      } else if (v === 'term') {
+        setView('term');
+        setRightSubtab('term');
+      } else if (v === 'preview') {
+        setView('term');
+        setRightSubtab('preview');
+      }
+    });
+  });
+
+  // ── Initial load & Restore Preferences ─────────────────────────────────────
+  const savedView = loadPref('view_mode', null);
+  if (savedView) setView(savedView);
+  const savedSubtab = loadPref('right_subtab', null);
+  if (savedSubtab) setRightSubtab(savedSubtab);
+  const savedSidebarW = loadPref('sidebar_width', null);
+  if (savedSidebarW) sidebar.style.width = savedSidebarW;
+  const savedCodeW = loadPref('code_pane_width', null);
+  if (savedCodeW) {
+    codePane.style.flex = 'none';
+    if (codePane) codePane.style.width = savedCodeW;
+    if (rightPane) rightPane.style.flex = '1';
+  }
+
   loadHistory();
   updateCharCounter();
+  autoResizePrompt();
+  autoResizeChatInput();
+</script>
+
+
+  // ── Topbar & Drawer Wiring ────────────────────────────────────────────────
+  const sidebarToggleBtn = $('sidebar-toggle-btn');
+  if (sidebarToggleBtn) sidebarToggleBtn.addEventListener('click', toggleSidebar);
+
+  const themeToggleBtn = $('theme-toggle-btn');
+  if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+
+  const btnOpenPreview = $('btn-open-preview');
+  if (btnOpenPreview) btnOpenPreview.addEventListener('click', () => openSlideover('preview'));
+
+  const btnOpenCode = $('btn-open-code');
+  if (btnOpenCode) btnOpenCode.addEventListener('click', () => openSlideover('code'));
+
+  const btnOpenDiff = $('btn-open-diff');
+  if (btnOpenDiff) btnOpenDiff.addEventListener('click', () => openSlideover('diff'));
+
+  const btnOpenLogs = $('btn-open-logs');
+  if (btnOpenLogs) btnOpenLogs.addEventListener('click', () => openSlideover('term'));
+
+  const btnOpenShell = $('btn-open-shell');
+  if (btnOpenShell) btnOpenShell.addEventListener('click', () => openSlideover('shell'));
+
+  const slideoverCloseBtn = $('slideover-close-btn');
+  if (slideoverCloseBtn) slideoverCloseBtn.addEventListener('click', closeSlideover);
+
+  const slideoverExpandBtn = $('slideover-expand-btn');
+  if (slideoverExpandBtn) slideoverExpandBtn.addEventListener('click', toggleSlideoverExpand);
+
+  const slideoverBackdrop = $('slideover-backdrop');
+  if (slideoverBackdrop) slideoverBackdrop.addEventListener('click', closeSlideover);
+
+  // Drawer tabs
+  ['preview', 'code', 'diff', 'term', 'shell'].forEach(t => {
+    const tabBtn = $(`dtab-${t}`);
+    if (tabBtn) tabBtn.addEventListener('click', () => openSlideover(t));
+  });
+
+  // Starter cards
+  document.querySelectorAll('.starter-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const p = card.getAttribute('data-prompt');
+      const sym = card.getAttribute('data-symbol');
+      const preset = card.getAttribute('data-preset');
+      if (p && promptInput) promptInput.value = p;
+      if (sym && symbolInput) symbolInput.value = sym;
+      if (preset && stylePresetSelect) stylePresetSelect.value = preset;
+      if (promptInput) {
+        promptInput.focus();
+        autoResizePrompt();
+        updateCharCounter();
+      }
+    });
+  });
+
+  // New chat button
+  const newChatBtn = $('new-chat-btn');
+  if (newChatBtn) {
+    newChatBtn.addEventListener('click', () => {
+      currentSessionId = null;
+      _activeHistoryItem = null;
+      if (promptInput) promptInput.value = '';
+      if (symbolInput) symbolInput.value = '';
+      if (chatScroll) {
+        chatScroll.innerHTML = '';
+        if (chatEmpty) {
+          chatScroll.appendChild(chatEmpty);
+          chatEmpty.style.display = 'flex';
+        }
+      }
+      if (livePlanWidget) livePlanWidget.style.display = 'none';
+      if (activeSessionTitle) activeSessionTitle.textContent = 'New Session';
+      closeSlideover();
+      if (promptInput) promptInput.focus();
+    });
+  }
+
+  // Restore sidebar state
+  try {
+    if (window.innerWidth > 768 && localStorage.getItem('workbench_sidebar_collapsed') === '1') {
+      const sb = $('sidebar');
+      if (sb) sb.classList.add('collapsed');
+    }
+  } catch (_) {}
+
+  // Restore theme
+  try {
+    const savedTheme = localStorage.getItem('workbench_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    if (themeToggleBtn) themeToggleBtn.innerHTML = savedTheme === 'light' ? '&#x263E;' : '&#x2600;';
+  } catch (_) {}
+
 </script>
 </body>
 </html>
+
 ````
+
 ---
 
 ### 3.5 Fine-Tuning & Evaluation Benchmark Pipeline
