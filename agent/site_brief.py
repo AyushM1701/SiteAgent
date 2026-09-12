@@ -13,15 +13,24 @@ Pipeline Stages:
 import json
 import os
 import re
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 
-from style_ingest import (
-    StyleSpec,
-    parse_css_tokens,
-    PRESET_STYLES,
-    spec_to_css_root,
-    spec_to_prompt_instructions,
-)
+try:
+    from style_ingest import (
+        StyleSpec,
+        parse_css_tokens,
+        PRESET_STYLES,
+        spec_to_css_root,
+        spec_to_prompt_instructions,
+    )
+except ImportError:
+    from agent.style_ingest import (
+        StyleSpec,
+        parse_css_tokens,
+        PRESET_STYLES,
+        spec_to_css_root,
+        spec_to_prompt_instructions,
+    )
 
 
 # ==============================================================================
@@ -612,21 +621,21 @@ def detect_business_type(prompt: str) -> str:
     return "saas"
 
 
-def extract_explicit_sections_and_instructions(prompt: str) -> tuple[Optional[list[str]], dict[str, str]]:
-    """
-    Parses prompt for explicit numbered/bulleted section declarations.
-    Detects numbered lists (1., 1), (1), 1:) and bulleted lists (-, *, •).
-    Extracts user-authored section labels and custom instructions.
-    Returns (sections_list, custom_instructions_dict) or (None, {}).
-    """
+def extract_explicit_sections(prompt: str) -> Optional[List[Tuple[str, str]]]:
+    """Detect a user-authored numbered/bulleted section list in the prompt.
+    Returns [(slug, description), ...] in order, or None if no explicit
+    list structure is present (≥2 matches required to count as a list)."""
+    if not prompt or not isinstance(prompt, str):
+        return None
+
     # Exclude common non-section bullet headers (e.g. "Design requirements:", "Color palette:")
     NON_SECTION_PREFIXES = {
         "design", "requirement", "requirements", "color", "palette", "typography",
         "font", "button", "card", "styling", "rules", "guidelines", "constraint", "constraints",
-        "tech", "stack", "note", "notes", "overview"
+        "tech", "stack", "note", "notes", "overview", "theme"
     }
 
-    matches: list[tuple[str, str]] = []
+    matches: List[Tuple[str, str]] = []
 
     # Strategy 1: Check for an explicit "Sections:" or "Pages:" or "Structure:" block
     sec_block_m = re.search(
@@ -636,7 +645,6 @@ def extract_explicit_sections_and_instructions(prompt: str) -> tuple[Optional[li
     )
     if sec_block_m:
         block_text = sec_block_m.group(1)
-        # Parse items in the block (numbered or bulleted)
         item_pattern = re.compile(
             r'(?:^|\n)\s*(?:(?:\d+[\.\)\:]|\(\d+\))|[-*•\u2022])\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[-:\u2013\u2014]\s*([^\n]+(?:\n(?!\s*(?:(?:\d+[\.\)\:]|\(\d+\))|[-*•\u2022]))[^\n]+)*)|\s*$(?:\n|$))',
             re.MULTILINE
@@ -644,79 +652,108 @@ def extract_explicit_sections_and_instructions(prompt: str) -> tuple[Optional[li
         for m in item_pattern.finditer(block_text):
             raw_name = m.group(1).strip()
             raw_desc = (m.group(2) or "").strip()
-            slug_cand = re.sub(r'[^a-z0-9]+', '_', raw_name.lower()).strip('_')
-            if slug_cand and slug_cand not in NON_SECTION_PREFIXES:
-                matches.append((raw_name, raw_desc))
+            first_word = raw_name.lower().split()[0] if raw_name else ""
+            if first_word not in NON_SECTION_PREFIXES and len(raw_name) <= 50:
+                matches.append((raw_name, raw_desc or f"Write the {raw_name} section."))
 
-    # Strategy 2: If no block found or fewer than 2 items, look for numbered sections anywhere:
-    # 1. Header: ... 2. Hero: ... or 1) Practice Areas ... 2) Attorneys ...
+    # Strategy 2: Explicit numbered markers e.g. "1. Header", "1) Header", "(1) Header"
     if len(matches) < 2:
-        matches = []
-        numbered_pattern = re.compile(
-            r'(?:^|\n)\s*(?:(?:\d+[\.\)\:]|\(\d+\)))\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[-:\u2013\u2014]\s*([^\n]+(?:\n(?!\s*(?:(?:\d+[\.\)\:]|\(\d+\))|[-*•\u2022]))[^\n]+)*)|\s*$(?:\n|$))',
-            re.MULTILINE
-        )
-        for m in numbered_pattern.finditer(prompt):
-            raw_name = m.group(1).strip()
-            raw_desc = (m.group(2) or "").strip()
-            slug_cand = re.sub(r'[^a-z0-9]+', '_', raw_name.lower()).strip('_')
-            if slug_cand and slug_cand not in NON_SECTION_PREFIXES and len(slug_cand) <= 40:
-                matches.append((raw_name, raw_desc))
+        marker_iter = list(re.finditer(r'(?:^|\n|\s)(?:(?:\d+[\.\)]|\(\d+\)))\s*', prompt))
+        if len(marker_iter) >= 2:
+            num_matches: List[Tuple[str, str]] = []
+            for i, m in enumerate(marker_iter):
+                start_pos = m.end()
+                end_pos = marker_iter[i + 1].start() if i + 1 < len(marker_iter) else len(prompt)
+                item_text = prompt[start_pos:end_pos].strip()
+                if "\n\n" in item_text:
+                    item_text = item_text.split("\n\n")[0].strip()
 
-    # Strategy 3: Top-level bulleted list if items look like distinct sections
+                split_m = re.split(r'[:\-–—]\s*', item_text, maxsplit=1)
+                if len(split_m) == 2 and split_m[0].strip():
+                    label = split_m[0].strip()
+                    desc = split_m[1].strip()
+                else:
+                    label = item_text.strip()
+                    desc = f"Write the {label} section."
+
+                first_word = label.lower().split()[0] if label else ""
+                if first_word not in NON_SECTION_PREFIXES and 2 <= len(label) <= 50:
+                    num_matches.append((label, desc))
+            if len(num_matches) >= 2:
+                matches = num_matches
+
+    # Strategy 3: Multiline bulleted items e.g. "- Header: ...", "* Header: ...", "• Header: ..."
     if len(matches) < 2:
         bullet_pattern = re.compile(
-            r'(?:^|\n)\s*[-*•\u2022]\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[-:\u2013\u2014]\s*([^\n]+(?:\n(?!\s*[-*•\u2022]))[^\n]+)*|\s*$(?:\n|$))',
+            r'^\s*[-*•\u2022]\s*([A-Za-z0-9][\w\s/&-]+?)(?:\s*[:\-–—]\s*(.+))?$',
             re.MULTILINE
         )
-        candidate_bullets = []
+        bullet_matches: List[Tuple[str, str]] = []
         for m in bullet_pattern.finditer(prompt):
-            raw_name = m.group(1).strip()
-            raw_desc = (m.group(2) or "").strip()
-            first_word = raw_name.lower().split()[0] if raw_name else ""
-            if first_word in NON_SECTION_PREFIXES:
-                continue
-            slug_cand = re.sub(r'[^a-z0-9]+', '_', raw_name.lower()).strip('_')
-            if slug_cand and len(slug_cand) <= 35:
-                candidate_bullets.append((raw_name, raw_desc))
-        if len(candidate_bullets) >= 2:
-            matches = candidate_bullets
+            label = m.group(1).strip()
+            desc = (m.group(2) or "").strip() or f"Write the {label} section."
+            first_word = label.lower().split()[0] if label else ""
+            if first_word not in NON_SECTION_PREFIXES and 2 <= len(label) <= 50:
+                bullet_matches.append((label, desc))
+        if len(bullet_matches) >= 2:
+            matches = bullet_matches
 
-    if not matches or len(matches) < 2:
-        return None, {}
+    # Strategy 4: Explicit list following "with" or "sections:"
+    # e.g. "with Header, Hero, Spatial Products, and Footer."
+    if len(matches) < 2:
+        with_m = re.search(r'(?:with|sections?\s*:)\s+([A-Z][\w\s/&-]+(?:,\s*(?:and\s+)?[A-Z][\w\s/&-]+)+)', prompt)
+        if with_m:
+            candidate_list = with_m.group(1)
+            items = re.split(r',\s*(?:and\s+)?|\s+and\s+', candidate_list)
+            with_cands: List[Tuple[str, str]] = []
+            for item in items:
+                lbl = item.strip().rstrip('.')
+                if lbl and len(lbl) <= 50 and lbl.lower() not in NON_SECTION_PREFIXES:
+                    with_cands.append((lbl, f"Write the {lbl} section."))
+            if len(with_cands) >= 2:
+                matches = with_cands
 
-    sections: list[str] = []
-    instructions: dict[str, str] = {}
-    for raw_name, raw_desc in matches:
-        raw_name = raw_name.strip()
-        slug = re.sub(r'[^a-z0-9]+', '_', raw_name.lower()).strip('_')
-        if not slug:
+    if len(matches) < 2:
+        return None
+
+    def _slugify(text: str) -> str:
+        cleaned = re.sub(r'[^a-z0-9\s_-]+', '', text.lower()).strip()
+        return re.sub(r'[\s_]+', '-', cleaned).strip('-')
+
+    results: List[Tuple[str, str]] = []
+    seen = set()
+    for raw_label, desc in matches:
+        slug = _slugify(raw_label)
+        if not slug or slug in seen:
             continue
-        words = [w for w in slug.split('_') if w]
-        pascal_name = "".join(w.capitalize() for w in words)
-        desc = re.sub(r'\s+', ' ', raw_desc.strip()) if raw_desc else f"High-quality, responsive {raw_name} section."
-        sections.append(slug)
-        instructions[slug] = (
-            f"Write the {raw_name} section: {desc} "
-            f"Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
-        )
+        seen.add(slug)
+        results.append((slug, desc))
 
     # If footer is present, ensure it is at the end
-    if "footer" in sections:
-        sections = [s for s in sections if s != "footer"] + ["footer"]
+    footer_tuples = [t for t in results if t[0] == "footer"]
+    if footer_tuples:
+        results = [t for t in results if t[0] != "footer"] + footer_tuples
 
-    return (sections, instructions) if len(sections) >= 2 else (None, {})
+    return results if len(results) >= 2 else None
 
 
-def extract_explicit_sections(prompt: str) -> Optional[list[str]]:
-    """
-    Detects numbered lists (1., 1), etc.) and bulleted lists (-, *, •) in the raw user prompt.
-    Extracts the section names/labels the user wrote themselves (e.g., 'Flagship Products', 'Practice Areas').
-    Returns None (not an empty list) when no explicit structure is detected, so callers know
-    to fall back to the heuristic planner.
-    """
-    sections, _ = extract_explicit_sections_and_instructions(prompt)
-    return sections
+def extract_explicit_sections_and_instructions(prompt: str) -> tuple[Optional[list[str]], dict[str, str]]:
+    """Legacy compatibility helper returning (slugs_list, instructions_dict)."""
+    res = extract_explicit_sections(prompt)
+    if not res:
+        return None, {}
+    slugs = [slug for slug, _ in res]
+    instructions = {}
+    for slug, desc in res:
+        words = [w for w in re.split(r'[-_]', slug) if w]
+        pascal_name = "".join(w.capitalize() for w in words)
+        raw_name = " ".join(w.capitalize() for w in words)
+        full_desc = desc if desc else f"High-quality, responsive {raw_name} section."
+        instructions[slug] = (
+            f"Write the {raw_name} section: {full_desc} "
+            f"Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
+        )
+    return slugs, instructions
 
 
 def extract_explicit_section_instructions(prompt: str) -> dict[str, str]:
@@ -732,7 +769,7 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     """
     explicit = extract_explicit_sections(prompt)
     if explicit:
-        return explicit
+        return [slug for slug, _ in explicit]
 
     lower = prompt.lower()
 
@@ -843,19 +880,29 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
 
 def _build_heuristic_brief(prompt: str, style_spec: Optional[StyleSpec] = None) -> dict:
     """Builds a rich, domain-tailored structured content brief using the unified domain registry and optional StyleSpec."""
-    business_name = extract_business_name(prompt)
-    business_type = detect_business_type(prompt)
-
-    template = dict(_DOMAIN_TEMPLATES.get(business_type, _SAAS_TEMPLATE))
-    theme = _DOMAIN_THEMES.get(business_type, _DOMAIN_THEMES["saas"])
-    
     explicit_sections = extract_explicit_sections(prompt)
     if explicit_sections:
-        dynamic_sections = explicit_sections
-        explicit_instructions = extract_explicit_section_instructions(prompt)
+        dynamic_sections = [slug for slug, _ in explicit_sections]
+        explicit_instructions = {}
+        for slug, desc in explicit_sections:
+            words = [w for w in re.split(r'[-_]', slug) if w]
+            pascal_name = "".join(w.capitalize() for w in words)
+            raw_name = " ".join(w.capitalize() for w in words)
+            full_desc = desc if desc else f"High-quality, responsive {raw_name} section."
+            if "Files:" not in full_desc:
+                full_desc = f"{full_desc} Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
+            explicit_instructions[slug] = full_desc
+            explicit_instructions[slug.replace("-", "_")] = full_desc
+            explicit_instructions[slug.replace("_", "-")] = full_desc
+        business_type = detect_business_type(prompt)
     else:
+        business_type = detect_business_type(prompt)
         dynamic_sections = extract_sections_from_prompt(prompt, business_type)
         explicit_instructions = {}
+
+    business_name = extract_business_name(prompt)
+    template = dict(_DOMAIN_TEMPLATES.get(business_type, _SAAS_TEMPLATE))
+    theme = _DOMAIN_THEMES.get(business_type, _DOMAIN_THEMES["saas"])
 
     lower_prompt = prompt.lower()
     if style_spec:
@@ -984,6 +1031,8 @@ def generate_content_brief(
             resolved_style = PRESET_STYLES["cyberpunk_neon"]
 
     # 2. Brief synthesis
+    explicit_sections = extract_explicit_sections(prompt)
+
     if provider in ("auto", "gemini"):
         api_key = os.environ.get("GEMINI_API_KEY", "")
         if api_key:
@@ -991,6 +1040,11 @@ def generate_content_brief(
                 brief = _call_gemini_brief(prompt, api_key)
                 if brief and "business_name" in brief:
                     brief["source"] = "gemini"
+                    if explicit_sections:
+                        brief["sections"] = [slug for slug, _ in explicit_sections]
+                        brief["custom_section_instructions"] = {
+                            slug: desc for slug, desc in explicit_sections if desc
+                        }
                     if resolved_style:
                         brief["style_spec"] = resolved_style
                         brief["primary_color"] = resolved_style.get_primary_color()
@@ -1009,6 +1063,11 @@ def generate_content_brief(
                 brief = _call_openai_brief(prompt, api_key, base_url)
                 if brief and "business_name" in brief:
                     brief["source"] = "openai"
+                    if explicit_sections:
+                        brief["sections"] = [slug for slug, _ in explicit_sections]
+                        brief["custom_section_instructions"] = {
+                            slug: desc for slug, desc in explicit_sections if desc
+                        }
                     if resolved_style:
                         brief["style_spec"] = resolved_style
                         brief["primary_color"] = resolved_style.get_primary_color()

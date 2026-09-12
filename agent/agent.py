@@ -873,6 +873,73 @@ _SECTION_SYNONYMS: Dict[str, List[str]] = {
     "footer": ["footer", "bottom"],
 }
 
+_BASE_SECTION_INSTRUCTIONS: Dict[str, str] = {
+    "header": (
+        "Write the Header section: a sticky navigation bar with the business name/logo on the left, "
+        "navigation links in the center, and action controls on the right. If the prompt requests a theme toggle, "
+        "include a functional dark/light mode toggle switch using useState. Include a responsive mobile drawer toggle. "
+        "Files: src/components/Header.tsx + src/components/Header.css"
+    ),
+    "hero": (
+        "Write the Hero section: a high-impact full-width banner with background gradient, "
+        "business tagline as an h1, a compelling subtitle, primary/secondary action buttons, "
+        "and animated or styled metric badges if requested. "
+        "Files: src/components/Hero.tsx + src/components/Hero.css"
+    ),
+    "menu": (
+        "Write the Menu section: display the menu categories and items from the content brief. "
+        "Use a card-grid layout with item name, price, and description. "
+        "Files: src/components/Menu.tsx + src/components/Menu.css"
+    ),
+    "about": (
+        "Write the About section: a two-column layout with a heading, a short paragraph about the "
+        "business, and a decorative image placeholder or icon. "
+        "Files: src/components/About.tsx + src/components/About.css"
+    ),
+    "features": (
+        "Write the Features section: display each feature as a card with icon, title, and description. "
+        "If the prompt requests tabbed filtering or category switching, implement functional tab buttons with useState. "
+        "Files: src/components/Features.tsx + src/components/Features.css"
+    ),
+    "pricing": (
+        "Write the Pricing section: display 3 pricing tier cards (e.g. Starter, Pro/Recommended, Enterprise). "
+        "If the prompt requests an interactive pricing calculator or billing toggle, implement an annual/monthly "
+        "billing toggle switch with discounted calculation using useState. "
+        "Files: src/components/Pricing.tsx + src/components/Pricing.css"
+    ),
+    "testimonials": (
+        "Write the Testimonials section: display customer quotes, author names, roles, and star ratings. "
+        "If requested, build an interactive carousel card with previous and next pagination buttons tracking active index using useState. "
+        "Files: src/components/Testimonials.tsx + src/components/Testimonials.css"
+    ),
+    "projects": (
+        "Write the Projects section: display each project from the content brief as a card with "
+        "name, description, and tech stack tags. "
+        "Files: src/components/Projects.tsx + src/components/Projects.css"
+    ),
+    "skills": (
+        "Write the Skills section: display skills as styled pill/badge elements. "
+        "Files: src/components/Skills.tsx + src/components/Skills.css"
+    ),
+    "cta": (
+        "Write the CTA (Call to Action) section: a full-width colored banner with a compelling "
+        "headline and a prominent button. "
+        "Files: src/components/CTA.tsx + src/components/CTA.css"
+    ),
+    "contact": (
+        "Write the Contact section: display address, phone, email and hours from the content brief. "
+        "Use a clean card or two-column layout with icons. "
+        "Files: src/components/Contact.tsx + src/components/Contact.css"
+    ),
+    "footer": (
+        "Write the Footer section: a dark background footer with the business name, brief nav links, "
+        "contact info, and a copyright notice. "
+        "Files: src/components/Footer.tsx + src/components/Footer.css"
+    ),
+}
+
+_SECTION_INSTRUCTIONS: Dict[str, str] = dict(_BASE_SECTION_INSTRUCTIONS)
+
 
 def _compact_site_history(history: List[Dict[str, str]]) -> None:
     """
@@ -1022,7 +1089,7 @@ def auto_scaffold_section(
     """
     Synthesizes a rich, differentiated TSX component and matching CSS for a starved section.
     Parses item counts, parenthesized item names, and specific architectural specs from
-    custom_instr so that multi-item requirements (e.g. '4 flagship sound sculptures with
+    custom_instr so that multi-item requirements (e.g. '4 flagship items with
     frequency response tag and acoustic specs') generate multiple distinct cards rather
     than collapsing into one generic filler card.
     Returns (tsx_filename, tsx_content, css_filename, css_content).
@@ -1049,11 +1116,11 @@ def auto_scaffold_section(
             if c and len(c.split()) <= 4 and not any(k in c.lower() for k in ["e.g.", "etc.", "such as", "including"]):
                 parsed_items.append(c)
 
-    # 2. Detect implied numeric count (e.g. "4 flagship sound sculptures", "3 tiers", "four services")
+    # 2. Detect implied numeric count (e.g. "4 flagship products", "3 tiers", "four services")
     target_count = len(parsed_items)
     if target_count < 2:
         word_numbers = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
-        num_m = re.search(r'\b(\d+|two|three|four|five|six)\s+(?:flagship\s+)?(?:sound\s+sculptures?|products?|items?|models?|services?|attorneys?|features?|tiers?|plans?|cards?)', clean_desc, re.IGNORECASE)
+        num_m = re.search(r'\b(\d+|two|three|four|five|six)\s+(?:flagship\s+)?(?:products?|items?|models?|services?|attorneys?|features?|tiers?|plans?|cards?)', clean_desc, re.IGNORECASE)
         if num_m:
             raw_cnt = num_m.group(1).lower()
             target_count = word_numbers.get(raw_cnt, int(raw_cnt) if raw_cnt.isdigit() else 3)
@@ -1139,41 +1206,58 @@ def auto_scaffold_section(
 
 
 def _build_section_synonyms(sections: List[str]) -> Dict[str, List[str]]:
-    """Builds an expanded synonym map for all requested sections using generic word-stemming and slug variants."""
+    """Builds an expanded synonym map for all requested sections using generic word-stemming and multi-word slug combinations."""
     syns_map = {k: list(v) for k, v in _SECTION_SYNONYMS.items()}
     for sec in sections:
         norm = sec.lower().replace("-", "").replace("_", "")
         existing = set(syns_map.get(norm, []))
         existing.add(norm)
         existing.add(sec.lower())
+        existing.add(sec.lower().replace("-", "_"))
+        existing.add(sec.lower().replace("_", "-"))
+
         tokens = [t for t in re.split(r'[-_\s]', sec.lower()) if len(t) >= 2]
+        token_stems: List[List[str]] = []
         for t in tokens:
-            existing.add(t)
+            stems = {t}
             # Generic English morphological stemming rules
             if t.endswith("ies") and len(t) > 4:
-                existing.add(t[:-3] + "y")
+                stems.add(t[:-3] + "y")
             elif t.endswith("es") and len(t) > 3:
-                existing.add(t[:-2])
-                existing.add(t[:-1])
+                stems.add(t[:-2])
+                stems.add(t[:-1])
             elif t.endswith("s") and len(t) > 2:
-                existing.add(t[:-1])
+                stems.add(t[:-1])
             else:
-                existing.add(t + "s")
+                stems.add(t + "s")
                 if t[-1] in ("s", "x", "z", "ch", "sh"):
-                    existing.add(t + "es")
+                    stems.add(t + "es")
             if t.endswith("ing") and len(t) > 4:
-                existing.add(t[:-3])
+                stems.add(t[:-3])
             if t.endswith("ed") and len(t) > 3:
-                existing.add(t[:-2])
+                stems.add(t[:-2])
 
-        # Multi-token joined variants
+            token_stems.append(list(stems))
+            for s in stems:
+                existing.add(s)
+
+        # Multi-token joined and stemmed combinations
         if len(tokens) > 1:
             existing.add("".join(tokens))
-            last = tokens[-1]
-            if last.endswith("s") and len(last) > 2:
-                existing.add("".join(tokens[:-1]) + last[:-1])
+            existing.add("-".join(tokens))
+            existing.add("_".join(tokens))
+            existing.add(" ".join(tokens))
+            import itertools
+            for combo in itertools.product(*token_stems):
+                existing.add("".join(combo))
+                existing.add("-".join(combo))
+                existing.add("_".join(combo))
+                existing.add("".join(w.capitalize() for w in combo))
 
         syns_map[norm] = list(existing)
+        syns_map[sec.lower()] = list(existing)
+        syns_map[sec.lower().replace("-", "_")] = list(existing)
+        syns_map[sec.lower().replace("_", "-")] = list(existing)
     return syns_map
 
 
@@ -1208,71 +1292,8 @@ def run_site_agent_on_example(
         shutil.rmtree(case_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
 
-    # Derived section instructions — what to tell the model to write next
-    _SECTION_INSTRUCTIONS: Dict[str, str] = {
-        "header": (
-            "Write the Header section: a sticky navigation bar with the business name/logo on the left, "
-            "navigation links in the center, and action controls on the right. If the prompt requests a theme toggle, "
-            "include a functional dark/light mode toggle switch using useState. Include a responsive mobile drawer toggle. "
-            "Files: src/components/Header.tsx + src/components/Header.css"
-        ),
-        "hero": (
-            "Write the Hero section: a high-impact full-width banner with background gradient, "
-            "business tagline as an h1, a compelling subtitle, primary/secondary action buttons, "
-            "and animated or styled metric badges if requested. "
-            "Files: src/components/Hero.tsx + src/components/Hero.css"
-        ),
-        "menu": (
-            "Write the Menu section: display the menu categories and items from the content brief. "
-            "Use a card-grid layout with item name, price, and description. "
-            "Files: src/components/Menu.tsx + src/components/Menu.css"
-        ),
-        "about": (
-            "Write the About section: a two-column layout with a heading, a short paragraph about the "
-            "business, and a decorative image placeholder or icon. "
-            "Files: src/components/About.tsx + src/components/About.css"
-        ),
-        "features": (
-            "Write the Features section: display each feature as a card with icon, title, and description. "
-            "If the prompt requests tabbed filtering or category switching, implement functional tab buttons with useState. "
-            "Files: src/components/Features.tsx + src/components/Features.css"
-        ),
-        "pricing": (
-            "Write the Pricing section: display 3 pricing tier cards (e.g. Starter, Pro/Recommended, Enterprise). "
-            "If the prompt requests an interactive pricing calculator or billing toggle, implement an annual/monthly "
-            "billing toggle switch with discounted calculation using useState. "
-            "Files: src/components/Pricing.tsx + src/components/Pricing.css"
-        ),
-        "testimonials": (
-            "Write the Testimonials section: display customer quotes, author names, roles, and star ratings. "
-            "If requested, build an interactive carousel card with previous and next pagination buttons tracking active index using useState. "
-            "Files: src/components/Testimonials.tsx + src/components/Testimonials.css"
-        ),
-        "projects": (
-            "Write the Projects section: display each project from the content brief as a card with "
-            "name, description, and tech stack tags. "
-            "Files: src/components/Projects.tsx + src/components/Projects.css"
-        ),
-        "skills": (
-            "Write the Skills section: display skills as styled pill/badge elements. "
-            "Files: src/components/Skills.tsx + src/components/Skills.css"
-        ),
-        "cta": (
-            "Write the CTA (Call to Action) section: a full-width colored banner with a compelling "
-            "headline and a prominent button. "
-            "Files: src/components/CTA.tsx + src/components/CTA.css"
-        ),
-        "contact": (
-            "Write the Contact section: display address, phone, email and hours from the content brief. "
-            "Use a clean card or two-column layout with icons. "
-            "Files: src/components/Contact.tsx + src/components/Contact.css"
-        ),
-        "footer": (
-            "Write the Footer section: a dark background footer with the business name, brief nav links, "
-            "contact info, and a copyright notice. "
-            "Files: src/components/Footer.tsx + src/components/Footer.css"
-        ),
-    }
+    # Derived section instructions — per-run copy without mutating shared static _BASE_SECTION_INSTRUCTIONS
+    _SECTION_INSTRUCTIONS: Dict[str, str] = dict(_BASE_SECTION_INSTRUCTIONS)
 
     # Ingest explicit user-authored section overrides if provided
     if custom_section_instructions:
@@ -1283,17 +1304,23 @@ def run_site_agent_on_example(
                 full_instr = f"{full_instr} Files: src/components/{pascal_name}.tsx + src/components/{pascal_name}.css"
             _SECTION_INSTRUCTIONS[sec_key] = full_instr
             _SECTION_INSTRUCTIONS[sec_key.lower()] = full_instr
+            _SECTION_INSTRUCTIONS[sec_key.lower().replace("-", "_")] = full_instr
+            _SECTION_INSTRUCTIONS[sec_key.lower().replace("_", "-")] = full_instr
             _SECTION_INSTRUCTIONS[sec_key.lower().replace("-", "").replace("_", "")] = full_instr
 
     # Ensure every requested section has a clean instruction entry
     for sec in sections:
-        if sec not in _SECTION_INSTRUCTIONS:
+        if sec not in _SECTION_INSTRUCTIONS and sec.lower() not in _SECTION_INSTRUCTIONS:
             pascal = "".join(w.capitalize() for w in re.split(r'[-_]', sec))
             title = " ".join(w.capitalize() for w in re.split(r'[-_]', sec))
-            _SECTION_INSTRUCTIONS[sec] = (
+            default_instr = (
                 f"Write the {title} section: a responsive modern layout highlighting {title}. "
                 f"Files: src/components/{pascal}.tsx + src/components/{pascal}.css"
             )
+            _SECTION_INSTRUCTIONS[sec] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower()] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower().replace("-", "_")] = default_instr
+            _SECTION_INSTRUCTIONS[sec.lower().replace("_", "-")] = default_instr
 
     active_synonyms = _build_section_synonyms(sections)
     per_section_cap = max(2, max_turns // max(1, len(sections)))
