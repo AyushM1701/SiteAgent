@@ -1,0 +1,44 @@
+{
+  "status": "reviewed_generation_mix_requires_native_gate_and_preflight",
+  "training_started": false,
+  "train_rows": 39,
+  "validation_rows": 38,
+  "legacy_pool_rows_not_admitted": 207,
+  "excluded_rows": 288,
+  "train_target_types": {
+    "section": 12,
+    "repair": 15,
+    "complete_site": 12
+  },
+  "train_families": 12,
+  "train_domains": [
+    "arts",
+    "civic",
+    "dashboard",
+    "ecommerce",
+    "editorial",
+    "education",
+    "events",
+    "healthcare",
+    "hospitality",
+    "nonprofit",
+    "portfolio",
+    "unfamiliar"
+  ],
+  "max_encoded_tokens": 5597,
+  "source_sha256": {
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\full_site_training_v3\\train.jsonl": "62b0cbdb674275185a26e64b2decdadcdff12aead1c344c558f09cba753c72dc",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\full_site_training_v3\\validation.jsonl": "298aefd0101789e605b9ff75fee0f1e22b25095a461cd15622af2dfc1b0707da",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\diverse_v1.jsonl": "48f2574dedc73a6681c0a0a7e78de6cbe06b27c7ee89d4a9a199fbdad6d01e6c",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\forma_scroll_v2.jsonl": "af45cce7cc7297fd1271e23d7cdf970000020656420e5b151ec255a5bc6e095a",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\flattened_v2.jsonl": "cec94c2f44b9818ee49898a4b79abd382819ad37fd1db1136992070f52d41c1a",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\contract_repairs_v1.jsonl": "795d2197f151214f3bbb72ab9c0b07d3d15a18c51a92455519147653d0c7e523",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\design_v2_all_reviews.jsonl": "52787bfb40404858738d7a16a441de38688c6ad12b9886b7fe8efd59747cc9c5"
+  },
+  "output_sha256": {
+    "legacy_pool.jsonl": "cce65e104b5d1f3ffec61d424b738ee98e7b176c2a11d3052b6c8bfd8b796856",
+    "train.jsonl": "1a8ea3b048c2a18fd993f3fdfed323c82e6d9eba67ab834c57a9bcde6dc68f02",
+    "validation.jsonl": "b365f2fcb77b0d8c394fb85c55767c8396ad3e1dd8e190b62c92d39356df243c"
+  },
+  "policy": "Only reviewed rows enter train.jsonl. Legacy rows remain a separate unreviewed pool; no assistant targets rewritten."
+}

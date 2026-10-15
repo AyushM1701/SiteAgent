@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-base: #171717;
+  --bg-sidebar: #141414;
+  --bg-panel: #141414;
+  --bg-elevated: #1c1c1c;
+  --bg-input: #212121;
+  --accent: #6ee7b7;
+}
+
+[data-theme="light"] {
+  --bg-base: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-panel: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --bg-input: #ffffff;
+  --accent: #059669;
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* ==========================================================================
+   Comprehensive Light Mode Theme Overrides
+   ========================================================================== */
+
+html[data-theme="light"] body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Base App & Main Layout Backgrounds */
+html[data-theme="light"] .bg-\[\#171717\] {
+  background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .bg-\[\#141414\] {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .bg-\[\#1c1c1c\] {
+  background-color: #f1f5f9 !important;
+}
+
+html[data-theme="light"] .bg-\[\#212121\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .bg-\[\#1e1e1e\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Workspace sub-tabs & terminals */
+html[data-theme="light"] .bg-\[\#0a0c10\],
+html[data-theme="light"] .bg-\[\#07080c\],
+html[data-theme="light"] .bg-\[\#0f1012\] {
+  background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .bg-\[\#141619\] {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .bg-\[\#191c20\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Chat Bubbles & Activity Cards */
+html[data-theme="light"] .bg-\[\#191919\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+html[data-theme="light"] .bg-\[\#1e2228\] {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Borders */
+html[data-theme="light"] .border-white\/\[0\.04\],
+html[data-theme="light"] .border-white\/\[0\.06\],
+html[data-theme="light"] .border-white\/\[0\.08\],
+html[data-theme="light"] .border-white\/\[0\.10\],
+html[data-theme="light"] .border-white\/\[0\.12\],
+html[data-theme="light"] .border-white\/\[0\.15\],
+html[data-theme="light"] .border-white\/\[0\.20\] {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .focus-within\:border-white\/\[0\.20\]:focus-within {
+  border-color: rgba(16, 185, 129, 0.6) !important;
+}
+
+html[data-theme="light"] .focus\:border-white\/\[0\.12\]:focus {
+  border-color: rgba(16, 185, 129, 0.6) !important;
+}
+
+/* Typography */
+html[data-theme="light"] .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html[data-theme="light"] .text-slate-300 {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .text-slate-400 {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="light"] .text-white {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .hover\:text-white:hover {
+  color: #000000 !important;
+}
+
+html[data-theme="light"] .hover\:text-slate-200:hover {
+  color: #0f172a !important;
+}
+
+/* Accent enhancements in light mode */
+html[data-theme="light"] .text-emerald-400 {
+  color: #059669 !important;
+}
+
+html[data-theme="light"] .text-teal-400 {
+  color: #0d9488 !important;
+}
+
+html[data-theme="light"] .text-indigo-400 {
+  color: #6366f1 !important;
+}
+
+/* Interactive Hovers & Overlays */
+html[data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover,
+html[data-theme="light"] .hover\:bg-white\/\[0\.06\]:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme="light"] .hover\:bg-white\/\[0\.10\]:hover,
+html[data-theme="light"] .hover\:bg-white\/\[0\.12\]:hover,
+html[data-theme="light"] .hover\:bg-white\/\[0\.15\]:hover {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .bg-white\/\[0\.04\],
+html[data-theme="light"] .bg-white\/\[0\.06\],
+html[data-theme="light"] .bg-white\/\[0\.08\] {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html[data-theme="light"] .bg-white\/\[0\.10\],
+html[data-theme="light"] .bg-white\/\[0\.12\] {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html[data-theme="light"] .bg-white\/\[0\.15\] {
+  background-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Form controls */
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Scrollbars in Light Mode */
+html[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16) !important;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28) !important;
+}

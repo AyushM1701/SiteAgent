@@ -1,0 +1,87 @@
+"""Regression tests for the planners: requested sections, negation, per-prompt
+design seeding, and one art direction per prompt."""
+from agent.design_plan import synthesize_design_plan
+from agent.site_brief import extract_sections_from_prompt, generate_content_brief
+
+CERAMICS = (
+    "Build a complete responsive website for Aster & Kiln ceramics. Create a collection-led "
+    "storefront with glaze stories, product detail, care guide and studio notes. Required "
+    "interaction: Filter by vessel type and add an item to a shared cart; show honest "
+    "checkout-unavailable messaging. Art direction: warm editorial photography, clay textures, "
+    "restrained hover motion. Use specific honest content; do not invent testimonials, payment "
+    "completion, or live data."
+)
+
+
+def test_prose_feature_list_becomes_sections_and_unavailable_checkout_is_excluded():
+    sections = extract_sections_from_prompt(CERAMICS, "ecommerce")
+    for wanted in ("glaze-stories", "product-detail", "care-guide", "studio-notes", "products", "cart"):
+        assert wanted in sections
+    assert "checkout" not in sections
+    assert "testimonials" not in sections
+    assert sections[0] == "header" and sections[-1] == "footer"
+
+
+def test_negated_requests_do_not_add_sections():
+    saas = extract_sections_from_prompt(
+        "A SaaS landing page for a CI tool. Do not show pricing; we are invite-only. Include a product preview.", "saas")
+    assert "pricing" not in saas
+    assert "testimonials" not in saas  # "preview" is not "review"
+
+    restaurant = extract_sections_from_prompt(
+        "Restaurant site. We do not take reservations and have no contact form.", "restaurant")
+    assert "booking" not in restaurant
+    assert "contact" not in restaurant
+    assert "menu" in restaurant
+
+
+def test_negation_scope_ends_at_reset_words_and_hyphenated_no():
+    assert "pricing" in extract_sections_from_prompt(
+        "Bakery site without a signup wall, featuring pricing and a menu.", "restaurant")
+    assert "pricing" in extract_sections_from_prompt("A no-code builder SaaS with pricing and an FAQ.", "saas")
+
+
+def test_style_lists_are_not_sections():
+    sections = extract_sections_from_prompt("A portfolio with warm colors, serif type and subtle motion.", "portfolio")
+    assert not any(word in "-".join(sections) for word in ("color", "serif", "motion"))
+
+
+def test_design_plan_varies_with_prompt_when_task_index_is_fixed():
+    prompts = ["A bakery website for Crumb & Co", "A yoga studio site for Stillwater",
+               "A law firm site for Hart Legal", "A florist site for Petal Row",
+               "A bookshop site for Margins", "A tailor site for Fold & Hem"]
+    plans = [synthesize_design_plan({"prompt": p}, "general", 0) for p in prompts]
+    assert len({p.heroArchetype for p in plans}) > 1
+    assert len({p.designGenome["palette"] for p in plans}) > 1
+    # Same prompt, same plan.
+    again = synthesize_design_plan({"prompt": prompts[0]}, "general", 0)
+    assert again.to_dict() == plans[0].to_dict()
+
+
+def test_non_technical_domains_never_get_terminal_hero():
+    for i in range(30):
+        plan = synthesize_design_plan({"prompt": f"A neighbourhood bakery number {i}"}, "restaurant", 0)
+        assert plan.heroArchetype not in {"terminal_data", "product_stage"}
+
+
+def test_brief_layout_archetype_guides_hero_when_prompt_is_silent():
+    plan = synthesize_design_plan({"prompt": "A ceramics shop", "layoutArchetype": "bento"}, "ecommerce", 0)
+    assert plan.heroArchetype == "bento"
+
+
+def test_aligned_plan_defers_visual_system_to_brief():
+    plan = synthesize_design_plan({"prompt": "A ceramics shop with warm editorial photography"}, "ecommerce", 0)
+    plan.align_with_brief(media_available=False)
+    for owned in ("palette", "display_font", "body_font", "theme_mode", "hero", "density"):
+        assert owned not in plan.designGenome
+    assert "photo" not in plan.visualAnchor
+    assert "design system in the Content Brief" in plan.to_prompt_block()
+
+
+def test_incidental_style_words_do_not_force_a_preset():
+    brief = generate_content_brief(CERAMICS, provider="heuristic")
+    assert "style_spec" not in brief
+    luxury_goods = generate_content_brief("A shop selling luxury ceramics and champagne flutes.", provider="heuristic")
+    assert "style_spec" not in luxury_goods
+    styled = generate_content_brief("A ceramics shop in an editorial style.", provider="heuristic")
+    assert "style_spec" in styled

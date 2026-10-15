@@ -1,0 +1,114 @@
+{
+  "source_files": {
+    "Main.css": "023dfa15f5c4b1bcda2922a16393fc6878b5aefb672f833db0d5dc2c81140b8d",
+    "Main.tsx": "65679fdf3b6fa0db7fd6ccea6f27e360ad6c468bc0504a1dbf05e4c72265fcfe"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-DUxSj84A.css    3.41 kB \u00e2\u201d\u201a gzip:  1.28 kB\ndist/assets/index-Ntg0LXgr.js   196.01 kB \u00e2\u201d\u201a gzip: 61.81 kB\n\u00e2\u0153\u201c built in 570ms\n"
+    }
+  },
+  "browser_checks": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "interaction_5": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "interaction_5": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "interaction_5": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "captures": {
+    "desktop": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\desktop_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\desktop_scroll_video.webm",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "e85bfcd26fb9fd11d3caed288b441374c442c19849d562bfa8f42e1586c152f2",
+      "scroll_video_sha256": "469cd5782bb56bd21399804f01a90f8c26bee5eecd0bd7ff7eb62843027f54a1"
+    },
+    "mobile": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\mobile_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\mobile_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "e852399cb6a0365e7b3d16a31bf456d9ed33e10a3cdf1730c44746e9338bcb90",
+      "scroll_video_sha256": "f268f85b9f3dbec688b3f29c6e27ee83fdf2691472b3b3b3760473889c6605e5"
+    },
+    "reduced_motion": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\reduced_motion_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\afterlight\\captures\\reduced_motion_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": true,
+      "browser_errors": [],
+      "screenshot_sha256": "e852399cb6a0365e7b3d16a31bf456d9ed33e10a3cdf1730c44746e9338bcb90",
+      "scroll_video_sha256": "2e2bbae05f03eec1a57818e8af88fd38eecefde046030f81dd25c32feadd95c3"
+    }
+  },
+  "passed": true,
+  "visual_review": "pending_human",
+  "three_d_kind": "not_requested",
+  "webgl_runtime": "not_requested; no WebGL claim"
+}

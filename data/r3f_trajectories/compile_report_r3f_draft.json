@@ -1,0 +1,14 @@
+{
+  "source": "data/r3f_trajectories/r3f_draft.jsonl",
+  "total_records": 3,
+  "tested": 3,
+  "pass": 3,
+  "fail": 0,
+  "no_tsx_code": 0,
+  "tsc_unavailable": 0,
+  "pass_rate": "100.0%",
+  "top_error_codes": {},
+  "failed_tasks": [],
+  "first_failures": [],
+  "note": "Static TypeScript compilation only. Cannot verify: runtime behavior, visual correctness, keyboard/scroll events, WebGL in a real browser. Human review required for all promoted records."
+}

@@ -1,0 +1,69 @@
+{
+  "site": "forma_scroll_v2",
+  "source_sha256": {
+    "Main.tsx": "7aeaf2e2504b9e3b0647de769076aa454be13fb9d8e6ff651ffb9f082fcc6124",
+    "Main.css": "3f58e743ac935fd78d427c5485515539d5a255af93ab7a748ab7987907e54737"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-D9SAH4D3.css    6.51 kB \u00e2\u201d\u201a gzip:  2.12 kB\ndist/assets/index-CXhQtOCh.js   197.81 kB \u00e2\u201d\u201a gzip: 62.32 kB\n\u00e2\u0153\u201c built in 594ms\n"
+    }
+  },
+  "pixel_equivalence": {
+    "desktop": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\forma_scroll_v2\\desktop_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\forma_scroll_v2\\desktop_flattened.png"
+    },
+    "mobile": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\forma_scroll_v2\\mobile_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\forma_scroll_v2\\mobile_flattened.png"
+    }
+  },
+  "interactions": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "review_form_sha256": "e83a71e813438075d19ec2dbabea0419a919e472daa0b4d76083568263527254",
+  "original_reviewed_task_id": "diverse_forma_scroll_v2_hero",
+  "passed": true
+}

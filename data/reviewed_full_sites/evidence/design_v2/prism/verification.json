@@ -1,0 +1,117 @@
+{
+  "source_files": {
+    "Main.css": "d51ceba40d61fe886d322cfb05ef35637d395857c363bf0240f761b088b4baf9",
+    "Main.tsx": "7ff3904e16bf14d75f5536162223b7a76926febcbb07a5deed05531c12973933"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-Cp05Dm1I.css    4.12 kB \u00e2\u201d\u201a gzip:  1.49 kB\ndist/assets/index-CoYrOM_I.js   196.17 kB \u00e2\u201d\u201a gzip: 61.91 kB\n\u00e2\u0153\u201c built in 567ms\n"
+    }
+  },
+  "browser_checks": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_2": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "reveal_visible": true,
+        "css_3d_motion_or_reduced_motion": true,
+        "css_3d_faces": true,
+        "flat_fallback": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_2": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "reveal_visible": true,
+        "css_3d_motion_or_reduced_motion": true,
+        "css_3d_faces": true,
+        "flat_fallback": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_2": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "reveal_visible": true,
+        "css_3d_motion_or_reduced_motion": true,
+        "css_3d_faces": true,
+        "flat_fallback": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "captures": {
+    "desktop": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\desktop_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\desktop_scroll_video.webm",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "16554163d57b2efd10fa2f23b07489bada8ecb884d12fabed64406461cc098d5",
+      "scroll_video_sha256": "4f5d6e25a24d7d3541dba669c5de567c79ebf978369cadae787de1fba49768d7"
+    },
+    "mobile": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\mobile_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\mobile_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "170a0b102c60cdab6fb86cf54053c03450770712596d13e0f192f86b7cdc1266",
+      "scroll_video_sha256": "42b2e0e1d24f1b5793e8271d9c16a805c8a35fb4d65c4235d3fa8e68662db06f"
+    },
+    "reduced_motion": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\reduced_motion_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\prism\\captures\\reduced_motion_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": true,
+      "browser_errors": [],
+      "screenshot_sha256": "3be013ffc534d40b498b06b16c0334ef40b6897ba60414e8b6d54b39eb1fee58",
+      "scroll_video_sha256": "25256e5f065f93d5f3a02abd965a1c8775595b885c7a25d8eb8d1af0b64cc134"
+    }
+  },
+  "passed": true,
+  "visual_review": "pending_human",
+  "three_d_kind": "explicit_css_composition",
+  "webgl_runtime": "not_requested; no WebGL claim"
+}

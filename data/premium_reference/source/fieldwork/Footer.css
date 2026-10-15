@@ -1,0 +1,1 @@
+.f-footer{background:var(--ink);color:var(--cream);display:flex;align-items:center;justify-content:space-between;gap:25px;padding:40px 5vw}.f-footer>a:first-child{font-size:30px;letter-spacing:-1px;font-weight:700}.f-footer p,.f-footer>a:last-child{font-size:11px;line-height:1.7}@media(max-width:680px){.f-footer{flex-wrap:wrap;padding:30px 20px}.f-footer p{width:100%;order:3}}

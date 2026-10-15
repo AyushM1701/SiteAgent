@@ -1,0 +1,9 @@
+STEP 2 REJECTION AUDIT LOG
+Total Candidates: 102
+Survivors: 99
+Rejections: 3
+Rejections by gate: {'anti_duplication': 0, 'prompt_fidelity': 3, 'visual_judge_and_motion': 0}
+
+[PROMPT_FIDELITY] site_perfumery_botanical_scents (editorial) in site_trajectories_batch5.jsonl: Business name 'Oud Éternel Extrait de Parfum' is missing from rendered output.
+[PROMPT_FIDELITY] site_vfx_virtual_production (bento) in site_trajectories_batch5.jsonl: Business name '180° MicroLED Volume Stage' is missing from rendered output.
+[PROMPT_FIDELITY] site_vineyard_domaine_solis (timeline) in site_trajectories_batch5.jsonl: Business name 'Cuvée Terra Cotta 2021' is missing from rendered output.

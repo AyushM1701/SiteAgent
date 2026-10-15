@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-09-29T15:13:25.054499",
+  "input_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\siteagent_motion_sft_v1.jsonl",
+  "output_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\motion_cleaned.jsonl",
+  "total_records": 36,
+  "clean_records_count": 36,
+  "modified_records_count": 0,
+  "unmodified_records_count": 36,
+  "rejected_records_count": 0,
+  "thought_blocks_removed": 0,
+  "zero_thought_verified": true,
+  "status": "success",
+  "modified_sample": [],
+  "rejected_records": []
+}

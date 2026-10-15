@@ -1,0 +1,22 @@
+{
+  "status": "reviewed_input_ready_for_training_preflight",
+  "rows": 486,
+  "validation_rows": 68,
+  "families": 257,
+  "reviewed_rows": 21,
+  "sources": {
+    "data\\full_site_training\\train.jsonl": "ff23a0082f6427ec2d98f9a91e701c176550fdff953d63c373ce114b0ff70533",
+    "data\\reviewed_full_sites\\diverse_v1.jsonl": "48f2574dedc73a6681c0a0a7e78de6cbe06b27c7ee89d4a9a199fbdad6d01e6c",
+    "data\\reviewed_full_sites\\forma_scroll_v2.jsonl": "af45cce7cc7297fd1271e23d7cdf970000020656420e5b151ec255a5bc6e095a",
+    "data\\reviewed_full_sites\\flattened_v2.jsonl": "cec94c2f44b9818ee49898a4b79abd382819ad37fd1db1136992070f52d41c1a",
+    "data\\reviewed_full_sites\\contract_repairs_v1.jsonl": "795d2197f151214f3bbb72ab9c0b07d3d15a18c51a92455519147653d0c7e523"
+  },
+  "sha256": "62b0cbdb674275185a26e64b2decdadcdff12aead1c344c558f09cba753c72dc",
+  "validation_sha256": "298aefd0101789e605b9ff75fee0f1e22b25095a461cd15622af2dfc1b0707da",
+  "max_native_tokens": 6519,
+  "system_prompt_policy": "current runtime prompt selected by actual assistant protocol",
+  "training_started": false,
+  "excluded_train_rows": 358,
+  "excluded_validation_rows": 36,
+  "exclusion_policy": "Historical paired CSS import and selector contract; no target rewriting. This is not a claim that every excluded target fails rendering."
+}

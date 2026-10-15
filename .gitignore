@@ -1,6 +1,7 @@
 # --- Model weights (fetch via scripts/setup.sh, never commit) ---
 base-model/
-my-react-agent-lora/
+my-react-agent-lora/*
+!my-react-agent-lora/README.md
 my-react-agent-lora-dpo/
 agent_lora_output/
 models/
@@ -61,3 +62,22 @@ htmlcov/
 *~
 Thumbs.db
 scratch/
+
+# --- Generated run output, sessions and eval workspaces ---
+runs/
+sessions/
+experiments/
+.eval_compare_base/
+.eval_compare_sft/
+.eval_workspace_base_benchmark/
+.eval_site_benchmark_workspace/
+.site_star_workspace/
+.test_workspace/
+.omnirush/
+*checkpoints/
+checkpoint-*/
+
+# --- Workbench build output (commit only the assets index.html loads: git add -f) ---
+web_ui_static/assets/
+*.bak
+*.bak_*

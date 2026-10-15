@@ -1,0 +1,18 @@
+[
+  {
+    "task_id": "site_star_Vanguard_Legal_Partners_1789279726_turn12",
+    "reason": "Unbalanced tool_call tags in assistant target"
+  },
+  {
+    "task_id": "site_star_Apex_Wealth_Advisors_1789280175_turn12",
+    "reason": "Unbalanced tool_call tags in assistant target"
+  },
+  {
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn12",
+    "reason": "Unbalanced tool_call tags in assistant target"
+  },
+  {
+    "task_id": "site_star_Aura_Premier_Properties_1789280972_turn10",
+    "reason": "Unbalanced tool_call tags in assistant target"
+  }
+]

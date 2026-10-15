@@ -1,0 +1,78 @@
+{
+  "site": "quiethours",
+  "source_sha256": {
+    "Main.tsx": "106a877773c726858807275f94d9ef5960e19b263b8aa940250a4ac292cb4963",
+    "Main.css": "2982a903234f517d92188d1dede41e1a60a3148e8e217c37ac67b8c86e7975d8"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-DYz6Rk9A.css    5.53 kB \u00e2\u201d\u201a gzip:  1.76 kB\ndist/assets/index-DF7RqbU8.js   198.29 kB \u00e2\u201d\u201a gzip: 62.56 kB\n\u00e2\u0153\u201c built in 573ms\n"
+    }
+  },
+  "pixel_equivalence": {
+    "desktop": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\quiethours\\desktop_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\quiethours\\desktop_flattened.png"
+    },
+    "mobile": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\quiethours\\mobile_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\quiethours\\mobile_flattened.png"
+    }
+  },
+  "interactions": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "parallax_contract": true,
+        "reveal_visible": true,
+        "empty_validation": true,
+        "saved_note": true,
+        "clear_note": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "parallax_contract": true,
+        "reveal_visible": true,
+        "empty_validation": true,
+        "saved_note": true,
+        "clear_note": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "parallax_contract": true,
+        "reveal_visible": true,
+        "empty_validation": true,
+        "saved_note": true,
+        "clear_note": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "review_form_sha256": "b28158c0cceac65aa77b4310615d33a7c5548f328686fc3103bfac0435f1772b",
+  "original_reviewed_task_id": "diverse_quiethours_hero",
+  "passed": true
+}

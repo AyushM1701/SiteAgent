@@ -1,0 +1,107 @@
+{
+  "version": "1.0.0",
+  "total_lessons": 13,
+  "topics": [
+    "Canvas",
+    "React Three Fiber",
+    "Drei",
+    "Suspense",
+    "GLTF loading",
+    "lighting",
+    "materials",
+    "shader basics",
+    "animation cleanup",
+    "responsive camera",
+    "device pixel ratio",
+    "reduced motion",
+    "fallback UI"
+  ],
+  "verification": {
+    "all_covered": true,
+    "total_required": 13,
+    "total_covered": 13,
+    "missing_topics": [],
+    "covered_topics": [
+      "Canvas",
+      "Drei",
+      "GLTF loading",
+      "React Three Fiber",
+      "Suspense",
+      "animation cleanup",
+      "device pixel ratio",
+      "fallback UI",
+      "lighting",
+      "materials",
+      "reduced motion",
+      "responsive camera",
+      "shader basics"
+    ]
+  },
+  "lessons_summary": [
+    {
+      "topic": "Canvas",
+      "task_id": "three_d_canvas_setup",
+      "title": "Configuring the R3F Canvas Container"
+    },
+    {
+      "topic": "React Three Fiber",
+      "task_id": "three_d_r3f_core",
+      "title": "Declarative Scene Graph with R3F"
+    },
+    {
+      "topic": "Drei",
+      "task_id": "three_d_drei_helpers",
+      "title": "Leveraging Drei Helpers"
+    },
+    {
+      "topic": "Suspense",
+      "task_id": "three_d_suspense_boundaries",
+      "title": "Asynchronous Scene Loading with React Suspense"
+    },
+    {
+      "topic": "GLTF loading",
+      "task_id": "three_d_gltf_loading",
+      "title": "Loading and Preloading GLTF/GLB Models"
+    },
+    {
+      "topic": "lighting",
+      "task_id": "three_d_lighting_budget",
+      "title": "Performant Studio Lighting and Shadows"
+    },
+    {
+      "topic": "materials",
+      "task_id": "three_d_materials_config",
+      "title": "PBR Materials and Color Management"
+    },
+    {
+      "topic": "shader basics",
+      "task_id": "three_d_shader_basics",
+      "title": "Custom Vertex and Fragment Shaders"
+    },
+    {
+      "topic": "animation cleanup",
+      "task_id": "three_d_animation_cleanup",
+      "title": "Animation Cleanup and Memory Leak Prevention"
+    },
+    {
+      "topic": "responsive camera",
+      "task_id": "three_d_responsive_camera",
+      "title": "Viewport-Aware Responsive Camera Adjustments"
+    },
+    {
+      "topic": "device pixel ratio",
+      "task_id": "three_d_dpr_budget",
+      "title": "Device Pixel Ratio (DPR) Clamping for High-DPI Displays"
+    },
+    {
+      "topic": "reduced motion",
+      "task_id": "three_d_reduced_motion",
+      "title": "Accessible prefers-reduced-motion Handling"
+    },
+    {
+      "topic": "fallback UI",
+      "task_id": "three_d_fallback_ui",
+      "title": "Graceful CSS and 2D Canvas Fallbacks for WebGL Failure"
+    }
+  ]
+}

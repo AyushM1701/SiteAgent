@@ -1,0 +1,51 @@
+import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode, type RefObject } from 'react';
+import './NativeMotion.css';
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+function useMedia(query: string, fallback = true) {
+  const [matches, setMatches] = useState(fallback);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia(query);
+    const update = () => setMatches(media.matches);
+    update(); media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, [query]);
+  return matches;
+}
+export function useReducedMotion() { return useMedia('(prefers-reduced-motion: reduce)'); }
+function useStaticMotion() { return useReducedMotion() || useMedia('(max-width: 767px), (hover: none), (pointer: coarse)'); }
+export type PointerSample = { x: number; y: number; active: boolean };
+export function usePointerRaf<T extends HTMLElement>(ref: RefObject<T | null>, onFrame: (sample: PointerSample) => void, disabled = false) {
+  const callback = useRef(onFrame); callback.current = onFrame;
+  useEffect(() => {
+    const el = ref.current; if (!el) return; let frame: number | null = null; let point: { x: number; y: number } | null = null;
+    const reset = () => { point = null; if (frame !== null) cancelAnimationFrame(frame); frame = null; callback.current({ x: 0, y: 0, active: false }); };
+    if (disabled) { reset(); return; }
+    const schedule = () => { if (frame !== null) return; frame = requestAnimationFrame(() => { frame = null; if (!point) return; const rect = el.getBoundingClientRect(); callback.current({ x: clamp((point.x - rect.left) / Math.max(1, rect.width) * 2 - 1, -1, 1), y: clamp((point.y - rect.top) / Math.max(1, rect.height) * 2 - 1, -1, 1), active: true }); }); };
+    const move = (event: PointerEvent) => { if (event.pointerType === 'touch') { reset(); return; } point = { x: event.clientX, y: event.clientY }; schedule(); };
+    el.addEventListener('pointermove', move, { passive: true }); el.addEventListener('pointerleave', reset); el.addEventListener('pointercancel', reset); el.addEventListener('focusin', reset); window.addEventListener('blur', reset); window.addEventListener('scroll', schedule, { passive: true, capture: true }); window.addEventListener('resize', schedule, { passive: true });
+    return () => { reset(); el.removeEventListener('pointermove', move); el.removeEventListener('pointerleave', reset); el.removeEventListener('pointercancel', reset); el.removeEventListener('focusin', reset); window.removeEventListener('blur', reset); window.removeEventListener('scroll', schedule, true); window.removeEventListener('resize', schedule); };
+  }, [ref, disabled]);
+}
+export type ScrollSample = { progress: number; velocity: number };
+export function useScrollProgress<T extends HTMLElement>(ref: RefObject<T | null>, onFrame: (sample: ScrollSample) => void, disabled = false) {
+  const callback = useRef(onFrame); callback.current = onFrame;
+  useEffect(() => { const el = ref.current; if (!el) return; if (disabled) { callback.current({ progress: 0.5, velocity: 0 }); return; } let frame: number | null = null; let previousY = window.scrollY; let previousTime = performance.now();
+    const schedule = () => { if (frame !== null) return; frame = requestAnimationFrame(time => { frame = null; const rect = el.getBoundingClientRect(); const velocity = clamp((window.scrollY - previousY) / Math.max(16, time - previousTime), -3, 3); previousY = window.scrollY; previousTime = time; callback.current({ progress: clamp((window.innerHeight - rect.top) / Math.max(1, window.innerHeight + rect.height), 0, 1), velocity }); }); };
+    window.addEventListener('scroll', schedule, { passive: true, capture: true }); window.addEventListener('resize', schedule, { passive: true }); const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule); observer?.observe(el); schedule();
+    return () => { window.removeEventListener('scroll', schedule, true); window.removeEventListener('resize', schedule); observer?.disconnect(); if (frame !== null) cancelAnimationFrame(frame); };
+  }, [ref, disabled]);
+}
+export function useIntersectionReveal<T extends HTMLElement>(ref: RefObject<T | null>, disabled = false) {
+  useEffect(() => { const root = ref.current; if (!root) return; const nodes = Array.from(root.children).filter((node): node is HTMLElement => node instanceof HTMLElement); const show = () => nodes.forEach(node => { node.removeAttribute('data-motion-pending'); node.style.removeProperty('--motion-delay'); }); if (disabled || typeof IntersectionObserver === 'undefined') { show(); return; }
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) { entry.target.removeAttribute('data-motion-pending'); observer.unobserve(entry.target); } }), { threshold: 0.01 }); nodes.forEach((node, index) => { node.style.setProperty('--motion-delay', `${Math.min(index, 8) * 60}ms`); node.setAttribute('data-motion-pending', ''); observer.observe(node); }); const focus = () => show(); root.addEventListener('focusin', focus); return () => { observer.disconnect(); root.removeEventListener('focusin', focus); show(); };
+  }, [ref, disabled]);
+}
+type MotionProps = HTMLAttributes<HTMLDivElement> & { disabled?: boolean };
+export function MagneticTarget({ children, className = '', disabled = false, strength = 16, ...props }: MotionProps & { strength?: number }) { const root = useRef<HTMLDivElement>(null); const layer = useRef<HTMLDivElement>(null); const staticMotion = useStaticMotion(); usePointerRaf(root, ({ x, y }) => { if (layer.current) layer.current.style.transform = `translate3d(${x * clamp(strength, 0, 48)}px, ${y * clamp(strength, 0, 48)}px, 0)`; }, disabled || staticMotion); return <div {...props} ref={root} className={`native-magnetic ${className}`}><div ref={layer} className="native-pointer-layer">{children}</div></div>; }
+export function TiltSurface({ children, className = '', disabled = false, degrees = 8, ...props }: MotionProps & { degrees?: number }) { const root = useRef<HTMLDivElement>(null); const layer = useRef<HTMLDivElement>(null); const staticMotion = useStaticMotion(); usePointerRaf(root, ({ x, y }) => { if (layer.current) layer.current.style.transform = `perspective(900px) rotateX(${-y * clamp(degrees, 0, 15)}deg) rotateY(${x * clamp(degrees, 0, 15)}deg)`; }, disabled || staticMotion); return <div {...props} ref={root} className={`native-tilt ${className}`}><div ref={layer} className="native-pointer-layer">{children}</div></div>; }
+export function ParallaxLayer({ children, className = '', disabled = false, distance = 60, ...props }: MotionProps & { distance?: number }) { const root = useRef<HTMLDivElement>(null); const layer = useRef<HTMLDivElement>(null); const staticMotion = useStaticMotion(); useScrollProgress(root, ({ progress }) => { if (layer.current) layer.current.style.transform = `translate3d(0, ${(progress * 2 - 1) * clamp(distance, 0, 120)}px, 0)`; }, disabled || staticMotion); return <div {...props} ref={root} className={`native-parallax ${className}`}><div ref={layer} className="native-parallax-layer">{children}</div></div>; }
+export function StickyNarrative({ visual, children, className = '', disabled = false, ...props }: MotionProps & { visual: ReactNode }) { const staticMotion = useStaticMotion(); return <section {...props} className={`native-sticky ${className}`} data-motion-static={disabled || staticMotion || undefined}><div className="native-sticky-visual">{visual}</div><div className="native-sticky-steps">{children}</div></section>; }
+export function RevealGroup({ children, className = '', disabled = false, ...props }: MotionProps) { const root = useRef<HTMLDivElement>(null); const staticMotion = useStaticMotion(); useIntersectionReveal(root, disabled || staticMotion); return <div {...props} ref={root} className={`native-reveal ${className}`}>{children}</div>; }
+export function VelocityMarquee({ children, className = '', disabled = false, speed = 28, ...props }: MotionProps & { speed?: number }) { const root = useRef<HTMLDivElement>(null); const track = useRef<HTMLDivElement>(null); const staticMotion = useStaticMotion(); useScrollProgress(root, sample => { if (track.current) track.current.style.setProperty('--motion-velocity', String(Math.abs(sample.velocity))); }, disabled || staticMotion); useEffect(() => { const outer = root.current, inner = track.current; if (!outer || !inner || disabled || staticMotion) return; let frame: number | null = null, offset = 0, direction = 1, max = 0, last = 0; const resize = () => { max = Math.max(0, inner.scrollWidth - outer.clientWidth); }; const tick = (time: number) => { const dt = last ? Math.min(32, time - last) / 1000 : 0; last = time; offset = clamp(offset + direction * clamp(speed, 0, 120) * dt, 0, max); if (offset >= max || offset <= 0) direction *= -1; inner.style.transform = `translate3d(${-offset}px, 0, 0)`; frame = requestAnimationFrame(tick); }; const start = () => { if (frame === null && max > 0) frame = requestAnimationFrame(tick); }; const stop = () => { if (frame !== null) cancelAnimationFrame(frame); frame = null; last = 0; }; const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => { resize(); start(); }); observer?.observe(outer); observer?.observe(inner); const enter = () => stop(); const leave = () => start(); outer.addEventListener('pointerenter', enter); outer.addEventListener('pointerleave', leave); outer.addEventListener('focusin', stop); outer.addEventListener('focusout', leave); window.addEventListener('resize', resize, { passive: true }); resize(); start(); return () => { stop(); observer?.disconnect(); outer.removeEventListener('pointerenter', enter); outer.removeEventListener('pointerleave', leave); outer.removeEventListener('focusin', stop); outer.removeEventListener('focusout', leave); window.removeEventListener('resize', resize); inner.style.transform = ''; }; }, [disabled, staticMotion, speed]); return <div {...props} ref={root} className={`native-marquee ${className}`} data-motion-static={disabled || staticMotion || undefined}><div ref={track} className="native-marquee-track">{children}</div></div>; }

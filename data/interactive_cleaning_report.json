@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-09-29T15:13:25.211235",
+  "input_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\interactive_curriculum_trajectories.jsonl",
+  "output_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\interactive_cleaned.jsonl",
+  "total_records": 23,
+  "clean_records_count": 23,
+  "modified_records_count": 0,
+  "unmodified_records_count": 23,
+  "rejected_records_count": 0,
+  "thought_blocks_removed": 0,
+  "zero_thought_verified": true,
+  "status": "success",
+  "modified_sample": [],
+  "rejected_records": []
+}

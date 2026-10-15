@@ -1,0 +1,13 @@
+{
+  "accepted": 984,
+  "rejected": 4,
+  "independent_families": 220,
+  "source_hashes": {
+    "data\\quality_candidate\\train.jsonl": "8560275b5bc3ae49b5362275f15cb264ad3fb9501bd7f6ea5c8ff2fc41d174ab",
+    "data\\premium_reference\\train.jsonl": "f35eaf9c3d7667aa8bb1e667e4d63ee17a38badc28e2b4c4291a56618baefdfb"
+  },
+  "train_sha256": "a91c654e20d43ac6cc7d8eaf8f229916c1c2f0d5842548698e272c9cc6a9be8f",
+  "validation_sha256": "417ad5e41e4f0c91b99c7af7d65511b87c9e231c344591eff7fd0b51e7bc8326",
+  "tokenizer_sha256": "bd5948af71b4f56cf697f7580814c7ce8b80595ef985544efcacf716126a2e31",
+  "limitation": "Protocol-valid does not imply visually approved. Existing replay data retains its original quality limitations."
+}

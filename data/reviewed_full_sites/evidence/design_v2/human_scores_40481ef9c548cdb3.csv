@@ -1,0 +1,8 @@
+"site_id","reviewer_id","layout","hierarchy","typography","content_specificity","imagery_assets","motion_timing","mobile_composition","notes","approved","source_fingerprint","verification_sha256"
+"tidehouse","yash","5","5","5","4","5","4","5","","yes","b8552dbdf141cad7ca487c1a258bf8f75a6cffefcb697e8a2b9855c744deb0b7","273fa52bd2c3298df4f3141467d374866e0a6fa198a5069e1a09075df80bc20c"
+"openbench","yash","4","4","4","4","4","4","4","","yes","4b3de2615bf2091804b4a815593962a8fe1a024fa4765caa8747d5ec2b6e84aa","dcd6ed90c7f898f8c2288fbdb0b5d7c715911232c9cd4dda910ddf480c932a15"
+"commonground","yash","5","5","5","5","5","5","5","","yes","1ada755d4df9db4db343f04da52dff5c11cb9441aa62c3661d9612abe193c65a","570c98a24a4ceb6cbadcb150c3ef95fc181c2b8f5881c0b558184b871f080ce5"
+"afterlight","yash","5","5","5","5","4","5","5","","yes","1189129a6ec19da5a3daaffe7f3f5e659c7499018209526bc26a06757f4ca629","13e9c5bbfd6ed21e46cbd4e1ebdcb8f71d3b15d2ca9ead13b35d3bcc071b5abb"
+"gridwatch","yash","4","5","5","5","5","5","5","","yes","6603c953db0c57d694575f586624b7bcd9cc3af784bb1c36802d362301bed59e","a07b2f0a2917f5f7de51a860673f4559589c37f8b72016d1f076dc7e29547bc5"
+"carenotes","yash","4","4","4","4","4","4","4","","yes","91c83d01f563ac9700e7450f7ff1fa0398615542d32ee877d14ac53ee873b13f","d3a6022dccdc5a96457927419ab998ce3229a813ed4af58b1d526a1aeb3f36a4"
+"seedcircle","yash","4","4","4","4","5","4","5","","yes","aed9f19a8d7e26a121d1e1bddd47e901dca618b8055d3b2153bd701d283f24c8","c901d139f574303d98b5f668e672950491cd014d088f70d6fccbeeab6bb2ad82"

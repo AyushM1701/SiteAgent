@@ -1,0 +1,11 @@
+{
+  "desktop_width": 1440,
+  "mobile_width": 375,
+  "horizontal_overflow": false,
+  "view_control": true,
+  "pause_control": true,
+  "keyboard_tabs": true,
+  "form_demo": true,
+  "reduced_motion": true,
+  "page_errors": []
+}

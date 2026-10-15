@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 evaluate.py - High-Performance Vitest + jsdom + RTL Evaluation Driver
-for React + TypeScript + CSS SLMs (Qwen2.5-Coder-3B-Instruct / fine-tuned LoRA).
+for React + TypeScript + CSS SLMs (Qwen3-4B / fine-tuned LoRA).
 
 Features:
 - Enforces exact named export matching in prompt instructions to eliminate import-mismatch false negatives.
@@ -552,10 +552,13 @@ def run_command(cmd: List[str], cwd: Optional[Path] = None, timeout: Optional[in
             timeout=timeout
         )
     except subprocess.TimeoutExpired as e:
+        out = e.stdout or ""
+        if isinstance(out, bytes):
+            out = out.decode("utf-8", errors="replace")
         return subprocess.CompletedProcess(
             args=cmd,
             returncode=-1,
-            stdout=e.stdout or "",
+            stdout=out,
             stderr=f"Command timed out after {timeout} seconds."
         )
     except Exception as exc:
@@ -605,7 +608,7 @@ class ModelEvaluator:
     def __init__(
         self,
         model_name: str,
-        max_seq_length: int = 1024,
+        max_seq_length: int = 8192,
         is_mock: bool = False,
         agent_protocol: bool = False,
     ):
@@ -629,9 +632,14 @@ class ModelEvaluator:
                 load_in_4bit=True,
             )
             FastLanguageModel.for_inference(self.model)
+            try:
+                from agent.agent_protocol import set_default_tokenizer
+            except (ImportError, ModuleNotFoundError):
+                from agent_protocol import set_default_tokenizer
+            set_default_tokenizer(self.tokenizer)
             print("Model loaded successfully with Unsloth.")
-        except ImportError:
-            print("Unsloth not installed or failed, attempting standard transformers...")
+        except Exception as e:
+            print(f"Unsloth load note ({e}), attempting standard transformers...")
             from transformers import AutoModelForCausalLM, AutoTokenizer
             import torch
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -641,6 +649,11 @@ class ModelEvaluator:
                 device_map="auto"
             )
             print("Model loaded with transformers.")
+            try:
+                from agent.agent_protocol import set_default_tokenizer
+            except (ImportError, ModuleNotFoundError):
+                from agent_protocol import set_default_tokenizer
+            set_default_tokenizer(self.tokenizer)
 
     def generate(
         self,
@@ -653,7 +666,7 @@ class ModelEvaluator:
 
         import torch
         if self.agent_protocol:
-            from agent_protocol import AGENT_SYSTEM_PROMPT, WriteComponentAction, format_chatml, parse_agent_output
+            from agent_protocol import AGENT_SYSTEM_PROMPT, WriteComponentAction, WriteSiteAction, format_chatml, parse_agent_output
 
             instruction = prompt
             if "### Instruction:\n" in instruction:
@@ -679,12 +692,40 @@ class ModelEvaluator:
             )
         completion_tokens = output[0][inputs.input_ids.shape[1]:]
         generated = self.tokenizer.decode(completion_tokens, skip_special_tokens=True)
+        # Strip Qwen3 native <think> thinking blocks from decoded output.
+        generated = re.sub(r'<think>[\s\S]*?</think>\s*', '', generated, flags=re.DOTALL).strip()
         if self.agent_protocol:
             turn = parse_agent_output(generated)
             if isinstance(turn.action, WriteComponentAction):
                 if turn.action.css:
                     return f"{turn.action.tsx}\n/* Component.module.css */\n{turn.action.css}"
                 return turn.action.tsx
+            if isinstance(turn.action, WriteSiteAction) and turn.action.files:
+                tsx_code = ""
+                css_code = ""
+                for fpath, fcontent in turn.action.files:
+                    if fpath.endswith(('.tsx', '.ts')):
+                        tsx_code = fcontent
+                    elif fpath.endswith('.css'):
+                        css_code = fcontent
+                if tsx_code:
+                    if css_code:
+                        return f"{tsx_code}\n/* Component.module.css */\n{css_code}"
+                    return tsx_code
+            # Robust fallback for XML file tags
+            file_matches = re.findall(r'<file path="([^"]*)">\s*([\s\S]*?)\s*</file>', generated)
+            if file_matches:
+                tsx_code = ""
+                css_code = ""
+                for fpath, fcontent in file_matches:
+                    if fpath.endswith(('.tsx', '.ts')):
+                        tsx_code = fcontent.strip()
+                    elif fpath.endswith('.css'):
+                        css_code = fcontent.strip()
+                if tsx_code:
+                    if css_code:
+                        return f"{tsx_code}\n/* Component.module.css */\n{css_code}"
+                    return tsx_code
             return ""
         if "### Response:\n" in generated:
             return generated.split("### Response:\n")[-1].strip()
@@ -736,6 +777,8 @@ def evaluate_batch(
         # Write CSS module
         css_content = css_code if css_code else "/* empty styles */"
         (case_dir / "Component.module.css").write_text(css_content, encoding="utf-8")
+        for css_import in re.findall(r"import\s+['\"](\./[^'\"]+\.css)['\"]", tsx_code):
+            (case_dir / Path(css_import).name).write_text(css_content, encoding="utf-8")
         # Write Component.test.tsx
         (case_dir / "Component.test.tsx").write_text(test_file_code, encoding="utf-8")
 
@@ -874,7 +917,10 @@ def evaluate_sequential(
         case_dir.mkdir(parents=True, exist_ok=True)
 
         (case_dir / "Component.tsx").write_text(tsx_code, encoding="utf-8")
-        (case_dir / "Component.module.css").write_text(css_code or "/* styles */", encoding="utf-8")
+        css_content = css_code or "/* styles */"
+        (case_dir / "Component.module.css").write_text(css_content, encoding="utf-8")
+        for css_import in re.findall(r"import\s+['\"](\./[^'\"]+\.css)['\"]", tsx_code):
+            (case_dir / Path(css_import).name).write_text(css_content, encoding="utf-8")
         test_file = case_dir / "Component.test.tsx"
         test_file.write_text(test_file_code, encoding="utf-8")
 

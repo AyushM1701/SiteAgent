@@ -1,0 +1,17 @@
+{
+  "independent_sites": 3,
+  "section_examples": 15,
+  "synthetic_protocol_repairs": 3,
+  "total_examples": 21,
+  "max_target_tokens": 1495,
+  "max_total_tokens": 7846,
+  "tokenizer_sha256": "bd5948af71b4f56cf697f7580814c7ce8b80595ef985544efcacf716126a2e31",
+  "source_hashes": {
+    "margin": "c46e79836b28b89dc8822e7fef5fae9e1ceb02d32a65612bb7e01077c0357cd8",
+    "fieldwork": "e9785d746c4d5a7a6ebca426c79906b1e4d95ce810e3c15f6265cbc4e4f8d30a",
+    "parallax": "41f8eb44248bbc215c51dfeed7c087bd872d3b051f92a515cf51144ec68d9487"
+  },
+  "training_performed": false,
+  "limits": "Browser/type/protocol verification does not prove model quality. No source-site assets or code copied.",
+  "synthetic_behavior_repairs": 3
+}

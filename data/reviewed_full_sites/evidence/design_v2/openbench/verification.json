@@ -1,0 +1,111 @@
+{
+  "source_files": {
+    "Main.css": "b282b4adccafe0114c58d769c5ab4f488e66026c8f057fe7ddd38732372601bd",
+    "Main.tsx": "93d5dd647f61ccf39264f967783e788d291c74ba3f4ded541b0a4b146f6fe6d2"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.22 kB\ndist/assets/index-B8bVEOmy.css    3.20 kB \u00e2\u201d\u201a gzip:  1.23 kB\ndist/assets/index-B6eaos7m.js   196.24 kB \u00e2\u201d\u201a gzip: 62.00 kB\n\u00e2\u0153\u201c built in 578ms\n"
+    }
+  },
+  "browser_checks": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "captures": {
+    "desktop": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\desktop_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\desktop_scroll_video.webm",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "4946da31265f19e4f28c4ae69ea0cf94ee054e783d19abf24e832f8eaedbb5e7",
+      "scroll_video_sha256": "d8df7553ceb54b2f21c2aa768b5f369487fd5928033e8a8e87a20f09b527c90a"
+    },
+    "mobile": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\mobile_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\mobile_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "483ec074b67aeb3cd83856331900a6c6f635d39a478eb5d8a4aac6f41da0280c",
+      "scroll_video_sha256": "8069299fe6677d28a5460e605e395da622088a39fbf76da4dbc7642e66bbd204"
+    },
+    "reduced_motion": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\reduced_motion_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\openbench\\captures\\reduced_motion_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": true,
+      "browser_errors": [],
+      "screenshot_sha256": "483ec074b67aeb3cd83856331900a6c6f635d39a478eb5d8a4aac6f41da0280c",
+      "scroll_video_sha256": "f2aa82c0a596294d2569fb325137469901dddc188723f405cc7cf1e257f2bddf"
+    }
+  },
+  "passed": true,
+  "visual_review": "pending_human",
+  "three_d_kind": "not_requested",
+  "webgl_runtime": "not_requested; no WebGL claim"
+}

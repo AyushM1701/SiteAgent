@@ -1,0 +1,87 @@
+name: Verify Reconstructed Export Tree (P0-01)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  verify-self-contained-export:
+    name: Verify Document Reconstructability & Smoke Imports
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Reconstruct Export Tree into Empty Clean-Room Directory
+        run: |
+          python -c "
+          import re, os
+          from pathlib import Path
+
+          doc_path = Path('docs/architecture_and_source.md')
+          doc_text = doc_path.read_text(encoding='utf-8')
+          dest = Path('clean_reconstructed_tree')
+          dest.mkdir(parents=True, exist_ok=True)
+
+          section_pattern = re.compile(
+              r'####\s+`([^`]+)`\n\n'
+              r'- \*\*Path\*\*:\s*`file:///C:/Users/AYUSH/Documents/slm/([^`]+)`\n'
+              r'- \*\*Lines\*\*:\s*([0-9,]+)\s*\|\s*\*\*Size\*\*:\s*([0-9,]+)\s*bytes\s*\|\s*\*\*SHA-256\*\*:\s*`([0-9a-f]{64})`\s*\|\s*\*\*Newline\*\*:\s*`(True|False)`\n'
+              r'- \*\*Fence\*\*:\s*(\d+)\s*backticks\n'
+              r'- \*\*Description\*\*:\s*([^\n]+)\n\n'
+              r'(`{5,})([a-zA-Z0-9_-]*)\n'
+              r'(.*?)\n\9\n\n---',
+              re.DOTALL
+          )
+
+          matches = list(section_pattern.finditer(doc_text))
+          print(f'Extracting {len(matches)} files from docs/architecture_and_source.md...')
+          assert len(matches) >= 350, f'Expected >= 350 files, got {len(matches)}'
+
+          for m in matches:
+              rel_path = m.group(2)
+              has_nl = m.group(6) == 'True'
+              body = m.group(11)
+              out_file = dest / rel_path
+              out_file.parent.mkdir(parents=True, exist_ok=True)
+              content = (body + '\n') if has_nl else body
+              out_file.write_bytes(content.encode('utf-8'))
+
+          print(f'Successfully reconstructed {len(matches)} files into {dest}.')
+          "
+
+      - name: Compile Reconstructed Tree
+        run: |
+          cd clean_reconstructed_tree
+          python -m compileall .
+
+      - name: Run Core Module Smoke Imports
+        env:
+          PYTHONPATH: clean_reconstructed_tree
+        run: |
+          python -c "import agent.site_brief"
+          python -c "import agent.agent"
+          python -c "import server.app"
+          python -c "import agent.stock_photos; import agent.design_plan; import agent.site_file_normalizer; import agent.tailwind_support; import agent.ecommerce_repair; import evaluation.motion_benchmark; import data_pipeline.build_dataset"
+
+      - name: Run Smoke Test Suite
+        env:
+          PYTHONPATH: clean_reconstructed_tree
+        run: |
+          python -m pytest clean_reconstructed_tree/tests/test_import_smoke.py -v

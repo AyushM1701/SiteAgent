@@ -1,0 +1,1266 @@
+[
+  {
+    "source_line": 1,
+    "task_id": "site_bakery_golden_crumb_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 6,
+    "task_id": "site_law_vance_holloway_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 11,
+    "task_id": "site_travel_wanderlust_expeditions_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 16,
+    "task_id": "site_vet_paws_claws_hospital_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 21,
+    "task_id": "site_podcast_the_future_syntax_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 26,
+    "task_id": "site_coworking_the_hive_collective_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 31,
+    "task_id": "site_brewery_hop_craft_brewing_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 36,
+    "task_id": "site_interior_lumina_living_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 41,
+    "task_id": "site_music_neon_sound_fest_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 46,
+    "task_id": "site_photography_elena_voss_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 51,
+    "task_id": "site_spa_serene_lotus_wellness_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 56,
+    "task_id": "site_solar_helios_clean_energy_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 61,
+    "task_id": "site_cybersecurity_aegis_shield_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 66,
+    "task_id": "site_barbershop_iron_shears_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 71,
+    "task_id": "site_optometry_clarity_eye_studio_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 76,
+    "task_id": "site_catering_savory_roots_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 81,
+    "task_id": "site_florist_botanica_atelier_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 86,
+    "task_id": "site_cleaning_spark_clean_co_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 91,
+    "task_id": "site_logistics_vanguard_freight_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 96,
+    "task_id": "site_hotel_azure_cove_resort_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 101,
+    "task_id": "site_mental_health_mindful_pathways_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 106,
+    "task_id": "site_recruiting_talent_forge_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 111,
+    "task_id": "site_print_shop_press_and_paper_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 116,
+    "task_id": "site_winery_valle_di_pietra_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 121,
+    "task_id": "site_roofer_summit_shield_roofing_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 126,
+    "task_id": "site_dentistry_pearl_dental_spa_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 131,
+    "task_id": "site_plumbing_flow_pro_services_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 136,
+    "task_id": "site_jewelry_aurelia_fine_gems_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 141,
+    "task_id": "site_martial_arts_ronin_bjj_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 146,
+    "task_id": "site_bookstore_the_inkwell_shelf_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 151,
+    "task_id": "site_landscaping_terra_verve_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 156,
+    "task_id": "site_auto_detailing_apex_ceramic_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 161,
+    "task_id": "site_insurance_shield_harbor_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 166,
+    "task_id": "site_pottery_earth_and_kiln_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 171,
+    "task_id": "site_moving_smooth_move_logistics_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 176,
+    "task_id": "site_apparel_terra_wear_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 181,
+    "task_id": "site_museum_metropolitan_modern_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 186,
+    "task_id": "site_pest_control_eco_guard_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 191,
+    "task_id": "site_charter_blue_horizon_sailing_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 196,
+    "task_id": "site_tutoring_quant_masters_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 201,
+    "task_id": "site_coffee_roasters_elevation_roast_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 206,
+    "task_id": "site_cinema_the_starlight_indie_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 211,
+    "task_id": "site_bakery_gluten_free_crumbles_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 216,
+    "task_id": "site_event_space_the_foundry_loft_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 221,
+    "task_id": "site_medtech_pulse_biometrics_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 226,
+    "task_id": "site_ai_vector_scale_db_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 231,
+    "task_id": "site_devops_ebpf_telemetry_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 236,
+    "task_id": "site_ai_llm_gateway_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 241,
+    "task_id": "site_cloud_finops_optimizer_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 246,
+    "task_id": "site_dev_api_contract_test_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 251,
+    "task_id": "site_infra_bare_metal_cloud_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 256,
+    "task_id": "site_database_distributed_sql_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 261,
+    "task_id": "site_quantum_circuits_lab_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 266,
+    "task_id": "site_telehealth_neurology_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 271,
+    "task_id": "site_biomechanics_sports_rehab_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 276,
+    "task_id": "site_dermatology_precision_skin_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 281,
+    "task_id": "site_pediatric_sensory_therapy_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 286,
+    "task_id": "site_cardiology_heart_rhythm_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 291,
+    "task_id": "site_fertility_nova_origins_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 296,
+    "task_id": "site_oncology_immunotherapy_inst_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 301,
+    "task_id": "site_keyboards_bespoke_keebs_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 306,
+    "task_id": "site_ceramics_stone_and_ember_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 311,
+    "task_id": "site_olive_oil_estate_grove_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 316,
+    "task_id": "site_tailor_savile_bespoke_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 321,
+    "task_id": "site_audio_vacuum_tube_amps_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 326,
+    "task_id": "site_knives_damascus_forge_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 331,
+    "task_id": "site_tea_ancient_puerh_vault_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 336,
+    "task_id": "site_studio_vivid_3d_motion_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 341,
+    "task_id": "site_arch_viz_hyper_real_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 346,
+    "task_id": "site_audio_film_scoring_lab_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 351,
+    "task_id": "site_brand_collective_monolith_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 356,
+    "task_id": "site_lighting_architectural_lumen_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 361,
+    "task_id": "site_train_silk_road_express_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 366,
+    "task_id": "site_lodge_savanna_canopy_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 371,
+    "task_id": "site_matcha_kyoto_ceremony_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 376,
+    "task_id": "site_bathhouse_nordic_sauna_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 381,
+    "task_id": "site_retreat_zen_monastery_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 386,
+    "task_id": "site_resort_coral_atoll_overwater_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 391,
+    "task_id": "site_yacht_electric_marine_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 396,
+    "task_id": "site_leather_artisan_saddlery_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 401,
+    "task_id": "site_acoustics_soundproofing_pro_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 406,
+    "task_id": "site_neon_artisan_glassworks_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 411,
+    "task_id": "site_bike_aerodynamic_fit_lab_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 416,
+    "task_id": "site_drone_lidar_mapping_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 421,
+    "task_id": "site_hydroponics_urban_harvest_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 426,
+    "task_id": "site_restoration_midcentury_modern_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 431,
+    "task_id": "site_coffee_single_origin_lab_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 436,
+    "task_id": "site_climbing_summit_bouldering_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 441,
+    "task_id": "site_whiskey_highland_cask_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 446,
+    "task_id": "site_star_Vanguard_Legal_Partners_1789279726_turn2",
+    "reasons": [
+      "src/components/Header.css: Unknown word .vanguard-header at 55:1",
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 448,
+    "task_id": "site_star_Vanguard_Legal_Partners_1789279726_turn6",
+    "reasons": [
+      "src/components/Features.css: Unclosed bracket at 63:25"
+    ]
+  },
+  {
+    "source_line": 450,
+    "task_id": "site_star_Vanguard_Legal_Partners_1789279726_turn10",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 451,
+    "task_id": "site_star_Apex_Wealth_Advisors_1789280175_turn2",
+    "reasons": [
+      "src/components/Header.css: Unclosed block at 23:1",
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 455,
+    "task_id": "site_star_Apex_Wealth_Advisors_1789280175_turn10",
+    "reasons": [
+      "src/components/Contact.css: Unclosed bracket at 65:19"
+    ]
+  },
+  {
+    "source_line": 456,
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn2",
+    "reasons": [
+      "src/components/Header.css: Unclosed block at 22:1",
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 458,
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn6",
+    "reasons": [
+      "src/components/Features.css: Unclosed bracket at 50:25"
+    ]
+  },
+  {
+    "source_line": 459,
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn8",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 460,
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn10",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 461,
+    "task_id": "site_star_Aura_Premier_Properties_1789280972_turn2",
+    "reasons": [
+      "src/components/Header.css: Unclosed block at 74:1",
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 463,
+    "task_id": "site_star_Aura_Premier_Properties_1789280972_turn6",
+    "reasons": [
+      "src/components/Features.css: Unclosed block at 69:1"
+    ]
+  },
+  {
+    "source_line": 464,
+    "task_id": "site_star_Aura_Premier_Properties_1789280972_turn8",
+    "reasons": [
+      "src/components/Contact.css: Unclosed block at 43:1"
+    ]
+  },
+  {
+    "source_line": 491,
+    "task_id": "site_restaurant_azure_food_junction_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 496,
+    "task_id": "site_portfolio_priya_sharma_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 500,
+    "task_id": "site_restaurant_miso_soul_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 505,
+    "task_id": "site_event_devsummit_2025_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 511,
+    "task_id": "site_saas_prose_ai_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 517,
+    "task_id": "site_ecommerce_blanc_studio_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 522,
+    "task_id": "site_portfolio_marcus_bell_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 528,
+    "task_id": "site_agency_pixel_forge_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 533,
+    "task_id": "site_education_codecraft_academy_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 538,
+    "task_id": "site_healthcare_lumina_dental_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 544,
+    "task_id": "site_architecture_atelier_nord_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 550,
+    "task_id": "site_ecommerce_solace_coffee_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 556,
+    "task_id": "site_glass_cortex_ai_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 561,
+    "task_id": "site_glass_nexus_vector_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 566,
+    "task_id": "site_glass_sentinel_zero_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 571,
+    "task_id": "site_glass_aether_stream_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 576,
+    "task_id": "site_glass_synapse_mesh_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 581,
+    "task_id": "site_glass_vortex_crypto_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 586,
+    "task_id": "site_glass_chronos_time_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 591,
+    "task_id": "site_glass_stellar_sat_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 596,
+    "task_id": "site_glass_axiom_formal_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 601,
+    "task_id": "site_glass_omni_agent_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 606,
+    "task_id": "site_glass_helix_bio_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 611,
+    "task_id": "site_glass_flux_state_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 616,
+    "task_id": "site_glass_strata_observability_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 621,
+    "task_id": "site_brutal_hackers_hub_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 626,
+    "task_id": "site_brutal_zero_audit_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 631,
+    "task_id": "site_brutal_git_forge_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 636,
+    "task_id": "site_brutal_terminal_fm_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 641,
+    "task_id": "site_brutal_bolt_shipping_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 646,
+    "task_id": "site_brutal_stack_overflow_alt_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 651,
+    "task_id": "site_brutal_vault_defi_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 656,
+    "task_id": "site_brutal_brutalist_print_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 661,
+    "task_id": "site_brutal_circuit_labs_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 666,
+    "task_id": "site_brutal_kiosk_coffee_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 671,
+    "task_id": "site_brutal_rebel_agency_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 676,
+    "task_id": "site_brutal_drop_sneakers_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 681,
+    "task_id": "site_brutal_distro_zine_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 686,
+    "task_id": "site_brutal_boulder_gym_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 691,
+    "task_id": "site_brutal_garage_tunes_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 696,
+    "task_id": "site_brutal_forge_hardware_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 701,
+    "task_id": "site_lux_nordic_arch_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 706,
+    "task_id": "site_lux_aurum_wealth_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 711,
+    "task_id": "site_lux_monolith_stone_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 716,
+    "task_id": "site_lux_elysian_villas_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 721,
+    "task_id": "site_lux_sovereign_aviation_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 726,
+    "task_id": "site_lux_reserve_vintage_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 731,
+    "task_id": "site_lux_paradis_resort_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 736,
+    "task_id": "site_lux_vessel_yachts_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 741,
+    "task_id": "site_lux_chateau_vineyard_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 746,
+    "task_id": "site_lux_couture_tailor_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 751,
+    "task_id": "site_lux_equine_stud_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 756,
+    "task_id": "site_lux_sanctuary_spa_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 761,
+    "task_id": "site_lux_heritage_diamonds_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 766,
+    "task_id": "site_lux_privat_concierge_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 771,
+    "task_id": "site_lux_estate_sculpture_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 776,
+    "task_id": "site_saas_pulse_metrics_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 781,
+    "task_id": "site_saas_vault_secrets_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 786,
+    "task_id": "site_saas_docu_sign_pro_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 791,
+    "task_id": "site_saas_task_harmony_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 796,
+    "task_id": "site_saas_hire_stream_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 801,
+    "task_id": "site_saas_pay_rail_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 806,
+    "task_id": "site_saas_audit_log_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 811,
+    "task_id": "site_saas_uptime_mon_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 816,
+    "task_id": "site_saas_api_gateway_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 821,
+    "task_id": "site_saas_form_craft_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 826,
+    "task_id": "site_saas_feature_flag_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 831,
+    "task_id": "site_saas_feedback_loop_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 836,
+    "task_id": "site_saas_invoice_flow_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 841,
+    "task_id": "site_saas_status_page_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 846,
+    "task_id": "site_saas_asset_dam_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 851,
+    "task_id": "site_saas_survey_mind_turn2",
+    "reasons": [
+      "src/components/Header.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 867,
+    "task_id": "site_stack_tuantanah_33cfa11_turn10",
+    "reasons": [
+      "src/components/Footer.tsx: placeholder href=\"#\" requires a real destination or local behavior"
+    ]
+  },
+  {
+    "source_line": 965,
+    "task_id": "reference_margin_hero_repair_envelope",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 967,
+    "task_id": "reference_margin_workspace_repair_behavior",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 972,
+    "task_id": "reference_fieldwork_hero_repair_envelope",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 974,
+    "task_id": "reference_fieldwork_capabilities_repair_behavior",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 979,
+    "task_id": "reference_parallax_hero_repair_envelope",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  },
+  {
+    "source_line": 982,
+    "task_id": "reference_parallax_projects_repair_behavior",
+    "reasons": [
+      "Duplicate assistant target despite different prompt/context"
+    ]
+  }
+]

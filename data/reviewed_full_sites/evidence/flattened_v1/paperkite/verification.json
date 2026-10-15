@@ -1,0 +1,69 @@
+{
+  "site": "paperkite",
+  "source_sha256": {
+    "Main.tsx": "6f605f24e006bb05d2d028fa1ebc0e3f2b791d1bdfd2530949e87ad8a7440a15",
+    "Main.css": "4c4375f4e6b91f996f7a645b2c5123dcfc210b98132bfba018b651772114f94a"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-DYtKiN8I.css    6.05 kB \u00e2\u201d\u201a gzip:  1.91 kB\ndist/assets/index-BIgSq9v-.js   197.29 kB \u00e2\u201d\u201a gzip: 62.17 kB\n\u00e2\u0153\u201c built in 592ms\n"
+    }
+  },
+  "pixel_equivalence": {
+    "desktop": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\paperkite\\desktop_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\paperkite\\desktop_flattened.png"
+    },
+    "mobile": {
+      "dom_identical": true,
+      "pixels_identical": true,
+      "original_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\paperkite\\mobile_original.png",
+      "flattened_screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\flattened_reviewed_sites\\paperkite\\mobile_flattened.png"
+    }
+  },
+  "interactions": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "cart_total": true,
+        "cart_reset": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "cart_total": true,
+        "cart_reset": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "cart_total": true,
+        "cart_reset": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "review_form_sha256": "b28158c0cceac65aa77b4310615d33a7c5548f328686fc3103bfac0435f1772b",
+  "original_reviewed_task_id": "diverse_paperkite_hero",
+  "passed": true
+}

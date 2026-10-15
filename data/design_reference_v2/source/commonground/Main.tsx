@@ -1,0 +1,18 @@
+import React from 'react';
+import './Main.css';
+function useMotion(){
+ const ref=React.useRef<HTMLElement>(null);
+ React.useEffect(()=>{
+  const root=ref.current;if(!root)return;
+  const media=matchMedia('(prefers-reduced-motion: reduce)');let frame=0;
+  const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){(entry.target as HTMLElement).dataset.seen='true';observer.unobserve(entry.target);}}),{threshold:.12});
+  const watched=new WeakSet<Element>();const register=()=>root.querySelectorAll('[data-reveal]').forEach(el=>{if(!watched.has(el)){watched.add(el);observer.observe(el);}});
+  register();const mutations=new MutationObserver(register);mutations.observe(root,{childList:true,subtree:true});root.classList.add('motion-ready');
+  const update=()=>{frame=0;root.style.setProperty('--shift',media.matches?'0px':`${Math.min(scrollY*.13,85)}px`);};
+  const scroll=()=>{if(!frame)frame=requestAnimationFrame(update);};
+  window.addEventListener('scroll',scroll,{passive:true});media.addEventListener('change',scroll);update();
+  return ()=>{observer.disconnect();mutations.disconnect();cancelAnimationFrame(frame);window.removeEventListener('scroll',scroll);media.removeEventListener('change',scroll);root.classList.remove('motion-ready');};
+ },[]);return ref;
+}
+export function Main(){const root=useMotion();const [day,setDay]=React.useState('Weekday');const [accessible,setAccessible]=React.useState(false);const activities=day==='Weekday'?['Reading circle','Repair table']:['Seed exchange'];return <main className="commonground" ref={root}><nav><strong>COMMON GROUND</strong><div><a href="#directory">Find a moment</a><a href="#access">Plan a visit</a></div></nav><header><div><p>A FICTIONAL COMMUNITY DIRECTORY</p><h1>A place for<br/><em>everyone.</em></h1><p>Small, shared spaces. Simple ways to meet your neighbors.</p></div><div data-map data-art role="img" aria-label="Original abstract neighborhood map, not a real location"><i/><i/><i/><b>CG</b></div></header><section id="directory" data-reveal><h2>What is happening?</h2><div aria-label="Activity day">{['Weekday','Weekend'].map(value=><button key={value} aria-pressed={day===value} onClick={()=>setDay(value)}>{value}</button>)}</div><ul>{activities.map((activity,index)=><li key={activity}><span>0{index+1}</span><h3>{activity}</h3><p>Fictional activity example. Ask your local organizer for real availability.</p></li>)}</ul></section><section id="access" data-reveal><h2>Make space for your needs.</h2><label><input type="checkbox" checked={accessible} onChange={event=>setAccessible(event.target.checked)}/> Show step-free planning notes</label><p role="status">{accessible?'Check entrances, paths and seating with the actual venue before visiting.':'Choose the planning notes that help you.'}</p><small>Directory demo only. No actual address, schedule or official affiliation.</small></section><footer>Common Ground · Original fictional reference · No backend services.</footer></main>;}
+export default Main;

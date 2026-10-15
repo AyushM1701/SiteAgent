@@ -1,0 +1,8 @@
+import React,{useEffect,useRef} from 'react';
+import './Hero.css';
+export function Hero(){
+ const art=useRef<HTMLDivElement>(null);
+ useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');let frame=0;const update=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{art.current?.style.setProperty('--drift',media.matches?'0px':`${Math.min(scrollY*.12,55)}px`);});};addEventListener('scroll',update,{passive:true});media.addEventListener('change',update);update();return()=>{removeEventListener('scroll',update);media.removeEventListener('change',update);cancelAnimationFrame(frame);};},[]);
+ return <section className="quiet-hero" id="start"><header className="quiet-nav"><a href="#start">quiet hours<span>↟</span></a><nav aria-label="Main"><a href="#guide">Take a soundwalk</a><a href="#journal">Field journal</a></nav></header><div className="quiet-hero-grid"><div><p className="quiet-eyebrow">A SMALL PRACTICE IN PAYING ATTENTION</p><h1>The world<br />has a <em>quieter</em><br />side.</h1><p className="quiet-intro">Step outside. Slow your pace. Notice the layers of sound that usually slip between the things you do.</p><a className="quiet-button" href="#guide">Begin with listening ↓</a></div><div className="quiet-landscape" ref={art} role="img" aria-label="An abstract evening landscape with a pale moon and layered hills"><i className="quiet-moon"/><i className="quiet-hill quiet-hill--back"/><i className="quiet-hill quiet-hill--front"/><span>LISTEN / NOTICE / REMEMBER</span></div></div><p className="quiet-caption">No microphone. No location tracking. Just your attention.</p></section>;
+}
+export default Hero;

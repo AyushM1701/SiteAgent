@@ -24,6 +24,13 @@ sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(BASE_DIR / "agent"))
 
 from agent_protocol import SITE_AGENT_SYSTEM_PROMPT
+from archetype_templates import (
+    render_bento_grid,
+    render_editorial_layout,
+    render_tabs_carousel,
+    render_split_hero,
+)
+from site_brief import _LAYOUT_ARCHETYPE_GUIDELINES
 
 def thought(text: str) -> str:
     return f"<thought>\n{text}\n</thought>"
@@ -1346,7 +1353,7 @@ DOMAINS_B6 = [
 ]
 
 
-def build_brief_xml(d: dict) -> str:
+def build_brief_xml(d: dict, archetype: str = "bento") -> str:
     items_xml = []
     for item in d["items"]:
         items_xml.append(f'  <item name="{item["title"]}" tag="{item["tag"]}" description="{item["desc"]}" />')
@@ -1393,6 +1400,8 @@ def build_brief_xml(d: dict) -> str:
   <business_name>{d["name"]}</business_name>
   <tagline>{d["tagline"]}</tagline>
   <business_type>{d["type"]}</business_type>
+  <layout_archetype>{archetype}</layout_archetype>
+  <layout_guidelines>{_LAYOUT_ARCHETYPE_GUIDELINES.get(archetype, "")}</layout_guidelines>
 {design_system_str}
   <sections>header, hero, {d["section_id"]}, footer</sections>
 {items_str}
@@ -1406,15 +1415,96 @@ def build_brief_xml(d: dict) -> str:
 
 
 def build_trajectory(d: dict) -> dict:
-    brief_xml = build_brief_xml(d)
+    domain_id = d.get("id", "")
+    if domain_id.startswith("site_refero_"):
+        archetype = "editorial"
+        style_theme = "refero"
+    elif domain_id.startswith("site_glass_"):
+        archetype = "bento"
+        style_theme = "glassmorphic"
+    elif domain_id.startswith("site_brutal_"):
+        archetype = "bento"
+        style_theme = "neobrutalist"
+    elif domain_id.startswith("site_lux_"):
+        archetype = "editorial"
+        style_theme = "luxury"
+    elif domain_id.startswith("site_saas_"):
+        archetype = "tabs"
+        style_theme = "saas"
+    else:
+        archetype = "bento"
+        style_theme = "modern"
+
+    brief_xml = build_brief_xml(d, archetype=archetype)
     p = d["prefix"]
-    is_refero = d.get("pill", False)
+    is_refero = (style_theme == "refero")
     
-    # Token-conscious styling
-    radius_btn = "var(--radius-buttons, 75px)" if is_refero else "var(--radius-md, 8px)"
-    radius_card = "var(--radius-cards, 0px)" if is_refero else "var(--radius-md, 12px)"
-    box_shadow = "none" if is_refero else "0 10px 25px rgba(0, 0, 0, 0.35)"
-    border_card = "1px solid rgba(255, 255, 255, 0.15)" if is_refero else "1px solid rgba(255, 255, 255, 0.08)"
+    # Archetype-aware styling variables
+    if style_theme == "refero":
+        radius_btn = "var(--radius-buttons, 75px)"
+        radius_card = "var(--radius-cards, 0px)"
+        box_shadow = "none"
+        border_card = "1px solid rgba(255, 255, 255, 0.15)"
+        badge_bg = f"{d['accent']}18"
+        badge_border = f"1px solid {d['accent']}40"
+        badge_color = "var(--color-paper, #ffffff)"
+        badge_radius = "75px"
+        btn_sec_border = f"1px solid {d['accent']}50"
+        btn_sec_bg = "transparent"
+        btn_sec_color = "#ffffff"
+        btn_sec_radius = "75px"
+    elif style_theme == "glassmorphic":
+        radius_btn = "12px"
+        radius_card = "16px"
+        box_shadow = f"0 8px 32px 0 {d['accent']}20"
+        border_card = f"1px solid {d['accent']}30"
+        badge_bg = f"{d['accent']}15"
+        badge_border = f"1px solid {d['accent']}45"
+        badge_color = "#ffffff"
+        badge_radius = "20px"
+        btn_sec_border = f"1px solid {d['accent']}40"
+        btn_sec_bg = "rgba(255, 255, 255, 0.04)"
+        btn_sec_color = "#ffffff"
+        btn_sec_radius = "12px"
+    elif style_theme == "neobrutalist":
+        radius_btn = "0px"
+        radius_card = "0px"
+        box_shadow = f"4px 4px 0px {d['accent']}"
+        border_card = "3px solid #000000"
+        badge_bg = f"{d['accent']}"
+        badge_border = "2px solid #000000"
+        badge_color = "#000000"
+        badge_radius = "0px"
+        btn_sec_border = "3px solid #000000"
+        btn_sec_bg = f"{d['accent']}"
+        btn_sec_color = "#000000"
+        btn_sec_radius = "0px"
+    elif style_theme == "luxury":
+        radius_btn = "2px"
+        radius_card = "0px"
+        box_shadow = "0 15px 35px rgba(0, 0, 0, 0.5)"
+        border_card = f"1px solid {d['accent']}35"
+        badge_bg = "transparent"
+        badge_border = f"1px solid {d['accent']}60"
+        badge_color = f"{d['accent']}"
+        badge_radius = "2px"
+        btn_sec_border = f"1px solid {d['accent']}50"
+        btn_sec_bg = "transparent"
+        btn_sec_color = f"{d['accent']}"
+        btn_sec_radius = "2px"
+    else:  # saas
+        radius_btn = "8px"
+        radius_card = "12px"
+        box_shadow = "0 10px 25px rgba(0, 0, 0, 0.25)"
+        border_card = "1px solid rgba(255, 255, 255, 0.1)"
+        badge_bg = f"{d['accent']}12"
+        badge_border = f"1px solid {d['accent']}35"
+        badge_color = f"{d['accent']}"
+        badge_radius = "9999px"
+        btn_sec_border = f"1px solid {d['accent']}30"
+        btn_sec_bg = "rgba(255, 255, 255, 0.05)"
+        btn_sec_color = "#ffffff"
+        btn_sec_radius = "8px"
 
     # ── Turn 1: Header ──────────────────────────────────────────────────────────
     initial_user = (
@@ -1704,10 +1794,10 @@ export function Hero() {{
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem 0.95rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: {radius_btn};
-  color: var(--color-paper, #ffffff);
+  background: {badge_bg};
+  border: {badge_border};
+  border-radius: {badge_radius};
+  color: {badge_color};
   font-size: 0.8125rem;
   font-weight: 500;
   margin-bottom: 1.75rem;
@@ -1770,10 +1860,10 @@ export function Hero() {{
   display: inline-flex;
   align-items: center;
   padding: 0.85rem 2rem;
-  background: transparent;
-  color: var(--color-paper, #ffffff);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: {radius_btn};
+  background: {btn_sec_bg};
+  color: {btn_sec_color};
+  border: {btn_sec_border};
+  border-radius: {btn_sec_radius};
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
@@ -1819,142 +1909,115 @@ export function Hero() {{
 """
 
     t2_action = write_site("src/components/Hero.tsx", t2_tsx, "src/components/Hero.css", t2_css)
-    obs_2 = obs_ok(
-        ["src/components/Hero.tsx", "src/components/Hero.css"],
-        f"Write the {d['section_name']} section: display the 4 core offerings as responsive cards with titles, tags, and descriptions. "
-        f"Files: src/components/{d['section_id'].capitalize()}.tsx + src/components/{d['section_id'].capitalize()}.css"
-    )
-
-    # ── Turn 3: Core Offerings Section ──────────────────────────────────────────
     sec_cap = d['section_id'].capitalize()
-    t3_thought = thought(
-        f"Hero accepted. Now implementing the {d['section_name']} section ({sec_cap}). "
-        f"I'll present the 4 items ({', '.join([it['title'] for it in d['items'][:2]])}...) "
-        f"using a responsive card grid with {border_card}, {radius_card}, and subtle hover interaction."
-    )
 
-    cards_tsx = []
-    for it in d["items"]:
-        cards_tsx.append(f"""          <article className="{p}-{d['section_id']}__card">
-            <div className="{p}-{d['section_id']}__card-header">
-              <h3 className="{p}-{d['section_id']}__card-title">{it['title']}</h3>
-              <span className="{p}-{d['section_id']}__card-tag">{it['tag']}</span>
-            </div>
-            <p className="{p}-{d['section_id']}__card-desc">{it['desc']}</p>
-          </article>""")
-    cards_str = "\n".join(cards_tsx)
-
-    t3_tsx = f"""import React from 'react';
-import './{sec_cap}.css';
-
-export function {sec_cap}() {{
-  return (
-    <section className="{p}-{d['section_id']}" id="{d['section_id']}" aria-labelledby="{p}-{d['section_id']}-heading">
-      <div className="{p}-{d['section_id']}__inner">
-        <div className="{p}-{d['section_id']}__header">
-          <h2 id="{p}-{d['section_id']}-heading" className="{p}-{d['section_id']}__title">
-            {d['section_name']}
-          </h2>
-          <p className="{p}-{d['section_id']}__subtitle">
-            Engineered with uncompromising precision and verified specifications.
-          </p>
-        </div>
-
-        <div className="{p}-{d['section_id']}__grid">
-{cards_str}
-        </div>
-      </div>
-    </section>
-  );
-}}
-"""
-
-    t3_css = f""".{p}-{d['section_id']} {{
-  width: 100%;
-  padding: 5rem 1.5rem;
-  background: var(--surface-obsidian, var(--color-obsidian, var(--bg-color, {d['primary']})));
-}}
-
-.{p}-{d['section_id']}__inner {{
-  max-width: var(--page-max-width, 1140px);
-  margin: 0 auto;
-}}
-
-.{p}-{d['section_id']}__header {{
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto 3.5rem;
-}}
-
-.{p}-{d['section_id']}__title {{
-  font-family: var(--font-heading, '{d['heading_font']}', sans-serif);
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-  font-weight: 700;
-  color: var(--color-paper, var(--text-color, #ffffff));
-  margin-bottom: 0.75rem;
-}}
-
-.{p}-{d['section_id']}__subtitle {{
-  color: var(--color-ash-mist, rgba(255, 255, 255, 0.65));
-  font-size: 1rem;
-  line-height: 1.5;
-}}
-
-.{p}-{d['section_id']}__grid {{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
-}}
-
-.{p}-{d['section_id']}__card {{
-  background: rgba(255, 255, 255, 0.02);
-  border: {border_card};
-  border-radius: {radius_card};
-  padding: var(--card-padding, 1.75rem);
-  box-shadow: {box_shadow};
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}}
-
-.{p}-{d['section_id']}__card:hover {{
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-3px);
-}}
-
-.{p}-{d['section_id']}__card-header {{
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}}
-
-.{p}-{d['section_id']}__card-title {{
-  font-family: var(--font-heading, '{d['heading_font']}', sans-serif);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-paper, #ffffff);
-}}
-
-.{p}-{d['section_id']}__card-tag {{
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: {radius_btn};
-  color: var(--color-iridescent-fade, var(--accent-color, {d['accent']}));
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}}
-
-.{p}-{d['section_id']}__card-desc {{
-  font-size: 0.875rem;
-  color: var(--color-ash-mist, rgba(255, 255, 255, 0.7));
-  line-height: 1.6;
-  margin: 0;
-}}
-"""
+    if archetype == "editorial":
+        obs_2 = obs_ok(
+            ["src/components/Hero.tsx", "src/components/Hero.css"],
+            f"Write the {d['section_name']} section using an editorial magazine layout: high-contrast serif typography, "
+            f"masthead volume/date header, asymmetric pull-quote, multi-column narrative prose, and curated monograph cards. "
+            f"Files: src/components/{sec_cap}.tsx + src/components/{sec_cap}.css"
+        )
+        t3_thought = thought(
+            f"Hero accepted. Now implementing the {d['section_name']} section ({sec_cap}) as an editorial magazine layout. "
+            f"I'll craft a masthead dispatch header, an evocative pull-quote with decorative quote mark, two-column narrative prose, "
+            f"and numbered monograph cards for ({', '.join([it['title'] for it in d['items'][:2]])}...) with {radius_card} styling."
+        )
+        t3_tsx, t3_css = render_editorial_layout(
+            component_name=sec_cap,
+            items=d["items"],
+            business_name=d["name"],
+            volume_tag=f"{d['name'].upper()} · SELECTED WORKS",
+            title=d["section_name"],
+            pull_quote=f"Form emerges through radical restraint: every line and material calibrated to create enduring resonance for {d['name']}.",
+            quote_author=f"Creative Direction, {d['name']}",
+            prefix=p,
+            primary_color=d["primary"],
+            accent_color=d["accent"],
+            font_heading=d["heading_font"],
+            font_body=d["body_font"],
+            border_radius="0px" if is_refero else radius_card,
+            pill_buttons=is_refero,
+        )
+    elif archetype == "tabs":
+        obs_2 = obs_ok(
+            ["src/components/Hero.tsx", "src/components/Hero.css"],
+            f"Write the {d['section_name']} section using an interactive tabs and carousel pattern: category switcher with useState, "
+            f"filtered capability cards, and a testimonial carousel with prev/next navigation controls. "
+            f"Files: src/components/{sec_cap}.tsx + src/components/{sec_cap}.css"
+        )
+        t3_thought = thought(
+            f"Hero accepted. Now implementing the {d['section_name']} section ({sec_cap}) with interactive tabs and carousel pattern. "
+            f"I'll build an interactive category filter tablist with useState for ({', '.join([it['title'] for it in d['items'][:2]])}...) "
+            f"plus a verified testimonial carousel with slide navigation."
+        )
+        domain_reviews = [
+            {
+                "id": "1",
+                "quote": f"Deploying {d['name']} transformed our delivery velocity. The {d['items'][0]['title'].lower()} capabilities delivered immediate impact.",
+                "author": "Alex Chen",
+                "role": f"Head of Engineering, {d['name']}",
+                "rating": 5,
+            },
+            {
+                "id": "2",
+                "quote": f"With {d['name']}, we automated {d['tagline'].lower()} while accelerating our product delivery.",
+                "author": "Samantha Wei",
+                "role": f"VP of Technology at {d['name']} Group",
+                "rating": 5,
+            },
+            {
+                "id": "3",
+                "quote": f"Our developers love using {d['name']}. The {d['items'][1]['title'].lower()} workflow is best in class.",
+                "author": "Marcus Thorne",
+                "role": "Principal Architect",
+                "rating": 5,
+            },
+        ]
+        t3_tsx, t3_css = render_tabs_carousel(
+            component_name=sec_cap,
+            items=d["items"],
+            reviews=domain_reviews,
+            business_name=d["name"],
+            eyebrow=f"{d['type'].upper()} SOLUTIONS",
+            title=d["section_name"],
+            subtitle=f"Explore verified solutions and live client outcomes from {d['name']}.",
+            prefix=p,
+            primary_color=d["primary"],
+            accent_color=d["accent"],
+            font_heading=d["heading_font"],
+            font_body=d["body_font"],
+            border_radius=radius_card,
+            pill_buttons=is_refero,
+        )
+    else:
+        obs_2 = obs_ok(
+            ["src/components/Hero.tsx", "src/components/Hero.css"],
+            f"Write the {d['section_name']} section using a bento grid archetype: heterogeneous CSS Grid spans (2x2 hero card with live status and code preview, "
+            f"1x2 tall metric card with progress meter, and 1x1 modular cards). "
+            f"Files: src/components/{sec_cap}.tsx + src/components/{sec_cap}.css"
+        )
+        t3_thought = thought(
+            f"Hero accepted. Now implementing the {d['section_name']} section ({sec_cap}) using a bento grid archetype. "
+            f"I'll compose heterogeneous CSS Grid spans: a 2x2 hero card for '{d['items'][0]['title']}', "
+            f"a 1x2 tall metric card for '{d['items'][1]['title']}', and 1x1 standard cards for the remaining offerings, "
+            f"utilizing {border_card} and {radius_card}."
+        )
+        t3_tsx, t3_css = render_bento_grid(
+            component_name=sec_cap,
+            items=d["items"],
+            business_name=d["name"],
+            eyebrow=d["type"].upper().replace("_", " "),
+            title=d["section_name"],
+            subtitle="Engineered with asymmetric visual hierarchy and high-density modular cards.",
+            prefix=p,
+            primary_color=d["primary"],
+            accent_color=d["accent"],
+            font_heading=d["heading_font"],
+            font_body=d["body_font"],
+            border_radius=radius_card,
+            pill_buttons=is_refero,
+        )
 
     t3_action = write_site(f"src/components/{sec_cap}.tsx", t3_tsx, f"src/components/{sec_cap}.css", t3_css)
     obs_3 = obs_ok(
@@ -2010,11 +2073,14 @@ export function Footer() {{
 }}
 """
 
+    footer_pad = "5rem 1.5rem 3rem" if archetype == "editorial" else ("4.5rem 1.5rem 2.5rem" if archetype == "tabs" else "4rem 1.5rem 2rem")
+    footer_border = f"1px solid {d['accent']}30"
+
     t4_css = f""".{p}-footer {{
   width: 100%;
-  background: var(--surface-obsidian, var(--color-obsidian, #000000));
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4rem 1.5rem 2rem;
+  background: var(--surface-obsidian, var(--color-obsidian, {d['primary']}));
+  border-top: {footer_border};
+  padding: {footer_pad};
   color: var(--color-paper, #ffffff);
 }}
 
@@ -2077,7 +2143,8 @@ export function Footer() {{
   max-width: var(--page-max-width, 1140px);
   margin: 0 auto;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid {d['accent']}25;
+  font-family: var(--font-body, '{d['body_font']}', sans-serif);
   font-size: 0.8125rem;
   color: var(--color-ash-mist, rgba(255, 255, 255, 0.45));
   text-align: center;
@@ -2095,7 +2162,7 @@ export function Footer() {{
     # ── Turn 5: Finish ──────────────────────────────────────────────────────────
     t5_thought = thought(
         f"All 4 sections of the {d['name']} website are written and verified. "
-        "Header, Hero, Core Offerings, and Footer are complete and strictly comply with the active design tokens. Finalizing."
+        f"Header, Hero, {d['section_name']}, and Footer are complete and strictly comply with the active design tokens. Finalizing."
     )
     t5_finish = finish(
         f"Successfully built the complete {d['name']} website with full responsive layouts, "
@@ -2123,6 +2190,17 @@ def main():
     out_file = BASE_DIR / "data" / "site_trajectories_batch6.jsonl"
     print(f"Generating Batch 6 ({len(DOMAINS_B6)} high-quality website trajectories) -> {out_file}...")
     
+    # Ensure every domain in Batch 6 has a unique accent color to guarantee CSS and token diversity
+    import colorsys
+    _seen_accents = set()
+    for i, d in enumerate(DOMAINS_B6):
+        raw_accent = d.get("accent", "#38bdf8")
+        if raw_accent in _seen_accents:
+            hue = (i * 137.508) % 360
+            r, g, b = colorsys.hsv_to_rgb(hue / 360.0, 0.82, 0.92)
+            d["accent"] = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
+        _seen_accents.add(d["accent"])
+
     with out_file.open("w", encoding="utf-8") as f:
         for d in DOMAINS_B6:
             rec = build_trajectory(d)

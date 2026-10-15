@@ -1,0 +1,2782 @@
+[
+  {
+    "split": "train",
+    "task_id": "site_bakery_golden_crumb_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['gc-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bakery_golden_crumb_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_law_vance_holloway_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vh-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_law_vance_holloway_turn6",
+    "reasons": [
+      "src/components/PracticeAreas.tsx: stylesheet contract gaps: ['vh-editorial__date', 'vh-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_law_vance_holloway_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vh-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_travel_wanderlust_expeditions_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['wl-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_travel_wanderlust_expeditions_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['wl-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_vet_paws_claws_hospital_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['pc-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_vet_paws_claws_hospital_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_podcast_the_future_syntax_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['fs-hero--split', 'fs-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_podcast_the_future_syntax_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['fs-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_coworking_the_hive_collective_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['th-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_coworking_the_hive_collective_turn6",
+    "reasons": [
+      "src/components/MembershipTiers.tsx: stylesheet contract gaps: ['th-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_coworking_the_hive_collective_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['th-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brewery_hop_craft_brewing_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['hb-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brewery_hop_craft_brewing_turn6",
+    "reasons": [
+      "src/components/CurrentTaplist.tsx: stylesheet contract gaps: ['hb-editorial__date', 'hb-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brewery_hop_craft_brewing_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hb-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_interior_lumina_living_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ll-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_interior_lumina_living_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ll-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_music_neon_sound_fest_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ns-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_music_neon_sound_fest_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ns-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_photography_elena_voss_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ev-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_photography_elena_voss_turn6",
+    "reasons": [
+      "src/components/FeaturedPortfolios.tsx: stylesheet contract gaps: ['ev-editorial__date', 'ev-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_photography_elena_voss_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ev-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_spa_serene_lotus_wellness_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sl-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_spa_serene_lotus_wellness_turn6",
+    "reasons": [
+      "src/components/TherapeuticRituals.tsx: stylesheet contract gaps: ['sl-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_spa_serene_lotus_wellness_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sl-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_solar_helios_clean_energy_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['he-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_solar_helios_clean_energy_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['he-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cybersecurity_aegis_shield_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['az-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cybersecurity_aegis_shield_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['az-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_barbershop_iron_shears_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['is-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_barbershop_iron_shears_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['is-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_optometry_clarity_eye_studio_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ce-hero--split', 'ce-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_optometry_clarity_eye_studio_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ce-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_catering_savory_roots_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sr-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_catering_savory_roots_turn6",
+    "reasons": [
+      "src/components/SeasonalMenus.tsx: stylesheet contract gaps: ['sr-editorial__date', 'sr-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_catering_savory_roots_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sr-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_florist_botanica_atelier_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ba-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_florist_botanica_atelier_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ba-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cleaning_spark_clean_co_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sc-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cleaning_spark_clean_co_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_logistics_vanguard_freight_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vg-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_logistics_vanguard_freight_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vg-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_hotel_azure_cove_resort_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ac-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_hotel_azure_cove_resort_turn6",
+    "reasons": [
+      "src/components/PrivateVillas.tsx: stylesheet contract gaps: ['ac-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_hotel_azure_cove_resort_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ac-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_mental_health_mindful_pathways_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['mp-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_mental_health_mindful_pathways_turn6",
+    "reasons": [
+      "src/components/ClinicalSpecialties.tsx: stylesheet contract gaps: ['mp-editorial__date', 'mp-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_mental_health_mindful_pathways_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['mp-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_recruiting_talent_forge_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['tf-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_recruiting_talent_forge_turn6",
+    "reasons": [
+      "src/components/SearchPractices.tsx: stylesheet contract gaps: ['tf-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_recruiting_talent_forge_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tf-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_print_shop_press_and_paper_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['pp-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_print_shop_press_and_paper_turn6",
+    "reasons": [
+      "src/components/PrintTechniques.tsx: stylesheet contract gaps: ['pp-editorial__date', 'pp-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_print_shop_press_and_paper_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pp-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_winery_valle_di_pietra_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vp-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_winery_valle_di_pietra_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vp-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_roofer_summit_shield_roofing_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ss-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_roofer_summit_shield_roofing_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ss-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dentistry_pearl_dental_spa_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['pd-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dentistry_pearl_dental_spa_turn6",
+    "reasons": [
+      "src/components/SmileTreatments.tsx: stylesheet contract gaps: ['pd-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dentistry_pearl_dental_spa_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pd-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_plumbing_flow_pro_services_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['fp-hero--split', 'fp-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_plumbing_flow_pro_services_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['fp-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_jewelry_aurelia_fine_gems_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['au-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_jewelry_aurelia_fine_gems_turn6",
+    "reasons": [
+      "src/components/FineCollections.tsx: stylesheet contract gaps: ['au-editorial__date', 'au-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_jewelry_aurelia_fine_gems_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['au-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_martial_arts_ronin_bjj_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ro-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_martial_arts_ronin_bjj_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ro-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bookstore_the_inkwell_shelf_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['iw-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bookstore_the_inkwell_shelf_turn6",
+    "reasons": [
+      "src/components/RareVolumes.tsx: stylesheet contract gaps: ['iw-editorial__date', 'iw-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bookstore_the_inkwell_shelf_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['iw-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_landscaping_terra_verve_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['tv-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_landscaping_terra_verve_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tv-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_auto_detailing_apex_ceramic_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ap-hero--split', 'ap-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_auto_detailing_apex_ceramic_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ap-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_insurance_shield_harbor_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sh-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_insurance_shield_harbor_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sh-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pottery_earth_and_kiln_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ek-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pottery_earth_and_kiln_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ek-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_moving_smooth_move_logistics_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sm-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_moving_smooth_move_logistics_turn6",
+    "reasons": [
+      "src/components/MovingServices.tsx: stylesheet contract gaps: ['sm-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_moving_smooth_move_logistics_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sm-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_apparel_terra_wear_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['tw-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_apparel_terra_wear_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tw-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_museum_metropolitan_modern_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['mm-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_museum_metropolitan_modern_turn6",
+    "reasons": [
+      "src/components/CurrentExhibitions.tsx: stylesheet contract gaps: ['mm-editorial__date', 'mm-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_museum_metropolitan_modern_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['mm-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pest_control_eco_guard_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['eg-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pest_control_eco_guard_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['eg-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_charter_blue_horizon_sailing_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['bh-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_charter_blue_horizon_sailing_turn6",
+    "reasons": [
+      "src/components/CharterFleet.tsx: stylesheet contract gaps: ['bh-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_charter_blue_horizon_sailing_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['bh-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tutoring_quant_masters_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['qm-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tutoring_quant_masters_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['qm-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_coffee_roasters_elevation_roast_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['er-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_coffee_roasters_elevation_roast_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['er-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cinema_the_starlight_indie_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sl-hero--split', 'sl-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cinema_the_starlight_indie_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sl-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bakery_gluten_free_crumbles_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['cb-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bakery_gluten_free_crumbles_turn6",
+    "reasons": [
+      "src/components/DailyGluten-FreeMenu.tsx: stylesheet contract gaps: ['cb-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bakery_gluten_free_crumbles_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cb-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_event_space_the_foundry_loft_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['fo-hero--split', 'fo-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_event_space_the_foundry_loft_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['fo-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ai_vector_scale_db_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vs-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ai_vector_scale_db_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vs-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_devops_ebpf_telemetry_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['kt-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_devops_ebpf_telemetry_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kt-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ai_llm_gateway_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ng-hero--split', 'ng-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ai_llm_gateway_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ng-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cloud_finops_optimizer_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['cl-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cloud_finops_optimizer_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cl-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dev_api_contract_test_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sv-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dev_api_contract_test_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sv-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_infra_bare_metal_cloud_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ab-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_infra_bare_metal_cloud_turn6",
+    "reasons": [
+      "src/components/HardwareConfigurations.tsx: stylesheet contract gaps: ['ab-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_infra_bare_metal_cloud_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ab-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_database_distributed_sql_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ts-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_database_distributed_sql_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ts-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_quantum_circuits_lab_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['hq-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_quantum_circuits_lab_turn6",
+    "reasons": [
+      "src/components/ResearchModules.tsx: stylesheet contract gaps: ['hq-editorial__date', 'hq-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_quantum_circuits_lab_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hq-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_telehealth_neurology_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sn-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_telehealth_neurology_turn6",
+    "reasons": [
+      "src/components/SpecializedClinics.tsx: stylesheet contract gaps: ['sn-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_telehealth_neurology_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sn-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_biomechanics_sports_rehab_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['kl-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_biomechanics_sports_rehab_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kl-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dermatology_precision_skin_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ad-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_dermatology_precision_skin_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ad-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pediatric_sensory_therapy_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ls-hero--split', 'ls-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_pediatric_sensory_therapy_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ls-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cardiology_heart_rhythm_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ar-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_cardiology_heart_rhythm_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ar-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_fertility_nova_origins_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['no-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_fertility_nova_origins_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['no-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_oncology_immunotherapy_inst_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vi-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_oncology_immunotherapy_inst_turn6",
+    "reasons": [
+      "src/components/TherapeuticPillars.tsx: stylesheet contract gaps: ['vi-editorial__date', 'vi-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_oncology_immunotherapy_inst_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vi-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_keyboards_bespoke_keebs_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ak-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_keyboards_bespoke_keebs_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ak-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ceramics_stone_and_ember_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['se-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ceramics_stone_and_ember_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['se-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_olive_oil_estate_grove_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['do-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_olive_oil_estate_grove_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['do-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tailor_savile_bespoke_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['kv-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tailor_savile_bespoke_turn6",
+    "reasons": [
+      "src/components/BespokeServices.tsx: stylesheet contract gaps: ['kv-editorial__date', 'kv-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tailor_savile_bespoke_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kv-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_audio_vacuum_tube_amps_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sa-hero--split', 'sa-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_audio_vacuum_tube_amps_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sa-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_knives_damascus_forge_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['kc-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_knives_damascus_forge_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tea_ancient_puerh_vault_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['cm-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tea_ancient_puerh_vault_turn6",
+    "reasons": [
+      "src/components/ReserveCakesLooseLeaf.tsx: stylesheet contract gaps: ['cm-editorial__date', 'cm-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_tea_ancient_puerh_vault_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cm-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_studio_vivid_3d_motion_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vc-hero--split', 'vc-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_studio_vivid_3d_motion_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_arch_viz_hyper_real_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['al-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_arch_viz_hyper_real_turn6",
+    "reasons": [
+      "src/components/PortfolioStudies.tsx: stylesheet contract gaps: ['al-editorial__date', 'al-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_arch_viz_hyper_real_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['al-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_audio_film_scoring_lab_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['as-hero--split', 'as-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_audio_film_scoring_lab_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['as-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brand_collective_monolith_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['mc-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brand_collective_monolith_turn6",
+    "reasons": [
+      "src/components/SelectedCaseStudies.tsx: stylesheet contract gaps: ['mc-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brand_collective_monolith_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['mc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lighting_architectural_lumen_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ls-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lighting_architectural_lumen_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ls-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_train_silk_road_express_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sr-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_train_silk_road_express_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sr-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lodge_savanna_canopy_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sc-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lodge_savanna_canopy_turn6",
+    "reasons": [
+      "src/components/LodgeExperiences.tsx: stylesheet contract gaps: ['sc-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lodge_savanna_canopy_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_matcha_kyoto_ceremony_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['kk-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_matcha_kyoto_ceremony_turn6",
+    "reasons": [
+      "src/components/CeremonialOfferings.tsx: stylesheet contract gaps: ['kk-editorial__date', 'kk-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_matcha_kyoto_ceremony_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kk-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bathhouse_nordic_sauna_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['nf-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bathhouse_nordic_sauna_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['nf-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_retreat_zen_monastery_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['cp-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_retreat_zen_monastery_turn6",
+    "reasons": [
+      "src/components/SanctuaryPrograms.tsx: stylesheet contract gaps: ['cp-editorial__date', 'cp-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_retreat_zen_monastery_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cp-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_resort_coral_atoll_overwater_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sa-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_resort_coral_atoll_overwater_turn6",
+    "reasons": [
+      "src/components/ResortHighlights.tsx: stylesheet contract gaps: ['sa-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_resort_coral_atoll_overwater_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sa-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_yacht_electric_marine_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vm-hero--split', 'vm-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_yacht_electric_marine_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vm-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_leather_artisan_saddlery_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['oa-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_leather_artisan_saddlery_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['oa-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_acoustics_soundproofing_pro_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['dz-hero--tabs']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_acoustics_soundproofing_pro_turn6",
+    "reasons": [
+      "src/components/EngineeringServices.tsx: stylesheet contract gaps: ['dz-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_acoustics_soundproofing_pro_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['dz-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_neon_artisan_glassworks_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ln-hero--split', 'ln-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_neon_artisan_glassworks_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ln-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bike_aerodynamic_fit_lab_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['va-hero--timeline']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_bike_aerodynamic_fit_lab_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['va-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_drone_lidar_mapping_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['gs-hero--bento']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_drone_lidar_mapping_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gs-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_hydroponics_urban_harvest_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vt-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_hydroponics_urban_harvest_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vt-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_restoration_midcentury_modern_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['nh-hero--editorial']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_restoration_midcentury_modern_turn6",
+    "reasons": [
+      "src/components/RestorationSpecialities.tsx: stylesheet contract gaps: ['nh-editorial__date', 'nh-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_restoration_midcentury_modern_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['nh-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_climbing_summit_bouldering_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sv-hero--split', 'sv-hero__card-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_climbing_summit_bouldering_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sv-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_whiskey_highland_cask_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['hc-hero--grid']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_whiskey_highland_cask_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_star_Vanguard_Legal_Partners_1789279726_turn8",
+    "reasons": [
+      "src/components/Contact.tsx: stylesheet contract gaps: ['sa-btn', 'sa-card', 'sa-grid', 'sa-header-block']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_star_Beacon_Health_Diagnostics_1789280549_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['beacon-hero__content']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_star_Aura_Premier_Properties_1789280972_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['split-hero__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_fintech_bento_strata_turn10",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['strata-footer__col']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_bento_neuro_turn2",
+    "reasons": [
+      "src/components/EmergencyBanner.tsx: stylesheet contract gaps: ['neuro-emergency-banner__divider', 'neuro-emergency-banner__item', 'neuro-emergency-banner__label']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_bento_neuro_turn8",
+    "reasons": [
+      "src/components/BentoClinical.tsx: stylesheet contract gaps: ['neuro-bento__dynamic-content']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_bento_neuro_turn12",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['neuro-footer__col', 'neuro-footer__col--brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_tabs_solace_turn8",
+    "reasons": [
+      "src/components/ModalityTabs.tsx: stylesheet contract gaps: ['solace-tabs__panel-top']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_tabs_solace_turn12",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['solace-footer__col', 'solace-footer__col-brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_restaurant_azure_food_junction_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_portfolio_priya_sharma_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['pf-intro__content']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_portfolio_priya_sharma_turn6",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pf-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_restaurant_miso_soul_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ms-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_event_devsummit_2025_turn8",
+    "reasons": [
+      "src/components/Schedule.tsx: stylesheet contract gaps: ['ds-schedule__body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_event_devsummit_2025_turn10",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ds-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_education_codecraft_academy_turn6",
+    "reasons": [
+      "src/components/Curriculum.tsx: stylesheet contract gaps: ['cc-module__body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_education_codecraft_academy_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cc-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_lumina_dental_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['lumina-btn', 'lumina-btn--teal', 'lumina-hero__card-wrap', 'lumina-hero__content']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_lumina_dental_turn8",
+    "reasons": [
+      "src/components/Testimonials.tsx: stylesheet contract gaps: ['lumina-review-card__author']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_healthcare_lumina_dental_turn10",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['lumina-footer__brand']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_architecture_atelier_nord_turn6",
+    "reasons": [
+      "src/components/Projects.tsx: stylesheet contract gaps: ['nord-proj-row__main']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_architecture_atelier_nord_turn8",
+    "reasons": [
+      "src/components/Philosophy.tsx: stylesheet contract gaps: ['nord-philosophy__lead']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ecommerce_solace_coffee_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['solace-btn', 'solace-btn--orange']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ecommerce_solace_coffee_turn6",
+    "reasons": [
+      "src/components/Catalog.tsx: stylesheet contract gaps: ['solace-btn', 'solace-btn--orange']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_ecommerce_solace_coffee_turn8",
+    "reasons": [
+      "src/components/Story.tsx: stylesheet contract gaps: ['solace-tag']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_cortex_ai_turn6",
+    "reasons": [
+      "src/components/Capabilities.tsx: stylesheet contract gaps: ['cne-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_cortex_ai_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cne-footer__col', 'cne-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_nexus_vector_turn6",
+    "reasons": [
+      "src/components/Features.tsx: stylesheet contract gaps: ['nvd-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_nexus_vector_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['nvd-footer__col', 'nvd-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_sentinel_zero_turn6",
+    "reasons": [
+      "src/components/Vectors.tsx: stylesheet contract gaps: ['szd-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_sentinel_zero_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['szd-footer__col', 'szd-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_aether_stream_turn6",
+    "reasons": [
+      "src/components/Audio_sdks.tsx: missing paired CSS import",
+      "src/components/Audio_sdks.tsx: stylesheet contract gaps: ['asa-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_aether_stream_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['asa-footer__col', 'asa-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_synapse_mesh_turn6",
+    "reasons": [
+      "src/components/Mesh_features.tsx: missing paired CSS import",
+      "src/components/Mesh_features.tsx: stylesheet contract gaps: ['ssm-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_synapse_mesh_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ssm-footer__col', 'ssm-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_vortex_crypto_turn6",
+    "reasons": [
+      "src/components/Specs.tsx: stylesheet contract gaps: ['vee-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_vortex_crypto_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vee-footer__col', 'vee-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_chronos_time_turn6",
+    "reasons": [
+      "src/components/Db_engines.tsx: missing paired CSS import",
+      "src/components/Db_engines.tsx: stylesheet contract gaps: ['cts-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_chronos_time_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cts-footer__col', 'cts-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_stellar_sat_turn6",
+    "reasons": [
+      "src/components/Mission_modules.tsx: missing paired CSS import",
+      "src/components/Mission_modules.tsx: stylesheet contract gaps: ['sot-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_stellar_sat_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sot-footer__col', 'sot-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_axiom_formal_turn6",
+    "reasons": [
+      "src/components/Proofs.tsx: stylesheet contract gaps: ['afv-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_axiom_formal_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['afv-footer__col', 'afv-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_omni_agent_turn6",
+    "reasons": [
+      "src/components/Studio_modules.tsx: missing paired CSS import",
+      "src/components/Studio_modules.tsx: stylesheet contract gaps: ['oas-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_omni_agent_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['oas-footer__col', 'oas-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_helix_bio_turn6",
+    "reasons": [
+      "src/components/Discovery.tsx: stylesheet contract gaps: ['hmg-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_helix_bio_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hmg-footer__col', 'hmg-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_flux_state_turn6",
+    "reasons": [
+      "src/components/Cache_arch.tsx: missing paired CSS import",
+      "src/components/Cache_arch.tsx: stylesheet contract gaps: ['fdc-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_flux_state_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['fdc-footer__col', 'fdc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_strata_observability_turn6",
+    "reasons": [
+      "src/components/Stack_modules.tsx: missing paired CSS import",
+      "src/components/Stack_modules.tsx: stylesheet contract gaps: ['sko-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_glass_strata_observability_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sko-footer__col', 'sko-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_hackers_hub_turn6",
+    "reasons": [
+      "src/components/Criteria.tsx: stylesheet contract gaps: ['hfh-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_hackers_hub_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hfh-footer__col', 'hfh-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_zero_audit_turn6",
+    "reasons": [
+      "src/components/Bounties.tsx: stylesheet contract gaps: ['zbh-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_zero_audit_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['zbh-footer__col', 'zbh-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_git_forge_turn6",
+    "reasons": [
+      "src/components/Pillars.tsx: stylesheet contract gaps: ['gfp-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_git_forge_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gfp-footer__col', 'gfp-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_terminal_fm_turn6",
+    "reasons": [
+      "src/components/Shows.tsx: stylesheet contract gaps: ['tfm-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_terminal_fm_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tfm-footer__col', 'tfm-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_bolt_shipping_turn6",
+    "reasons": [
+      "src/components/Routes.tsx: stylesheet contract gaps: ['bgf-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_bolt_shipping_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['bgf-footer__col', 'bgf-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_stack_overflow_alt_turn6",
+    "reasons": [
+      "src/components/Channels.tsx: stylesheet contract gaps: ['dpf-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_stack_overflow_alt_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['dpf-footer__col', 'dpf-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_vault_defi_turn6",
+    "reasons": [
+      "src/components/Vaults.tsx: stylesheet contract gaps: ['vyp-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_vault_defi_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vyp-footer__col', 'vyp-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_brutalist_print_turn6",
+    "reasons": [
+      "src/components/Print_formats.tsx: missing paired CSS import",
+      "src/components/Print_formats.tsx: stylesheet contract gaps: ['hir-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_brutalist_print_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hir-footer__col', 'hir-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_circuit_labs_turn6",
+    "reasons": [
+      "src/components/Hardware_kits.tsx: missing paired CSS import",
+      "src/components/Hardware_kits.tsx: stylesheet contract gaps: ['chl-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_circuit_labs_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['chl-footer__col', 'chl-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_kiosk_coffee_turn6",
+    "reasons": [
+      "src/components/Tap_menu.tsx: missing paired CSS import",
+      "src/components/Tap_menu.tsx: stylesheet contract gaps: ['knc-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_kiosk_coffee_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['knc-footer__col', 'knc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_rebel_agency_turn6",
+    "reasons": [
+      "src/components/Campaigns.tsx: stylesheet contract gaps: ['rsc-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_rebel_agency_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['rsc-footer__col', 'rsc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_drop_sneakers_turn6",
+    "reasons": [
+      "src/components/Sneaker_drops.tsx: missing paired CSS import",
+      "src/components/Sneaker_drops.tsx: stylesheet contract gaps: ['ddk-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_drop_sneakers_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ddk-footer__col', 'ddk-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_distro_zine_turn6",
+    "reasons": [
+      "src/components/Zines.tsx: stylesheet contract gaps: ['dil-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_distro_zine_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['dil-footer__col', 'dil-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_boulder_gym_turn6",
+    "reasons": [
+      "src/components/Training_zones.tsx: missing paired CSS import",
+      "src/components/Training_zones.tsx: stylesheet contract gaps: ['gbl-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_boulder_gym_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gbl-footer__col', 'gbl-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_garage_tunes_turn6",
+    "reasons": [
+      "src/components/Arrivals.tsx: stylesheet contract gaps: ['gve-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_garage_tunes_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gve-footer__col', 'gve-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_forge_hardware_turn6",
+    "reasons": [
+      "src/components/Keyboards.tsx: stylesheet contract gaps: ['imk-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_brutal_forge_hardware_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['imk-footer__col', 'imk-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_nordic_arch_turn6",
+    "reasons": [
+      "src/components/Projects.tsx: stylesheet contract gaps: ['ana-editorial__date', 'ana-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_nordic_arch_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ana-footer__col', 'ana-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_aurum_wealth_turn6",
+    "reasons": [
+      "src/components/Wealth_practices.tsx: missing paired CSS import",
+      "src/components/Wealth_practices.tsx: stylesheet contract gaps: ['afo-editorial__date', 'afo-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_aurum_wealth_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['afo-footer__col', 'afo-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_monolith_stone_turn6",
+    "reasons": [
+      "src/components/Slabs.tsx: stylesheet contract gaps: ['mas-editorial__date', 'mas-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_monolith_stone_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['mas-footer__col', 'mas-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_elysian_villas_turn6",
+    "reasons": [
+      "src/components/Estates.tsx: stylesheet contract gaps: ['eae-editorial__date', 'eae-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_elysian_villas_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['eae-footer__col', 'eae-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_sovereign_aviation_turn6",
+    "reasons": [
+      "src/components/Fleet.tsx: stylesheet contract gaps: ['spa-editorial__date', 'spa-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_sovereign_aviation_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['spa-footer__col', 'spa-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_reserve_vintage_turn6",
+    "reasons": [
+      "src/components/Cellar_reserves.tsx: missing paired CSS import",
+      "src/components/Cellar_reserves.tsx: stylesheet contract gaps: ['rgc-editorial__date', 'rgc-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_reserve_vintage_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['rgc-footer__col', 'rgc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_paradis_resort_turn6",
+    "reasons": [
+      "src/components/Residences.tsx: stylesheet contract gaps: ['pma-editorial__date', 'pma-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_paradis_resort_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pma-footer__col', 'pma-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_vessel_yachts_turn6",
+    "reasons": [
+      "src/components/Yachts.tsx: stylesheet contract gaps: ['sny-editorial__date', 'sny-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_vessel_yachts_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sny-footer__col', 'sny-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_chateau_vineyard_turn6",
+    "reasons": [
+      "src/components/Vintages.tsx: stylesheet contract gaps: ['cdv-editorial__date', 'cdv-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_chateau_vineyard_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cdv-footer__col', 'cdv-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_couture_tailor_turn6",
+    "reasons": [
+      "src/components/Garments.tsx: stylesheet contract gaps: ['srb-editorial__date', 'srb-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_couture_tailor_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['srb-footer__col', 'srb-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_equine_stud_turn6",
+    "reasons": [
+      "src/components/Stallions.tsx: stylesheet contract gaps: ['vts-editorial__date', 'vts-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_equine_stud_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vts-footer__col', 'vts-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_sanctuary_spa_turn6",
+    "reasons": [
+      "src/components/Rituals.tsx: stylesheet contract gaps: ['sgo-editorial__date', 'sgo-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_sanctuary_spa_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sgo-footer__col', 'sgo-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_heritage_diamonds_turn6",
+    "reasons": [
+      "src/components/Creations.tsx: stylesheet contract gaps: ['maj-editorial__date', 'maj-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_heritage_diamonds_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['maj-footer__col', 'maj-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_privat_concierge_turn6",
+    "reasons": [
+      "src/components/Services.tsx: stylesheet contract gaps: ['kgc-editorial__date', 'kgc-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_privat_concierge_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kgc-footer__col', 'kgc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_estate_sculpture_turn6",
+    "reasons": [
+      "src/components/Sculptures.tsx: stylesheet contract gaps: ['mbf-editorial__date', 'mbf-editorial__volume']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_lux_estate_sculpture_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['mbf-footer__col', 'mbf-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_pulse_metrics_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pma-footer__col', 'pma-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_vault_secrets_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['kvc-footer__col', 'kvc-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_docu_sign_pro_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sfe-footer__col', 'sfe-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_task_harmony_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hw-footer__col', 'hw-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_hire_stream_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tsa-footer__col', 'tsa-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_pay_rail_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gpr-footer__col', 'gpr-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_audit_log_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['cs-footer__col', 'cs-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_uptime_mon_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ppm-footer__col', 'ppm-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_api_gateway_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['rgw-footer__col', 'rgw-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_form_craft_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['feb-footer__col', 'feb-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_feature_flag_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['thq-footer__col', 'thq-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_feedback_loop_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['uvs-footer__col', 'uvs-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_invoice_flow_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['bcb-footer__col', 'bcb-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_status_page_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ils-footer__col', 'ils-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_asset_dam_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pvd-footer__col', 'pvd-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_saas_survey_mind_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ipm-footer__col', 'ipm-footer__hours']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn2",
+    "reasons": [
+      "src/components/Header.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn6",
+    "reasons": [
+      "src/components/About.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn8",
+    "reasons": [
+      "src/components/Portfolio.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn10",
+    "reasons": [
+      "src/components/Faq.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn12",
+    "reasons": [
+      "src/components/Footer.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_tuantanah_33cfa11_turn2",
+    "reasons": [
+      "src/components/Header.tsx: missing paired CSS import",
+      "src/components/Header.tsx: stylesheet contract gaps: ['d-inline-block', 'logo-font', 'nav-font']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_tuantanah_33cfa11_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: missing paired CSS import",
+      "src/components/Hero.tsx: stylesheet contract gaps: ['d-md-block', 'd-none', 'h2', 'h3', 'logo-font']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_tuantanah_33cfa11_turn6",
+    "reasons": [
+      "src/components/Portfolio.tsx: missing paired CSS import",
+      "src/components/Portfolio.tsx: stylesheet contract gaps: ['col-12', 'col-md-3', 'img-gallery']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_tuantanah_33cfa11_turn8",
+    "reasons": [
+      "src/components/Faq.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_portfolio_react_def4985_turn2",
+    "reasons": [
+      "src/components/Header.tsx: missing paired CSS import",
+      "src/components/Header.tsx: stylesheet contract gaps: ['logo-image', 'logo-title', 'uk-logo', 'uk-nav', 'uk-navbar', 'uk-navbar-item', 'uk-navbar-left', 'uk-navbar-nav', 'uk-navbar-right', 'uk-navbar-toggle', 'uk-offcanvas', 'uk-offcanvas-bar', 'uk-offcanvas-close']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_portfolio_react_def4985_turn4",
+    "reasons": [
+      "src/components/About.tsx: missing paired CSS import",
+      "src/components/About.tsx: stylesheet contract gaps: ['snses', 'uk-container', 'uk-section']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_portfolio_react_def4985_turn6",
+    "reasons": [
+      "src/components/Portfolio.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "site_stack_portfolio_react_def4985_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: missing paired CSS import",
+      "src/components/Footer.tsx: stylesheet contract gaps: ['uk-container', 'uk-section']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_margin_hero",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_margin_workspace",
+    "reasons": [
+      "src/components/Workspace.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_margin_principles",
+    "reasons": [
+      "src/components/Principles.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_margin_plans",
+    "reasons": [
+      "src/components/Plans.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_fieldwork_architecture",
+    "reasons": [
+      "src/components/Architecture.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_fieldwork_questions",
+    "reasons": [
+      "src/components/Questions.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_parallax_hero",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_parallax_services",
+    "reasons": [
+      "src/components/Services.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_parallax_projects",
+    "reasons": [
+      "src/components/Projects.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "train",
+    "task_id": "reference_parallax_contact",
+    "reasons": [
+      "src/components/Contact.tsx: stylesheet contract gaps: ['eyebrow']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_accounting_apex_advisory_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['aa-hero--split', 'aa-hero__card-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_accounting_apex_advisory_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['aa-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_gaming_nova_strike_studios_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ns-hero--split', 'ns-hero__card-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_gaming_nova_strike_studios_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ns-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_crypto_zenith_vault_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['zv-hero--bento']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_crypto_zenith_vault_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['zv-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_security_sentinel_patrol_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['sp-hero--bento']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_security_sentinel_patrol_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['sp-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_tattoo_sacred_ink_collective_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['si-hero--editorial']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_tattoo_sacred_ink_collective_turn6",
+    "reasons": [
+      "src/components/ResidentArtists.tsx: stylesheet contract gaps: ['si-editorial__date', 'si-editorial__volume']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_tattoo_sacred_ink_collective_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['si-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_horology_vintage_watches_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['vh-hero--editorial']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_horology_vintage_watches_turn6",
+    "reasons": [
+      "src/components/VaultHighlights.tsx: stylesheet contract gaps: ['vh-editorial__date', 'vh-editorial__volume']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_horology_vintage_watches_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['vh-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_chalet_alpen_solitude_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['ca-hero--tabs']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_chalet_alpen_solitude_turn6",
+    "reasons": [
+      "src/components/ChaletAmenities.tsx: stylesheet contract gaps: ['ca-tabs__panel-footer']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_chalet_alpen_solitude_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ca-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_solar_microgrid_energy_turn4",
+    "reasons": [
+      "src/components/Hero.tsx: stylesheet contract gaps: ['tv-hero--bento']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_solar_microgrid_energy_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['tv-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_interactive_saas_flowsync_turn12",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['fs-footer__col-brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_nonprofit_green_horizon_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['gh-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_realestate_harbor_view_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hv-footer__brand']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_hyperion_cloud_turn6",
+    "reasons": [
+      "src/components/Platform.tsx: stylesheet contract gaps: ['hsc-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_hyperion_cloud_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['hsc-footer__col', 'hsc-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_quant_pulse_turn6",
+    "reasons": [
+      "src/components/Modules.tsx: stylesheet contract gaps: ['qpt-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_quant_pulse_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['qpt-footer__col', 'qpt-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_prism_vision_turn6",
+    "reasons": [
+      "src/components/Vision.tsx: stylesheet contract gaps: ['pcv-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_prism_vision_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['pcv-footer__col', 'pcv-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_nebula_render_turn6",
+    "reasons": [
+      "src/components/Pipelines.tsx: stylesheet contract gaps: ['nnr-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_nebula_render_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['nnr-footer__col', 'nnr-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_brutal_raw_goods_turn6",
+    "reasons": [
+      "src/components/Denim_pieces.tsx: missing paired CSS import",
+      "src/components/Denim_pieces.tsx: stylesheet contract gaps: ['rgh-bento__hero-body']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_brutal_raw_goods_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['rgh-footer__col', 'rgh-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_lux_michelin_eats_turn6",
+    "reasons": [
+      "src/components/Menu_sequences.tsx: missing paired CSS import",
+      "src/components/Menu_sequences.tsx: stylesheet contract gaps: ['ler-editorial__date', 'ler-editorial__volume']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_lux_michelin_eats_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['ler-footer__col', 'ler-footer__hours']"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_saas_support_desk_turn6",
+    "reasons": [
+      "src/components/Support_features.tsx: missing paired CSS import"
+    ]
+  },
+  {
+    "split": "validation",
+    "task_id": "site_saas_support_desk_turn8",
+    "reasons": [
+      "src/components/Footer.tsx: stylesheet contract gaps: ['rd-footer__col', 'rd-footer__hours']"
+    ]
+  }
+]

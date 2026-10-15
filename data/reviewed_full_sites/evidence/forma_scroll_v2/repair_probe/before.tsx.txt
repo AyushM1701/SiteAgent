@@ -1,0 +1,10 @@
+import React, {useState,useEffect,useRef} from 'react';
+import './Collection.css';
+const works = [{name:'Quiet Column',type:'Objects',tone:'sand',caption:'A study in vertical rhythm.'},{name:'The Space Between',type:'Studies',tone:'clay',caption:'Two forms, one conversation.'},{name:'Low Horizon',type:'Objects',tone:'ink',caption:'A grounded, horizontal gesture.'}];
+export function Collection(){
+  const [filter,setFilter]=useState('All');
+  const root=useRef<HTMLElement>(null);
+  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');const nodes=root.current?.querySelectorAll<HTMLElement>('.forma-work-heading,.forma-grid article');if(!nodes)return;const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('forma-revealed');observer.unobserve(entry.target);}}),{threshold:.12});if(!media.matches)nodes.forEach(node=>{node.classList.add('forma-reveal');observer.observe(node);});const show=()=>{if(media.matches)nodes.forEach(node=>node.classList.add('forma-revealed'));};media.addEventListener('change',show);return()=>{observer.disconnect();media.removeEventListener('change',show);};},[filter]);
+  return <section className="forma-work" id="work" ref={root}><div className="forma-work-heading"><div><p className="forma-work-kicker">SELECTED STUDIES</p><h2>Made to be noticed.<br />Designed to belong.</h2></div><div className="forma-filters" role="group" aria-label="Filter work">{['All','Objects','Studies'].map(item=><button key={item} aria-pressed={filter===item} onClick={()=>setFiltre(item)}>{item}</button>)}</div></div><div className="forma-grid" aria-live="polite">{works.filter(work=>filter==='All'||work.type===filter).map((work,index)=><article key={work.name}><div className={`forma-object forma-object--${work.tone}`} role="img" aria-label={`${work.name}, an abstract sculptural illustration`}><span/></div><p className="forma-work-number">0{index+1} / {work.type}</p><h3>{work.name}</h3><p>{work.caption}</p></article>)}</div></section>;
+}
+export default Collection;

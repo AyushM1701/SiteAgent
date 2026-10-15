@@ -1,0 +1,21 @@
+{
+  "source_sha256": "41f8eb44248bbc215c51dfeed7c087bd872d3b051f92a515cf51144ec68d9487",
+  "passed": true,
+  "method": "Manual CUA browser interaction and visual inspection; TypeScript noEmit compile",
+  "checked_on": "2026-09-16",
+  "desktop_viewport_width": 1280,
+  "mobile_viewport_width": 375,
+  "mobile_document_scroll_width": 360,
+  "h1_count": 1,
+  "broken_fragment_links": 0,
+  "browser_console_errors": 0,
+  "checks": [
+    "Pause changes to pressed Resume",
+    "Engineering accordion opens exclusively and closes on second click",
+    "Engineering filter shows one matching study",
+    "Valid local brief reports nothing sent or stored",
+    "Editing resets success; clearing via keyboard makes required textarea invalid"
+  ],
+  "limitations": "Not an automated cross-browser or screen-reader audit; reduced-motion media rules were not browser-emulated.",
+  "equivalent_style_migration": "Hex colors replaced with root custom properties; exact CSS literal reconstruction verified in token_migration.json. TSX unchanged; prior behavior/visual checks apply to the equivalent rendering."
+}

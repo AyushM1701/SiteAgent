@@ -1,0 +1,114 @@
+{
+  "source_files": {
+    "Collection.css": "e2cc6827a38f636fba9f9b7b20870d6ca155f5c1162e93388259d5ee7edcbb39",
+    "Collection.tsx": "07c7dcdd68e5e45a123da0b92c49ae0434aecbb83938b87a7da3e94fb5f274c1",
+    "Contact.css": "ade36475f4c6694cfee8dda79975d03c3c982377aff693378b1d40085bb8376a",
+    "Contact.tsx": "3403cbf5cd5cca4ed15a228839453a92507659e30814b73d12ec9f528f9dad0d",
+    "Hero.css": "412030733ec77dca66c1f1c2c3190d733a63d28f902bfde3916096861c8d7cdf",
+    "Hero.tsx": "4fd30d4c70a01c9a50f60d637e4448f744c221cc56001b8342fdfbc749eedb80"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 35 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-D9SAH4D3.css    6.51 kB \u00e2\u201d\u201a gzip:  2.12 kB\ndist/assets/index-CXhQtOCh.js   197.81 kB \u00e2\u201d\u201a gzip: 62.32 kB\n\u00e2\u0153\u201c built in 742ms\n"
+    }
+  },
+  "interactions": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "motion_contract": true,
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "motion_contract": true,
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "motion_contract": true,
+        "filter_one": true,
+        "filter_all": true,
+        "no_overflow": true,
+        "no_runtime_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "motion_timeline": [
+    {
+      "reduced_motion": false,
+      "opacity_before": "0",
+      "opacity_after": "1",
+      "stage_before": "matrix(1, 0, 0, 1, 0, 0)",
+      "stage_after": "matrix(1, 0, 0, 1, 0, 55)",
+      "passed": true
+    },
+    {
+      "reduced_motion": true,
+      "opacity_before": "1",
+      "opacity_after": "1",
+      "stage_before": "none",
+      "stage_after": "none",
+      "passed": true
+    }
+  ],
+  "browser_evidence": {
+    "url": "http://127.0.0.1:60174",
+    "captures": {
+      "desktop": {
+        "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\desktop_screenshot.png",
+        "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\desktop_scroll_video.webm",
+        "viewport": {
+          "width": 1280,
+          "height": 900
+        },
+        "reduced_motion": false,
+        "browser_errors": []
+      },
+      "mobile": {
+        "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\mobile_screenshot.png",
+        "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\mobile_scroll_video.webm",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "reduced_motion": false,
+        "browser_errors": []
+      },
+      "reduced_motion": {
+        "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\reduced_motion_screenshot.png",
+        "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\diverse_reference_review\\forma_scroll_v2\\captures\\reduced_motion_scroll_video.webm",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "reduced_motion": true,
+        "browser_errors": []
+      }
+    }
+  },
+  "passed": true,
+  "human_visual_review": null,
+  "admission_status": "new_revision_awaiting_review"
+}

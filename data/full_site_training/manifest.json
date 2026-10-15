@@ -1,0 +1,24 @@
+{
+  "status": "unreviewed_candidate_training_input",
+  "output": "data\\full_site_training\\train.jsonl",
+  "sha256": "ff23a0082f6427ec2d98f9a91e701c176550fdff953d63c373ce114b0ff70533",
+  "rows": 823,
+  "families": 256,
+  "validation_path": "data\\quality_candidate\\validation.jsonl",
+  "validation_sha256": "45eeef41fba6a7679dea9b91aeface33917f0d4a5e57df35f8c7c6ea4c773d12",
+  "validation_rows": 104,
+  "family_overlap": 0,
+  "sources": [
+    {
+      "path": "data\\quality_v3\\train.jsonl",
+      "sha256": "b36d461a81c11865de9f6764ad73c4aee415a84175a5b6e2565fe29bda90f283",
+      "rows": 787
+    },
+    {
+      "path": "data\\siteagent_motion_sft_v1.jsonl",
+      "sha256": "ab1932e2ce71d08706b63e2461d3094b79e897d34d2619102cc8569dcae89790",
+      "rows": 36
+    }
+  ],
+  "human_visual_review": "not performed"
+}

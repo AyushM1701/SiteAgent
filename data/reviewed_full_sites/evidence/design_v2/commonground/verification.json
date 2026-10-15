@@ -1,0 +1,111 @@
+{
+  "source_files": {
+    "Main.css": "1d963596a51722438bcb3e04952a97ae84fda5f47c487581dc3e817f947465bd",
+    "Main.tsx": "9849760b6d3149ab4839c63040eb0c4071ceb1c736bbeaeb7d2b6f4e16b72700"
+  },
+  "compilation": {
+    "typescript": {
+      "passed": true,
+      "output": ""
+    },
+    "build": {
+      "passed": true,
+      "output": "vite v7.3.6 building client environment for production...\ntransforming...\n\u00e2\u0153\u201c 29 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.30 kB \u00e2\u201d\u201a gzip:  0.23 kB\ndist/assets/index-B857ALY5.css    3.60 kB \u00e2\u201d\u201a gzip:  1.37 kB\ndist/assets/index-D3-LPy60.js   196.20 kB \u00e2\u201d\u201a gzip: 61.93 kB\n\u00e2\u0153\u201c built in 576ms\n"
+    }
+  },
+  "browser_checks": [
+    {
+      "mode": "desktop",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "mobile",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    },
+    {
+      "mode": "reduced_motion",
+      "checks": {
+        "main_visible": true,
+        "one_h1": true,
+        "no_overflow": true,
+        "interaction_1": true,
+        "interaction_3": true,
+        "nav_targets_exist": true,
+        "no_orphan_labels": true,
+        "parallax_or_reduced_motion": true,
+        "reveal_visible": true,
+        "no_browser_errors": true
+      },
+      "errors": [],
+      "passed": true
+    }
+  ],
+  "captures": {
+    "desktop": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\desktop_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\desktop_scroll_video.webm",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "335b8bbc8d2e25e8cd8aa449dab8ed408545f79d74266c62c2c13803556258ed",
+      "scroll_video_sha256": "280751b62061c3d612fb9a3863ec8ef56d3a54b3fe0742745203d48ca722abaa"
+    },
+    "mobile": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\mobile_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\mobile_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": false,
+      "browser_errors": [],
+      "screenshot_sha256": "ddb436a325d3e992c034d5402c440dcd7d49c1e473a0145e751d0f52d4fe69e5",
+      "scroll_video_sha256": "1476892e4a0f745821d16dad1101e52565de0040f145ef215eb920b39fde4635"
+    },
+    "reduced_motion": {
+      "screenshot": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\reduced_motion_screenshot.png",
+      "scroll_video": "C:\\Users\\AYUSH\\Documents\\slm\\runs\\design_reference_v2\\commonground\\captures\\reduced_motion_scroll_video.webm",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "reduced_motion": true,
+      "browser_errors": [],
+      "screenshot_sha256": "ddb436a325d3e992c034d5402c440dcd7d49c1e473a0145e751d0f52d4fe69e5",
+      "scroll_video_sha256": "7fef1963d575704423771fd0c593c9dbbd52daff38474c4c089e9b8580ef17da"
+    }
+  },
+  "passed": true,
+  "visual_review": "pending_human",
+  "three_d_kind": "not_requested",
+  "webgl_runtime": "not_requested; no WebGL claim"
+}

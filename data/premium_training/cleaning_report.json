@@ -1,0 +1,136 @@
+{
+  "timestamp": "2026-09-29T15:13:18.773769",
+  "input_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\premium_training\\train.jsonl",
+  "output_file": "C:\\Users\\AYUSH\\Documents\\slm\\data\\premium_training\\train_cleaned.jsonl",
+  "total_records": 984,
+  "clean_records_count": 984,
+  "modified_records_count": 984,
+  "unmodified_records_count": 0,
+  "rejected_records_count": 0,
+  "thought_blocks_removed": 2717,
+  "zero_thought_verified": true,
+  "status": "success",
+  "modified_sample": [
+    {
+      "line_number": 1,
+      "task_id": "site_bakery_golden_crumb_turn2",
+      "family_id": "0",
+      "thoughts_removed": 2
+    },
+    {
+      "line_number": 2,
+      "task_id": "site_bakery_golden_crumb_turn4",
+      "family_id": "0",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 3,
+      "task_id": "site_bakery_golden_crumb_turn6",
+      "family_id": "0",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 4,
+      "task_id": "site_bakery_golden_crumb_turn8",
+      "family_id": "0",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 5,
+      "task_id": "site_bakery_golden_crumb_turn10",
+      "family_id": "0",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 6,
+      "task_id": "site_law_vance_holloway_turn2",
+      "family_id": "1",
+      "thoughts_removed": 2
+    },
+    {
+      "line_number": 7,
+      "task_id": "site_law_vance_holloway_turn4",
+      "family_id": "1",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 8,
+      "task_id": "site_law_vance_holloway_turn6",
+      "family_id": "1",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 9,
+      "task_id": "site_law_vance_holloway_turn8",
+      "family_id": "1",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 10,
+      "task_id": "site_law_vance_holloway_turn10",
+      "family_id": "1",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 11,
+      "task_id": "site_travel_wanderlust_expeditions_turn2",
+      "family_id": "2",
+      "thoughts_removed": 2
+    },
+    {
+      "line_number": 12,
+      "task_id": "site_travel_wanderlust_expeditions_turn4",
+      "family_id": "2",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 13,
+      "task_id": "site_travel_wanderlust_expeditions_turn6",
+      "family_id": "2",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 14,
+      "task_id": "site_travel_wanderlust_expeditions_turn8",
+      "family_id": "2",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 15,
+      "task_id": "site_travel_wanderlust_expeditions_turn10",
+      "family_id": "2",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 16,
+      "task_id": "site_vet_paws_claws_hospital_turn2",
+      "family_id": "3",
+      "thoughts_removed": 2
+    },
+    {
+      "line_number": 17,
+      "task_id": "site_vet_paws_claws_hospital_turn4",
+      "family_id": "3",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 18,
+      "task_id": "site_vet_paws_claws_hospital_turn6",
+      "family_id": "3",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 19,
+      "task_id": "site_vet_paws_claws_hospital_turn8",
+      "family_id": "3",
+      "thoughts_removed": 3
+    },
+    {
+      "line_number": 20,
+      "task_id": "site_vet_paws_claws_hospital_turn10",
+      "family_id": "3",
+      "thoughts_removed": 3
+    }
+  ],
+  "rejected_records": []
+}

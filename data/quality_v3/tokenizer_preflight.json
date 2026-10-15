@@ -1,0 +1,31 @@
+{
+  "dataset": "data/quality_v3/train.jsonl",
+  "records": 787,
+  "tokenizer": "my-react-agent-lora/tokenizer.json",
+  "context_limit": 8192,
+  "errors": 0,
+  "token_stats": {
+    "min": 860,
+    "median": 4089,
+    "max": 6914,
+    "p95": 6045,
+    "p99": 6599
+  },
+  "over_4096": {
+    "count": 388,
+    "pct": 49.3
+  },
+  "over_6000": {
+    "count": 46,
+    "pct": 5.8
+  },
+  "verdict": "PASS",
+  "notes": [
+    "All 787 records fit within 8192-token context limit.",
+    "49.3% of records exceed 4096 tokens \u2014 context budget of 8192 is appropriate.",
+    "5.8% (46 records) exceed 6000 tokens \u2014 these may need per-turn compaction before training.",
+    "Max 6914 tokens has headroom below 8192 limit.",
+    "Zero encoding errors or malformed records.",
+    "Remaining gates: family/style balance review, browser test of survivors, add independently reviewed 3D/tool trajectories, re-run preflight after any data changes."
+  ]
+}

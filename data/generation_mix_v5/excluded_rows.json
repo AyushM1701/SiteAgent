@@ -1,0 +1,1730 @@
+[
+  {
+    "split": "legacy_pool",
+    "task_id": "site_bakery_golden_crumb_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_law_vance_holloway_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_travel_wanderlust_expeditions_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_vet_paws_claws_hospital_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_podcast_the_future_syntax_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_coworking_the_hive_collective_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brewery_hop_craft_brewing_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_interior_lumina_living_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_music_neon_sound_fest_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_photography_elena_voss_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_spa_serene_lotus_wellness_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_solar_helios_clean_energy_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_cybersecurity_aegis_shield_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_barbershop_iron_shears_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_optometry_clarity_eye_studio_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_catering_savory_roots_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_florist_botanica_atelier_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_cleaning_spark_clean_co_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_logistics_vanguard_freight_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_hotel_azure_cove_resort_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_mental_health_mindful_pathways_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_recruiting_talent_forge_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_print_shop_press_and_paper_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_winery_valle_di_pietra_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_roofer_summit_shield_roofing_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_dentistry_pearl_dental_spa_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_plumbing_flow_pro_services_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_jewelry_aurelia_fine_gems_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_martial_arts_ronin_bjj_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_bookstore_the_inkwell_shelf_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_landscaping_terra_verve_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_auto_detailing_apex_ceramic_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_insurance_shield_harbor_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_pottery_earth_and_kiln_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_moving_smooth_move_logistics_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_apparel_terra_wear_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_museum_metropolitan_modern_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_pest_control_eco_guard_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_charter_blue_horizon_sailing_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_tutoring_quant_masters_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_coffee_roasters_elevation_roast_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_cinema_the_starlight_indie_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_bakery_gluten_free_crumbles_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_event_space_the_foundry_loft_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_medtech_pulse_biometrics_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_ai_vector_scale_db_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_devops_ebpf_telemetry_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_ai_llm_gateway_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_cloud_finops_optimizer_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_dev_api_contract_test_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_infra_bare_metal_cloud_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_database_distributed_sql_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_quantum_circuits_lab_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_telehealth_neurology_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_biomechanics_sports_rehab_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_dermatology_precision_skin_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_pediatric_sensory_therapy_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_cardiology_heart_rhythm_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_fertility_nova_origins_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_oncology_immunotherapy_inst_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_keyboards_bespoke_keebs_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_ceramics_stone_and_ember_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_olive_oil_estate_grove_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_tailor_savile_bespoke_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_audio_vacuum_tube_amps_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_knives_damascus_forge_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_tea_ancient_puerh_vault_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_studio_vivid_3d_motion_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_arch_viz_hyper_real_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_audio_film_scoring_lab_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brand_collective_monolith_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lighting_architectural_lumen_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_train_silk_road_express_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lodge_savanna_canopy_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_matcha_kyoto_ceremony_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_bathhouse_nordic_sauna_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_retreat_zen_monastery_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_resort_coral_atoll_overwater_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_yacht_electric_marine_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_leather_artisan_saddlery_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_acoustics_soundproofing_pro_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_neon_artisan_glassworks_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_bike_aerodynamic_fit_lab_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_drone_lidar_mapping_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_hydroponics_urban_harvest_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_restoration_midcentury_modern_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_coffee_single_origin_lab_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_climbing_summit_bouldering_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_whiskey_highland_cask_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_fintech_bento_strata_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_legal_editorial_vance_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_healthcare_bento_neuro_turn14",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_healthcare_tabs_solace_turn14",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_restaurant_azure_food_junction_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_portfolio_priya_sharma_turn8",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_restaurant_miso_soul_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_event_devsummit_2025_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_prose_ai_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_ecommerce_blanc_studio_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_portfolio_marcus_bell_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_agency_pixel_forge_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_education_codecraft_academy_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_healthcare_lumina_dental_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_architecture_atelier_nord_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_ecommerce_solace_coffee_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_cortex_ai_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_nexus_vector_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_sentinel_zero_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_aether_stream_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_synapse_mesh_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_vortex_crypto_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_chronos_time_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_stellar_sat_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_axiom_formal_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_omni_agent_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_helix_bio_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_flux_state_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_glass_strata_observability_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_hackers_hub_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_zero_audit_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_git_forge_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_terminal_fm_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_bolt_shipping_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_stack_overflow_alt_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_vault_defi_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_brutalist_print_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_circuit_labs_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_kiosk_coffee_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_rebel_agency_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_drop_sneakers_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_distro_zine_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_boulder_gym_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_garage_tunes_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_brutal_forge_hardware_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_nordic_arch_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_aurum_wealth_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_monolith_stone_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_elysian_villas_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_sovereign_aviation_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_reserve_vintage_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_paradis_resort_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_vessel_yachts_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_chateau_vineyard_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_couture_tailor_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_equine_stud_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_sanctuary_spa_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_heritage_diamonds_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_privat_concierge_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_lux_estate_sculpture_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_pulse_metrics_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_vault_secrets_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_docu_sign_pro_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_task_harmony_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_hire_stream_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_pay_rail_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_audit_log_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_uptime_mon_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_api_gateway_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_form_craft_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_feature_flag_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_feedback_loop_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_invoice_flow_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_status_page_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_asset_dam_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_saas_survey_mind_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_stack_immunie_client_temp_cd2ceff_turn14",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_stack_tuantanah_33cfa11_turn12",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_stack_portfolio_react_def4985_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_badge_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_badge_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_button_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_button_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_accordion_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_accordion_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_tabs_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_tabs_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_table_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_table_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_separator_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_separator_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_skeleton_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_skeleton_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_switch_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_switch_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_command_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_command_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_data_table_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_data_table_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_dialog_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_dialog_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_tooltip_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_tooltip_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_popover_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_popover_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_slider_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_slider_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_sheet_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_sheet_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_radio_group_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_radio_group_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_checkbox_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_checkbox_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_textarea_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_textarea_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_select_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_select_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_toggle_group_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_toggle_group_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_metric_card_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "site_shadcn_metric_card_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_search_filter_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_search_filter_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_use_local_storage_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_use_local_storage_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_wizard_form_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_wizard_form_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_image_lightbox_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_image_lightbox_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_kanban_column_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_kanban_column_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_currency_converter_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_currency_converter_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_toast_container_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_toast_container_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_infinite_feed_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_infinite_feed_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_faq_accordion_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_faq_accordion_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_password_meter_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_password_meter_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_media_player_bar_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_media_player_bar_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_product_catalog_filter_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_product_catalog_filter_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_analytics_barchart_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_analytics_barchart_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_tab_interface_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_tab_interface_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_data_grid_search_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_data_grid_search_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_rest_api_fetch_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_rest_api_fetch_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_color_theme_picker_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_color_theme_picker_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_star_rating_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_star_rating_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_pricing_calculator_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_pricing_calculator_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_stats_counter_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_stats_counter_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_tag_input_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_tag_input_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_countdown_timer_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_countdown_timer_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_copy_code_block_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_copy_code_block_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_testimonial_carousel_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "legacy_pool",
+    "task_id": "ts_instruct_testimonial_carousel_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_accounting_apex_advisory_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_gaming_nova_strike_studios_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_crypto_zenith_vault_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_security_sentinel_patrol_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_tattoo_sacred_ink_collective_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_horology_vintage_watches_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_chalet_alpen_solitude_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_solar_microgrid_energy_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_interactive_saas_flowsync_turn14",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_nonprofit_green_horizon_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_realestate_harbor_view_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_hyperion_cloud_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_quant_pulse_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_prism_vision_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_glass_nebula_render_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_brutal_raw_goods_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_lux_michelin_eats_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_saas_support_desk_turn10",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_card_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_card_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_avatar_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_avatar_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_alert_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_alert_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_progress_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_progress_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_breadcrumb_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "site_shadcn_breadcrumb_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "ts_instruct_live_search_table_turn2",
+    "reason": "not a paired site-file action",
+    "errors": []
+  },
+  {
+    "split": "validation",
+    "task_id": "ts_instruct_live_search_table_turn4",
+    "reason": "finish has no preceding generated and accepted complete project",
+    "errors": []
+  }
+]

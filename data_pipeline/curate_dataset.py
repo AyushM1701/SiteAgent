@@ -40,6 +40,10 @@ DATA_DIR = BASE_DIR / "data"
 sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(BASE_DIR / "agent"))
 sys.path.insert(0, str(BASE_DIR / "training"))
+sys.path.insert(0, str(BASE_DIR / "data_pipeline"))
+
+import visual_judge
+from prompt_fidelity_gate import verify_prompt_fidelity
 
 # UTF-8 terminal encoding
 if hasattr(sys.stdout, "reconfigure"):
@@ -4891,7 +4895,9 @@ def run_star_pipeline(
     max_turns: int = 5,
     merge_output: bool = True,
     resume: bool = True,
-    output_file: str = "star_trajectories.jsonl"
+    output_file: str = "star_trajectories.jsonl",
+    visual_threshold: int = 3,
+    fidelity_check: bool = True,
 ):
     task_bank_file = Path("star_task_bank.jsonl")
     if task_bank_file.exists():
@@ -4917,6 +4923,7 @@ def run_star_pipeline(
 
     print("=" * 75)
     print("      SELF-TAUGHT REASONER (STaR) / REJECTION SAMPLING PIPELINE        ")
+    print(f"      (With Prompt-Fidelity Gate & Visual Quality Gating >={visual_threshold}/5)     ")
     print("=" * 75)
     print(f"Target Model: {model_path}")
     print(f"Task Bank Size: {len(tasks)} (running first {min(num_tasks, len(tasks))})")
@@ -4958,16 +4965,30 @@ def run_star_pipeline(
         turns_used = res.get("turns_used", 1)
 
         if final_passed:
+            # 1. Prompt-Fidelity Gate Check: verify named entities and quantity constraints
+            raw_trajectory = res.get("trajectory", [])
+            history = [dict(m) for m in raw_trajectory]
+            rendered_code = res.get("files", {}) or history
+
+            if fidelity_check:
+                fidelity_ok, f_reasons, f_metrics = verify_prompt_fidelity(prompt, rendered_code, brief=task)
+                if not fidelity_ok:
+                    print(f"  >>> [STaR Fidelity REJECTED]: Task #{i+1} {symbol} dropped required entities: {', '.join(f_reasons)}")
+                    continue
+
+            # 2. Visual Judge Quality Gating (threshold >= visual_threshold, default 3/5)
+            traj_data = {"task_id": traj_id, "prompt": prompt, "files": res.get("files", {}), "messages": history}
+            vis_ok, vis_res = visual_judge.filter_trajectory_visual(traj_data, threshold=visual_threshold)
+            if not vis_ok:
+                print(f"  >>> [STaR Visual REJECTED]: Task #{i+1} {symbol} visual score {vis_res.get('score', 0)}/5 below threshold {visual_threshold}. Issues: {vis_res.get('issues', [])}")
+                continue
+
             total_passed += 1
             if self_corrected or turns_used > 1:
                 total_self_corrected += 1
                 print(f"  >>> [STaR Harvested]: Task #{i+1} {symbol} self-corrected on Turn {turns_used}! Kept.")
             else:
                 print(f"  >>> [STaR Harvested]: Task #{i+1} {symbol} passed on Turn 1.")
-
-            # Preserve the authentic, genuine multi-turn rollout from agent_loop
-            raw_trajectory = res.get("trajectory", [])
-            history = [dict(m) for m in raw_trajectory]
 
             # Ensure dialogue finishes with an assistant finish tag if tests passed
             if history and history[-1].get("role") == "user":
@@ -5031,7 +5052,6 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from evaluate import strip_test_imports
-from generate_teacher import TeacherClient
 
 
 # ==============================================================================
@@ -5649,6 +5669,15 @@ def mine_stack_v2(
             if spec is None:
                 continue
 
+            # Visual Judge Quality Gating on candidate component + companion stylesheet
+            vis_ok, vis_res = visual_judge.filter_trajectory_visual(
+                {"code": code, "css": companion_css or ""},
+                threshold=3
+            )
+            if not vis_ok:
+                print(f"    [Visual Judge REJECT]: {symbol} visual score {vis_res.get('score', 0)}/5 below threshold 3/5 — skipping.", flush=True)
+                continue
+
             # 6. Sanitize test code
             clean_test = strip_test_imports(spec["test_code"])
 
@@ -5746,133 +5775,30 @@ Next step — generate agentic training trajectories with the teacher model:
 
 
 # ==============================================================================
-# 6. CLI
+# 6. Stack Mining Dispatcher
 # ==============================================================================
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Stream The Stack v2, filter React components & companion styles, and mine a website-building task bank."
-    )
-    parser.add_argument(
-        "--provider",
-        choices=["openai", "anthropic", "openrouter", "deepseek", "gemini"],
-        default="gemini",
-        help="Teacher LLM provider (default: gemini)",
-    )
-    parser.add_argument(
-        "--model",
-        type=str,
-        default="gemini-2.5-flash",
-        help="Teacher model name (default: gemini-2.5-flash)",
-    )
-    parser.add_argument(
-        "--api-key",
-        type=str,
-        default=None,
-        help="API key for the teacher provider (or set env var: GEMINI_API_KEY, ANTHROPIC_API_KEY, etc.)",
-    )
-    parser.add_argument(
-        "--hf-token",
-        type=str,
-        default=None,
-        help="HuggingFace token for gated the-stack-v2 (or set HF_TOKEN env var)",
-    )
-    parser.add_argument(
-        "--subset",
-        type=str,
-        default="TSX",
-        help="The Stack v2 subset configuration (default: 'TSX', options: 'TSX', 'CSS', 'SCSS', 'TypeScript')",
-    )
-    parser.add_argument(
-        "--target",
-        type=int,
-        default=50,
-        help="Number of NEW tasks to add to the task bank (default: 50)",
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="stack_task_bank.jsonl",
-        help="Output JSONL task bank file (default: stack_task_bank.jsonl)",
-    )
-    parser.add_argument(
-        "--resume",
-        action="store_true",
-        help="Skip symbols already saved in --output (safe to re-run)",
-    )
-    parser.add_argument(
-        "--scan-limit",
-        type=int,
-        default=5000,
-        help="Max number of raw Stack v2 rows to scan before stopping (default: 5000)",
-    )
-    parser.add_argument(
-        "--require-styles",
-        action="store_true",
-        help="Only select components that have resolved companion CSS/SCSS stylesheets",
-    )
-    parser.add_argument(
-        "--min-bytes",
-        type=int,
-        default=300,
-        help="Minimum file length in bytes to consider (default: 300)",
-    )
-    parser.add_argument(
-        "--max-bytes",
-        type=int,
-        default=15000,
-        help="Maximum file length in bytes to consider (default: 15000)",
-    )
-    parser.add_argument(
-        "--max-component-lines",
-        type=int,
-        default=250,
-        help="Max source file lines to consider as a candidate (default: 250)",
-    )
-    parser.add_argument(
-        "--temperature",
-        type=float,
-        default=0.2,
-        help="Sampling temperature for teacher model (default: 0.2)",
-    )
-    parser.add_argument(
-        "--offline",
-        action="store_true",
-        help="Mine and extract tasks using automated AST/props reverse engineering (no external LLM API key required)",
-    )
-    parser.add_argument(
-        "--merge-with",
-        type=str,
-        default=None,
-        help="Optional path to existing task bank (e.g. star_task_bank.jsonl) to merge with output",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Stream and filter candidate components & styles without invoking the Teacher LLM API",
-    )
-
-    args = parser.parse_args()
-
+def run_stack(args) -> None:
     mine_stack_v2(
-        provider=args.provider,
-        model=args.model,
-        api_key=args.api_key,
-        target=args.target,
-        output_file=Path(args.output),
-        resume=args.resume,
-        scan_limit=args.scan_limit,
-        temperature=args.temperature,
-        hf_token=args.hf_token,
-        max_component_lines=args.max_component_lines,
-        subset=args.subset,
-        min_bytes=args.min_bytes,
-        max_bytes=args.max_bytes,
-        require_styles=args.require_styles,
-        dry_run=args.dry_run,
-        offline=args.offline,
-        merge_with=Path(args.merge_with) if args.merge_with else None,
+        provider=getattr(args, "provider", "gemini"),
+        model=getattr(args, "model", "gemini-2.5-flash"),
+        api_key=getattr(args, "api_key", None),
+        target=getattr(args, "limit", getattr(args, "target", 10)),
+        output_file=Path(getattr(args, "out", getattr(args, "output", str(DATA_DIR / "site_trajectories_stack.jsonl")))),
+        resume=getattr(args, "resume", True),
+        scan_limit=getattr(args, "scan_limit", 5000),
+        temperature=getattr(args, "temperature", 0.2),
+        hf_token=getattr(args, "hf_token", None),
+        max_component_lines=getattr(args, "max_component_lines", 250),
+        subset=getattr(args, "subset", "TSX"),
+        min_bytes=getattr(args, "min_bytes", 300),
+        max_bytes=getattr(args, "max_bytes", 15000),
+        require_styles=getattr(args, "require_styles", True),
+        dry_run=getattr(args, "dry_run", False),
+        offline=getattr(args, "offline", True),
+        merge_with=Path(args.merge_with) if getattr(args, "merge_with", None) else None,
     )
+
 
 
 

@@ -379,6 +379,8 @@ To prevent the model from unlearning earlier capabilities while eliminating leak
 - **Eval Set Leakage**: **0 examples** (100% held-out).
 
 ### Completed SFT Training Run (Epochs: 3, LR: 1e-4)
+> Historical run, not the current export: on September 15, 2026, exported weights matched local checkpoint-46 (46 steps, one epoch; configured dropout 0.0) by SHA256. The 96-step run and benchmark below are retained as historical records. See [the model card](../my-react-agent-lora/README.md) for verified artifact identity and evaluation provenance limits.
+
 With `train_trajectories_agentic.jsonl` assembled (146 trajectories), training was executed on the RTX 4050 GPU using response-only loss masking:
 ```powershell
 python train_agent.py --epochs 3 --learning-rate 1e-4

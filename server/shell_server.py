@@ -64,10 +64,10 @@ def _clean_stale_nonces():
 def _verify_shell_token(token: str) -> bool:
     """Verifies either raw AUTH_TOKEN or single-use HMAC ticket (timestamp.nonce.sig)."""
     if not AUTH_TOKEN:
-        return True
-    if not token:
         return False
-    if token == AUTH_TOKEN:
+    if not isinstance(token, str) or not token:
+        return False
+    if hmac.compare_digest(token.encode("utf-8"), AUTH_TOKEN.encode("utf-8")):
         return True
 
     # Check if single-use HMAC ticket: {timestamp}.{nonce}.{sig}
@@ -115,7 +115,7 @@ def process_request(connection, request):
 
     # 2. Token check if query param supplied
     if not AUTH_TOKEN:
-        return None
+        return connection.respond(503, "Shell authentication is not configured\n")
     parsed = urllib.parse.urlparse(request.path)
     qs = urllib.parse.parse_qs(parsed.query)
     token = qs.get("token", [""])[0]
@@ -132,7 +132,10 @@ async def shell_handler(ws):
         print("[Shell WS] New client connected to port 5001")
 
     # If not already authenticated via query param, require initial auth message within 5s
-    if AUTH_TOKEN and not getattr(ws, "_shell_authenticated", False):
+    if not AUTH_TOKEN:
+        await ws.close(code=4401, reason="Shell authentication is not configured")
+        return
+    if not getattr(ws, "_shell_authenticated", False):
         try:
             raw_msg = await asyncio.wait_for(ws.recv(), timeout=5.0)
             if isinstance(raw_msg, bytes):
@@ -314,6 +317,8 @@ async def shell_handler(ws):
 
 
 async def main():
+    if not AUTH_TOKEN:
+        raise RuntimeError("SHELL_AUTH_TOKEN must be set; refusing to start an unauthenticated shell")
     print(f"[Shell Server] Dedicated PowerShell WebSocket server running on ws://{HOST}:5001")
     server = await websockets.serve(
         shell_handler,

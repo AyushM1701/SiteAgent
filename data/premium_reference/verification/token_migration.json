@@ -1,0 +1,32 @@
+{
+  "margin": {
+    "previous_source_sha256": "5790403fd5f3e1be2dd7964acec6e3983c0159dce959deb96531bb4d3499ee4f",
+    "files": {
+      "Footer.css": "Exact literal equivalence after variable resolution verified",
+      "Hero.css": "Exact literal equivalence after variable resolution verified",
+      "Plans.css": "Exact literal equivalence after variable resolution verified",
+      "Principles.css": "Exact literal equivalence after variable resolution verified",
+      "Workspace.css": "Exact literal equivalence after variable resolution verified"
+    }
+  },
+  "fieldwork": {
+    "previous_source_sha256": "36991a5706c260f2ccc240dbee58320d15415bb8c64877bf43c3eb3b3658aa84",
+    "files": {
+      "Architecture.css": "Exact literal equivalence after variable resolution verified",
+      "Capabilities.css": "Exact literal equivalence after variable resolution verified",
+      "Footer.css": "Exact literal equivalence after variable resolution verified",
+      "Hero.css": "Exact literal equivalence after variable resolution verified",
+      "Questions.css": "Exact literal equivalence after variable resolution verified"
+    }
+  },
+  "parallax": {
+    "previous_source_sha256": "d854850d24a2c62c902c34403fc283e1cc9bf24b62091bf7c9753b3914cca610",
+    "files": {
+      "Contact.css": "Exact literal equivalence after variable resolution verified",
+      "Footer.css": "Exact literal equivalence after variable resolution verified",
+      "Hero.css": "Exact literal equivalence after variable resolution verified",
+      "Projects.css": "Exact literal equivalence after variable resolution verified",
+      "Services.css": "Exact literal equivalence after variable resolution verified"
+    }
+  }
+}

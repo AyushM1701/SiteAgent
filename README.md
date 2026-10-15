@@ -31,6 +31,10 @@ python slm.py serve
 ```
 *Spawns the Flask SSE backend and isolated PTY terminal server, and automatically opens `http://127.0.0.1:5000` in your browser.*
 
+### Website requests
+
+The site planner supports portfolios, stores, publications, restaurants, events, dashboards, SaaS sites, and requests outside those categories. Describe the audience, content, visual style, and interactions you want. For an unusual layout, include an inline `Sections:` list or a numbered section list; the planner preserves those sections. Products, projects, prices, testimonials, and contact details should be supplied in the request when they need to appear as real business facts.
+
 ### 3. Full Training Pipeline (One Command)
 To rebuild datasets and retrain from scratch:
 ```bash
@@ -102,6 +106,8 @@ reactagent-slm/
 │   ├── RUNBOOK.md                 # Complete operations and troubleshooting runbook
 │   ├── PROJECT_JOURNEY.md         # Architecture decision log and research trajectory
 │   ├── architecture_and_source.md # Complete source and architecture documentation
+│   ├── architecture.md            # Pure system architecture and engineering deep-dive
+│   ├── source.md                  # Complete source code index and module catalog
 │   └── agent_results.json         # Benchmark evaluation trajectory records
 │
 └── scripts/                       # Cross-Platform Automation Commands

@@ -1,0 +1,22 @@
+@layer motion {
+  .native-magnetic { display: inline-block; }
+  .native-pointer-layer { transition: transform var(--duration-fast, 160ms) var(--ease-out, ease-out); }
+  .native-sticky { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: var(--space-xl, 3rem); align-items: start; }
+  .native-sticky-visual { position: sticky; top: var(--sticky-offset, 5rem); }
+  .native-sticky-steps { display: grid; gap: var(--space-xl, 3rem); min-width: 0; }
+  .native-sticky[data-motion-static] { grid-template-columns: minmax(0, 1fr); }
+  .native-sticky[data-motion-static] > .native-sticky-visual { position: static; }
+  .native-reveal > * { opacity: 1; transform: none; transition: opacity var(--duration-slow, 700ms) var(--ease-out, ease-out), transform var(--duration-slow, 700ms) var(--ease-out, ease-out); transition-delay: var(--motion-delay, 0ms); }
+  .native-reveal > [data-motion-pending] { opacity: 0; transform: translate3d(0, 20px, 0); }
+  .native-reveal:focus-within > * { opacity: 1; transform: none; transition: none; }
+  .native-marquee { overflow: hidden; }
+  .native-marquee-track { display: flex; width: max-content; min-width: 100%; gap: var(--space-m, 1.5rem); }
+  .native-marquee[data-motion-static] { overflow-x: auto; }
+  @media (max-width: 767px), (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+    .native-pointer-layer, .native-parallax-layer, .native-marquee-track { transform: none !important; transition: none; }
+    .native-sticky { grid-template-columns: minmax(0, 1fr); }
+    .native-sticky-visual { position: static; }
+    .native-reveal > * { opacity: 1 !important; transform: none !important; transition: none; }
+    .native-marquee { overflow-x: auto; }
+  }
+}

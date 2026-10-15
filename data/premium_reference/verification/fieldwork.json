@@ -1,0 +1,18 @@
+{
+  "source_sha256": "e9785d746c4d5a7a6ebca426c79906b1e4d95ce810e3c15f6265cbc4e4f8d30a",
+  "passed": true,
+  "method": "Manual CUA browser interaction and visual inspection; TypeScript noEmit compile",
+  "checked_on": "2026-09-16",
+  "desktop_viewport_width": 1280,
+  "mobile_viewport_width": 375,
+  "mobile_document_scroll_width": 360,
+  "h1_count": 1,
+  "broken_fragment_links": 0,
+  "browser_console_errors": 0,
+  "checks": [
+    "Retention click and ArrowRight select Acquisition",
+    "Accessible table shows Acquisition values 22,32,56,48,72,91"
+  ],
+  "limitations": "Not an automated cross-browser or screen-reader audit; reduced-motion media rules were not browser-emulated.",
+  "equivalent_style_migration": "Hex colors replaced with root custom properties; exact CSS literal reconstruction verified in token_migration.json. TSX unchanged; prior behavior/visual checks apply to the equivalent rendering."
+}

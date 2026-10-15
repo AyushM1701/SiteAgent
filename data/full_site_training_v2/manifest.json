@@ -1,0 +1,19 @@
+{
+  "status": "reviewed_input_ready_for_training_preflight",
+  "rows": 477,
+  "validation_rows": 68,
+  "families": 257,
+  "reviewed_rows": 12,
+  "sources": {
+    "data\\full_site_training\\train.jsonl": "ff23a0082f6427ec2d98f9a91e701c176550fdff953d63c373ce114b0ff70533",
+    "C:\\Users\\AYUSH\\Documents\\slm\\data\\reviewed_full_sites\\diverse_v1.jsonl": "48f2574dedc73a6681c0a0a7e78de6cbe06b27c7ee89d4a9a199fbdad6d01e6c"
+  },
+  "sha256": "8777132f15474f847c9b452a01eacca0f538773c7c5a571eaf9cb062d92e3002",
+  "validation_sha256": "298aefd0101789e605b9ff75fee0f1e22b25095a461cd15622af2dfc1b0707da",
+  "max_native_tokens": 6519,
+  "system_prompt_policy": "current runtime prompt selected by actual assistant protocol",
+  "training_started": false,
+  "excluded_train_rows": 358,
+  "excluded_validation_rows": 36,
+  "exclusion_policy": "Historical paired CSS import and selector contract; no target rewriting. This is not a claim that every excluded target fails rendering."
+}
