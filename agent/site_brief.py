@@ -1036,8 +1036,58 @@ _DOMAIN_TEMPLATES: dict[str, dict] = {
 # 2. Heuristic Business Name & Domain Classification
 # ==============================================================================
 
+_NAME_LEAD_RE = re.compile(
+    r"""^\s*(?i:(?:build|create|make|design|generate)\s+(?:a\s+|an\s+|the\s+)?(?:website|site|landing page|homepage)\s+(?:for\s+)?)?"""
+    r"""["“']?([A-Z0-9][\w&'’.+]*(?:\s+(?:&|and|of|the|de|la|[A-Z0-9][\w&'’.+]*)){0,4})["”']?\s*(?:[—–:]|\s-\s|,\s+(?:a|an|the)\b|\s+is\s+(?:a|an)\b)""",
+)
+# "Threadleaf stationery shop." — a leading name followed by a lowercase business noun.
+_NAME_NOUN_RE = re.compile(
+    r"""^\s*([A-Z][\w&'’]+(?:\s+(?:&\s+)?[A-Z][\w&'’]+){0,2})\s+(?:[a-z][\w-]*\s+){0,2}"""
+    r"""(?:shop|store|studio|cafe|café|bakery|restaurant|bistro|bar|gym|salon|clinic|agency|boutique|gallery|atelier|co)\b""")
+_NAME_REJECT_FIRST = {
+    "build", "create", "make", "design", "generate", "website", "portfolio", "landing", "a", "an", "the",
+    "sections", "section", "include", "modern", "minimal", "note", "notes", "style", "colors", "colours",
+    "palette", "requirements", "my", "our", "restaurant", "bakery", "shop", "store", "new", "please", "write",
+}
+_DESCRIPTIVE_NAME_STOP = {"with", "in", "at", "that", "which", "called", "named", "and", "or", "for", "from", "near", "on", "by"}
+
+
+def _valid_lead_name(candidate: str) -> bool:
+    words = candidate.split()
+    return bool(words) and words[0].lower() not in _NAME_REJECT_FIRST and len(candidate) <= 40
+
+
+def _descriptive_business_name(prompt: str) -> Optional[str]:
+    """"A landing page for a yoga studio" -> "Yoga Studio"."""
+    m = re.search(r"\bfor\s+(?:a|an|my|our)\s+([a-z][\w-]*(?:\s+[a-z][\w-]*){0,2})", prompt)
+    if not m:
+        return None
+    words: list[str] = []
+    for word in m.group(1).split():
+        if word in _DESCRIPTIVE_NAME_STOP:
+            break
+        words.append(word)
+    return " ".join(w.capitalize() for w in words) or None
+
+
 def extract_business_name(prompt: str) -> str:
     """Attempts to pull a business/project name from the prompt."""
+    # Priority 0: a leading name followed by a dash, colon, ", a …" or " is a …"
+    # ("Aster & Kiln — handmade ceramics…", "Northwind: a B2B SaaS").
+    m = _NAME_LEAD_RE.match(prompt)
+    if m and _valid_lead_name(m.group(1).strip()):
+        return m.group(1).strip()
+    m = _NAME_NOUN_RE.match(prompt)
+    if m and _valid_lead_name(m.group(1).strip()):
+        return m.group(1).strip()
+
+    name = _extract_business_name_legacy(prompt)
+    if name == "My Business":
+        return _descriptive_business_name(prompt) or name
+    return name
+
+
+def _extract_business_name_legacy(prompt: str) -> str:
     # Priority 1: Explicit "for <Name>", "called <Name>", "named <Name>"
     m = re.search(
         r'''(?:for|called|named)\s+["']?([A-Z][a-zA-Z0-9&]*(?:\s+[A-Za-z0-9&][a-zA-Z0-9&]*)*)["']?(?:\s*$|\s*,|\s*\.)''',
@@ -1450,6 +1500,8 @@ _NON_SECTION_ITEM_WORDS = {
     "bold", "clean", "modern", "premium", "elegant", "accent", "accents", "background", "backgrounds",
     "border", "borders", "radius", "corners", "copy", "react", "typescript", "css", "tailwind",
     "messaging", "message", "messages", "data", "facts",
+    "look", "looks", "technical", "space", "white", "lots", "colourful", "colorful", "playful",
+    "luxurious", "cozy", "cosy",
 }
 _LEADING_DETERMINERS_RE = re.compile(r"^(?:a|an|the|our|their|its|his|her|some|short|simple|dedicated)\s+", re.I)
 
@@ -1500,45 +1552,106 @@ def extract_implicit_feature_sections(prompt: str) -> list[str]:
     """
     lower = prompt.lower()
     found: list[str] = []
+
+    def _add(raw_items: list[str]) -> None:
+        kept = _filter_section_list_items(raw_items)
+        if len(kept) >= 2 and len(kept) * 2 >= len(raw_items):
+            for slug in kept:
+                if slug not in found:
+                    found.append(slug)
+
     for intro in re.finditer(r"\b(?:with|featuring|including|includes?:?|covering)\s+([^.;:\n]+)", lower):
         body = intro.group(1)
         if "," not in body and " and " not in body:
             continue
         raw_items = [item.strip() for item in re.split(r",\s*(?:and\s+|or\s+)?|\s+and\s+|\s+&\s+", body) if item.strip()]
-        if len(raw_items) < 2:
+        if len(raw_items) >= 2:
+            _add(raw_items)
+
+    # Bare list sentences: "Menu, about the chef, private dining."
+    for sentence in re.split(r"[.;\n]", lower):
+        sentence = sentence.strip()
+        if not sentence or ":" in sentence:
             continue
-        kept: list[str] = []
-        for item in raw_items:
-            # "a pricing section with a toggle" -> "pricing section"; drop "(6 cards)".
-            item = re.split(r"\s+(?:with|for|that|which|where|showing|using)\s+", item)[0]
-            item = re.sub(r"\([^)]*\)", "", item)
-            item = _LEADING_DETERMINERS_RE.sub("", item).strip()
-            item = re.sub(r"^(?:sticky|fixed|full-width|large|small)\s+", "", item)
-            if re.fullmatch(r"(?:nav|navbar|navigation|header|hero|footer|cta|call to action)(?: section| bar| banner)?", item):
-                continue  # page frame / inline control, planned separately
-            words = item.split()
-            if not words or len(words) > 4:
-                continue
-            # "transparent pricing" / "contact form" are the canonical section;
-            # "product detail" names a different section than "products".
-            canonical = next((slug for slug, pattern in _SECTION_KEYWORD_PATTERNS.items()
-                              if (m := re.search(pattern, item)) and item[m.end():].strip()
-                              in {"", "form", "section", "page", "area", "block", "list", "grid", "table"}), None)
-            if canonical:
-                kept.append(canonical)
-                continue
-            if any(word.strip("-") in _NON_SECTION_ITEM_WORDS for word in re.split(r"[\s-]+", item)):
-                continue
-            if words[0] in {"add", "filter", "toggle", "switch", "show", "use", "make", "keep", "click", "open", "build", "create"}:
-                continue
-            slug = _slugify_section(item)
-            if slug:
-                kept.append(slug)
-        if len(kept) >= 2 and len(kept) * 2 >= len(raw_items):
-            for slug in kept:
-                if slug not in found:
-                    found.append(slug)
+        commas = sentence.count(",")
+        if not (commas >= 2 or (commas >= 1 and re.search(r"\band\b", sentence))):
+            continue
+        raw_items = [item.strip() for item in re.split(r",\s*(?:and\s+|or\s+)?|\s+and\s+|\s+&\s+", sentence) if item.strip()]
+        if len(raw_items) < 2 or any(len(item.split()) > 4 for item in raw_items):
+            continue
+        _add(raw_items)
     return found
+
+
+def _filter_section_list_items(raw_items: list[str]) -> list[str]:
+    """Map prose list items to section slugs, dropping style/behaviour words."""
+    kept: list[str] = []
+    for item in raw_items:
+        # "a pricing section with a toggle" -> "pricing section"; drop "(6 cards)".
+        item = re.split(r"\s+(?:with|for|that|which|where|showing|using)\s+", item)[0]
+        item = re.sub(r"\([^)]*\)", "", item)
+        item = _LEADING_DETERMINERS_RE.sub("", item).strip()
+        item = re.sub(r"^(?:sticky|fixed|full-width|large|small)\s+", "", item)
+        if re.fullmatch(r"(?:nav|navbar|navigation|header|hero|footer|cta|call to action)(?: section| bar| banner)?", item):
+            continue  # page frame / inline control, planned separately
+        words = item.split()
+        if not words or len(words) > 4:
+            continue
+        if words[0] == "about":
+            kept.append("about")
+            continue
+        # "transparent pricing" / "contact form" are the canonical section;
+        # "product detail" names a different section than "products".
+        canonical = next((slug for slug, pattern in _SECTION_KEYWORD_PATTERNS.items()
+                          if (m := re.search(pattern, item)) and item[m.end():].strip()
+                          in {"", "form", "section", "page", "area", "block", "list", "grid", "table"}), None)
+        if canonical:
+            kept.append(canonical)
+            continue
+        if any(word.strip("-") in _NON_SECTION_ITEM_WORDS for word in re.split(r"[\s-]+", item)):
+            continue
+        if words[0] in {"add", "filter", "toggle", "switch", "show", "use", "make", "keep", "click", "open", "build", "create"}:
+            continue
+        slug = _slugify_section(item)
+        if slug:
+            kept.append(slug)
+    return kept
+
+
+_SYNONYM_SECTION_GROUPS = (
+    ("programs", "classes", "courses", "services"),
+    ("pricing", "membership", "plans", "packages"),
+)
+
+
+def _section_word_requested(lower: str, slug: str, group: tuple[str, ...]) -> bool:
+    """The slug's word appears in the prompt as a head noun, not only as a
+    modifier of another group member ("membership pricing" requests pricing)."""
+    stem = slug.rstrip("s")
+    others = "|".join(re.escape(o.rstrip("s")) for o in group if o != slug)
+    for m in re.finditer(rf"\b{re.escape(stem)}s?\b", lower):
+        if _is_negated(lower, m.start(), m.end()):
+            continue
+        if not re.match(rf"\s+(?:{others})s?\b", lower[m.end():]):
+            return True
+    return False
+
+
+def _merge_synonym_sections(middle: list[str], lower: str) -> list[str]:
+    """Collapse duplicated synonyms (programs/classes, pricing/membership):
+    keep members the prompt names, drop domain defaults that duplicate them."""
+    result = list(middle)
+    for group in _SYNONYM_SECTION_GROUPS:
+        present = [sec for sec in result if sec in group]
+        if len(present) < 2:
+            continue
+        requested = [sec for sec in present if _section_word_requested(lower, sec, group)]
+        keep = requested or present[:1]
+        # The kept member takes the slot of the first (default) member it replaces.
+        slot = result.index(present[0])
+        result = [sec for sec in result if sec not in group]
+        result[slot:slot] = keep
+    return result
 
 
 def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
@@ -1585,7 +1698,7 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
 
     elif business_type == "portfolio":
         middle.append("gallery" if re.search(r"\b(?:artist|photograph\w*|gallery|artwork|illustrat\w*)\b", lower) else "projects")
-        if re.search(r"\b(?:developer|engineer|designer|skills|tech stack|technologies)\b", lower):
+        if re.search(r"\b(?:skills|tech stack|technologies|toolkit)\b", lower):
             middle.append("skills")
         if wants_testimonials: middle.append("testimonials")
         middle.append("contact")
@@ -1698,6 +1811,10 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     # Domain defaults never override an explicit "no X" / "X unavailable".
     middle = [sec for sec in middle
               if not (sec in _SECTION_KEYWORD_PATTERNS and _explicitly_excluded(lower, _SECTION_KEYWORD_PATTERNS[sec]))]
+    middle = _merge_synonym_sections(middle, lower)
+    # Contact closes the page; sections the prompt lists after a domain default stay ahead of it.
+    if "contact" in middle:
+        middle = [sec for sec in middle if sec != "contact"] + ["contact"]
     if not middle:
         middle = [sec for sec in ("about", "contact")
                   if not _explicitly_excluded(lower, _SECTION_KEYWORD_PATTERNS[sec])] or ["about"]
@@ -1780,6 +1897,14 @@ def parse_section_spec(section: str, prompt: str) -> dict:
     raw = match.group(1).strip() if match else ""
     count = re.search(r"\b(\d+)\s+(?:cards?|items?|tiers?)\b", raw, re.I)
     items = [] if count else [part.strip() for part in raw.split(",") if part.strip()]
+    if not match:
+        # "Projects: Fern Studio rebrand, Halo app identity and Ostra packaging."
+        label = r"[\s-]+".join(re.escape(word) for word in re.split(r"[-_]+", section) if word)
+        colon = re.search(rf"\b{label}\s*:\s*([^\n.;]+)", prompt, re.I) if label else None
+        if colon:
+            parts = [part.strip() for part in re.split(r",\s*(?:and\s+)?|\s+and\s+", colon.group(1)) if part.strip()]
+            if 2 <= len(parts) <= 12 and all(len(part.split()) <= 6 for part in parts):
+                items = parts
     return {"parsed_items": items, "target_count": int(count.group(1)) if count else (len(items) or None)}
 
 

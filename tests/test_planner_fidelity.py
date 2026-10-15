@@ -85,3 +85,71 @@ def test_incidental_style_words_do_not_force_a_preset():
     assert "style_spec" not in luxury_goods
     styled = generate_content_brief("A ceramics shop in an editorial style.", provider="heuristic")
     assert "style_spec" in styled
+
+
+# --- Phase 1 planner fixes (IMPLEMENTATION_PLAN_2026-10-16 §5) ---
+import pytest
+
+from agent.site_brief import detect_business_type, extract_business_name, parse_section_spec
+
+ASTER = ("Aster & Kiln — handmade ceramics studio in Lisbon. Warm editorial photography, clay textures. "
+         "Sections: collection, glaze stories, care guide, studio notes. Email hello@asterkiln.com. No online checkout.")
+NORTHWIND = ("Northwind — a B2B analytics SaaS for logistics teams. Dark, technical look. "
+             "Include a product preview and FAQ. Do not show pricing.")
+SAFFRON = ("Saffron Table — modern Indian restaurant in Dehradun. Menu, about the chef, private dining. "
+           "We do not take online reservations.")
+MAYA = ("Portfolio for Maya Chen, a brand designer. Minimal, lots of white space. "
+        "Projects: Fern Studio rebrand, Halo app identity, Ostra packaging.")
+IRONWORKS = "Ironworks — a strength gym in Pune. Classes, coaches, membership pricing, FAQ, contact."
+THREADLEAF = ("Threadleaf stationery shop. Products: Notebook $12, Pencil set $8, Desk planner $24. "
+              "Add to cart with a cart count. FAQ and contact.")
+
+
+@pytest.mark.parametrize("prompt, name", [
+    (ASTER, "Aster & Kiln"),
+    (NORTHWIND, "Northwind"),
+    (SAFFRON, "Saffron Table"),
+    (MAYA, "Maya Chen"),
+    ("A website for a bakery called Crumb & Co.", "Crumb & Co"),
+    ("A landing page for a yoga studio", "Yoga Studio"),
+    (IRONWORKS, "Ironworks"),
+    (THREADLEAF, "Threadleaf"),
+])
+def test_business_name_extraction(prompt, name):
+    assert extract_business_name(prompt) == name
+
+
+def test_bare_list_sentence_becomes_sections():
+    sections = extract_sections_from_prompt(SAFFRON, detect_business_type(SAFFRON))
+    assert sections == ["header", "hero", "menu", "about", "private-dining", "contact", "footer"]
+
+
+@pytest.mark.parametrize("style_sentence", ["Minimal, lots of white space.", "Warm editorial photography, clay textures.",
+                                            "Dark, technical look.", "Playful, colourful and cozy."])
+def test_style_sentences_add_no_sections(style_sentence):
+    base = extract_sections_from_prompt("A bakery website.", "restaurant")
+    assert extract_sections_from_prompt("A bakery website. " + style_sentence, "restaurant") == base
+
+
+def test_colon_item_list_is_parsed_into_items():
+    spec = parse_section_spec("projects", MAYA)
+    assert spec["parsed_items"] == ["Fern Studio rebrand", "Halo app identity", "Ostra packaging"]
+    sections = extract_sections_from_prompt(MAYA, detect_business_type(MAYA))
+    assert not any(word in "-".join(sections) for word in ("fern", "halo", "ostra"))
+    brief = generate_content_brief(MAYA)
+    assert brief["section_plans"]["projects"]["parsed_items"] == ["Fern Studio rebrand", "Halo app identity", "Ostra packaging"]
+
+
+def test_skills_only_when_requested():
+    assert "skills" not in extract_sections_from_prompt(MAYA, "portfolio")
+    assert "skills" in extract_sections_from_prompt("Portfolio for a developer. Show my tech stack and projects.", "portfolio")
+
+
+def test_synonym_sections_merge():
+    sections = extract_sections_from_prompt(IRONWORKS, detect_business_type(IRONWORKS))
+    class_like = [s for s in sections if s in {"programs", "classes", "courses", "services"}]
+    price_like = [s for s in sections if s in {"pricing", "membership", "plans", "packages"}]
+    assert class_like == ["classes"]
+    assert len(price_like) == 1
+    for wanted in ("coaches", "faq", "contact"):
+        assert wanted in sections
