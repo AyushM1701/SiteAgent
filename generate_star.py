@@ -132,6 +132,7 @@ def run_site_star_pipeline(
                 max_turns=max_turns,
                 style_spec=brief.get("style_spec"),
                 custom_section_instructions=brief.get("custom_section_instructions"),
+                strategy="freeform",  # training trajectories record the code-writing loop
             )
 
             if not result.get("final_passed"):

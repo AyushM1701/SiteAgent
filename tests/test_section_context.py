@@ -1,3 +1,4 @@
+import pytest
 from copy import deepcopy
 from types import SimpleNamespace
 from agent.agent import run_site_agent_on_example
@@ -40,3 +41,9 @@ def test_deterministic_source_normalization_is_not_native_credit(tmp_path, monke
     assert result['sections_completed']==1
     assert 'src/components/Hero.css' in result['normalized_files']
     assert result['generation_quality']=='repaired'
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")

@@ -455,6 +455,18 @@ def _extract_project_name(prompt: str) -> str:
     Prefers explicit 'for <Name>' patterns; falls back to domain-specific slugs or title-cased words.
     Guaranteed to return a valid filesystem-safe slug.
     """
+    # 0. The planner's business-name rules ("Name — description", "Name: …",
+    #    "Portfolio for Name, a …") — the same name the site itself uses.
+    try:
+        from agent.site_brief import extract_business_name as _business_name
+        planned = _business_name(prompt)
+    except Exception:
+        planned = ""
+    if planned and planned != "My Business":
+        words = [w.capitalize() if w.islower() else w for w in re.findall(r'[A-Za-z0-9]+', planned)]
+        if words:
+            return "_".join(words)[:64]
+
     # 1. Quoted name after 'for' / 'called' / 'named' or near start of prompt
     m = re.search(r'''(?:for|called|named)\s+["']([a-zA-Z0-9\s_-]{2,40})["']''', prompt[:200], re.I)
     if m:
@@ -972,7 +984,7 @@ def _worker():
                 except Exception as _q_err:
                     print(f"[Worker] Failed to auto-dispatch queued prompt for {proj_id}: {_q_err}")
 
-threading.Thread(target=_worker, daemon=True).start()
+# The worker thread starts at the end of the module, once every function it calls exists (B6).
 
 
 _stdout_context = threading.local()
@@ -1573,11 +1585,10 @@ export default defineConfig({{
             clean_import = tsx_path[:-4] if tsx_path.endswith(".tsx") else tsx_path
             import_lines.append(f"import * as {mod_var} from './{clean_import}';")
 
+            # A section without a usable export renders nothing in the customer
+            # site; the problem is reported to the developer console only.
             fallback_jsx = (
-                f"(() => React.createElement('div', {{style: {{padding: '1.5rem', textAlign: 'center', "
-                f"background: 'rgba(239, 68, 68, 0.08)', border: '1px dashed #ef4444', borderRadius: '8px', "
-                f"margin: '1rem', color: '#f87171', fontFamily: 'sans-serif'}}}}, "
-                f"'⚠️ Section \"{raw_comp}\" has no valid React export.'))"
+                f"(() => {{ console.warn('Section {raw_comp} is missing a React export and was skipped.'); return null; }})"
             )
 
             if alt_name and alt_name != raw_comp:
@@ -1641,8 +1652,12 @@ export default function App() {{
         app_css_path = target_dir / "src" / "App.css"
         app_css_path.parent.mkdir(parents=True, exist_ok=True)
 
-        from style_ingest import build_site_root_css
-        root_css, _ = build_site_root_css(brief=brief)
+        kit_base_css = (brief or {}).get("kit_base_css")
+        if kit_base_css:
+            root_css = ""
+        else:
+            from style_ingest import build_site_root_css
+            root_css, _ = build_site_root_css(brief=brief)
 
         tailwind_theme = ""
         if tailwind_enabled:
@@ -1659,7 +1674,12 @@ export default function App() {{
                 '@import "tailwindcss";\n'
                 f'@theme {{ --color-primary: {primary_theme}; --color-accent: {accent_theme}; }}\n\n'
             )
-        full_app_css = (
+        if kit_base_css:
+            # The kit stylesheet carries its own tokens and reset (no global
+            # zero-padding, no black default background).
+            full_app_css = tailwind_theme + kit_base_css
+        else:
+            full_app_css = (
             tailwind_theme +
             f"{root_css}\n\n"
             "*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }\n"
@@ -1674,26 +1694,45 @@ export default function App() {{
 
         # P0-4: HTML-escape project name and description to prevent stored HTML injection
         safe_project_name = html.escape(project_name.replace('_', ' '))
-        safe_meta_desc = html.escape(f"{project_name} website built by ReactAgent SLM")
+        display_name = project_name.replace('_', ' ')
+        tagline = str((brief or {}).get("description") or (brief or {}).get("tagline") or "").strip()
+        meta_desc = tagline if tagline and tagline.lower() != display_name.lower() else display_name
+        safe_meta_desc = html.escape(meta_desc)
 
-        font_h = (brief.get("font_heading") if brief else None) or "Inter"
-        font_b = (brief.get("font_body") if brief else None) or "Inter"
-        fonts_set = {font_h, font_b}
-        font_links = "&".join([f"family={urllib.parse.quote_plus(f)}:wght@400;500;600;700;800" for f in sorted(fonts_set)])
-        font_href = f"https://fonts.googleapis.com/css2?{font_links}&amp;display=swap"
+        kit_font_href = (brief or {}).get("kit_font_href")
+        if kit_font_href:
+            font_href = html.escape(kit_font_href)
+        else:
+            font_h = (brief.get("font_heading") if brief else None) or "Inter"
+            font_b = (brief.get("font_body") if brief else None) or "Inter"
+            fonts_set = {font_h, font_b}
+            font_links = "&".join([f"family={urllib.parse.quote_plus(f)}:wght@400;500;600;700;800" for f in sorted(fonts_set)])
+            font_href = f"https://fonts.googleapis.com/css2?{font_links}&amp;display=swap"
+        kit_head = (brief or {}).get("kit_head_tags") or ""
+        description_tag = "" if 'name="description"' in kit_head else f'<meta name="description" content="{safe_meta_desc}" />\n    '
+        head_extra = (kit_head + "\n    ") if kit_head else ""
+        icon_css = "" if kit_base_css else (
+            '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" '
+            'integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" '
+            'crossorigin="anonymous" referrerpolicy="no-referrer" />\n    ')
+        for public_rel, public_data in ((brief or {}).get("kit_public_files") or []):
+            public_dest = target_dir / "public" / public_rel
+            public_dest.parent.mkdir(parents=True, exist_ok=True)
+            if isinstance(public_data, (bytes, bytearray)):
+                public_dest.write_bytes(bytes(public_data))
+            else:
+                public_dest.write_text(str(public_data), encoding="utf-8")
 
         index_html = f"""<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="{safe_meta_desc}" />
-    <title>{safe_project_name}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    {description_tag}<title>{safe_project_name}</title>
+    {head_extra}<link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="{font_href}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  </head>
+    {icon_css}  </head>
   <body style="margin: 0;">
     <div id="root"></div>
     <script type="module" src="/main.tsx"></script>
@@ -1719,13 +1758,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="{safe_meta_desc}" />
-    <title>{safe_project_name}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    {description_tag}<title>{safe_project_name}</title>
+    {head_extra}<link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="{font_href}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="./preview.css" />
+    {icon_css}    <link rel="stylesheet" href="./preview.css" />
   </head>
   <body style="margin: 0;">
     <div id="root"></div>
@@ -2808,6 +2845,16 @@ def _run_generation(task: dict, q: queue.Queue):
     q.put({"type": "done"})
 
 
+def _kit_edit_note(workspace_dir: Path) -> str:
+    """Design-kit vocabulary for edit turns, so edits stay in the same system."""
+    try:
+        saved = json.loads((Path(workspace_dir) / "content_brief.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    summary = str(saved.get("kit_edit_summary") or "").strip()
+    return f" {summary}" if summary else ""
+
+
 def _run_session_edit_turn(task: dict, q: queue.Queue):
     """Executes a targeted follow-up edit turn within an existing session.
 
@@ -2879,6 +2926,7 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
             "Prefer a guarded surgical JSON action: {\"action\":\"replace_hunks\",\"arguments\":{\"path\":\"...\",\"base_sha256\":\"...\",\"hunks\":[{\"before\":\"exact text\",\"after\":\"replacement\",\"expected_count\":1}]}}. "
             "Only use write_site with complete contents when a surgical patch is impossible. "
             "Ensure all TypeScript syntax is correct and design tokens are strictly preserved."
+            + _kit_edit_note(session.workspace_dir)
         )
 
         history = [
@@ -3380,11 +3428,13 @@ def _run_site_generation(task: dict, q: queue.Queue):
     """Site-mode generation pipeline: runs the multi-turn site agent and scaffolds a Vite app."""
     import shutil
     from agent import run_site_agent_on_example
+    from agent.agent import resolve_site_strategy
     from site_brief import generate_content_brief, brief_to_xml
 
     task_id      = task["task_id"]
     prompt       = task["prompt"]
     project_name = task["symbol"]
+    strategy     = resolve_site_strategy(task.get("strategy"))
     max_turns    = task.get("max_turns", 10)
     max_tokens   = task.get("max_tokens", 2048)
 
@@ -3420,8 +3470,9 @@ def _run_site_generation(task: dict, q: queue.Queue):
         # Ensure footer is last
         if "footer" in sections:
             sections = [s for s in sections if s != "footer"] + ["footer"]
-        # Ensure max_turns provides sufficient headroom for retries (at least len(sections) + 4, min 10 turns)
-        max_turns = max(max_turns, len(sections) + 4, 10)
+        # The freeform loop needs retry headroom; the kit makes one call per section.
+        if strategy == "freeform":
+            max_turns = max(max_turns, len(sections) + 4, 10)
         xml_brief = brief_to_xml(brief) if brief else ""
         style_spec = brief.get("style_spec") if brief else None
 
@@ -3469,9 +3520,26 @@ def _run_site_generation(task: dict, q: queue.Queue):
             event_callback=_on_site_agent_event,
             diagnostics_dir=session.workspace_dir / "raw_generation",
             stop_check=lambda: task_id in cancelled_tasks,
+            strategy=strategy,
+            brief=brief,
         )
     finally:
         _stdout_context.active_queue = None
+
+    kit_output = result.get("kit") if isinstance(result, dict) else None
+    if kit_output:
+        # The kit decides the final section order and owns the site stylesheet,
+        # fonts, head tags and public assets used by the scaffold below.
+        brief = dict(brief or {})
+        brief.update({
+            "kit_base_css": kit_output.get("base_css"),
+            "kit_font_href": kit_output.get("font_href"),
+            "kit_head_tags": kit_output.get("head_tags"),
+            "kit_public_files": kit_output.get("public_files") or [],
+            "kit_edit_summary": kit_output.get("edit_summary", ""),
+        })
+        sections = list(result.get("sections_planned") or sections)
+
 
     if task_id in cancelled_tasks:
         try:
@@ -3561,6 +3629,8 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "business_type": brief.get("business_type", "general") if brief else "general",
         "motion_plan": [item.to_dict() if hasattr(item, "to_dict") else item for item in brief.get("motion_plan", [])] if brief else [],
         "requirement_manifest": brief.get("requirement_manifest", {}) if brief else {},
+        "strategy": strategy,
+        "kit_edit_summary": (brief or {}).get("kit_edit_summary", ""),
     }
     for brief_workspace in (session.workspace_dir, site_export_dir):
         (brief_workspace / "content_brief.json").write_text(
@@ -3620,7 +3690,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
         {
             "task": f"Section: {sec}",
             "status": "blocked" if sec.lower() in blocked_names else "completed",
-            "file": f"src/components/{sec.capitalize()}.tsx",
+            "file": f"src/components/{''.join(w[:1].upper() + w[1:] for w in re.split(r'[-_]', sec) if w)}.tsx",
         }
         for sec in sections
     ]
@@ -4104,6 +4174,7 @@ def generate():
             "max_tokens":   allocated_tokens,
             "token_budget": budget_dict,
             "site_token_limit": int(data["max_tokens"]) if data.get("max_tokens") is not None else None,
+            "strategy":     data.get("strategy"),
             "style_tokens": style_tokens,
             "styleTokens":  style_tokens,
             "style_preset": style_preset,
@@ -5271,6 +5342,9 @@ def _stop_shell_server():
             except Exception as _kill_err:
                 print(f"[Server] Warning: Failed to kill shell server process: {_kill_err}")
         _shell_process = None
+
+
+threading.Thread(target=_worker, daemon=True).start()
 
 
 if __name__ == "__main__":

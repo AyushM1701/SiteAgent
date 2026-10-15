@@ -14,7 +14,15 @@ Design Principles:
 import json
 import os
 import re
+import sys as _sys
 import textwrap
+
+# One module, two import names. Scripts that put agent/ on sys.path import this
+# file as "agent_protocol"; package code imports "agent.agent_protocol". Without
+# the alias each name gets its own module and its own registered tokenizer, so
+# token counting silently falls back to the legacy template (audit A3).
+for _alias in ("agent_protocol", "agent.agent_protocol"):
+    _sys.modules.setdefault(_alias, _sys.modules[__name__])
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union

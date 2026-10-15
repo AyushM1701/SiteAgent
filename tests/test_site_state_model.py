@@ -434,3 +434,9 @@ def test_run_site_generation_propagates_state_model(monkeypatch, tmp_path):
     assert data["final_passed"] is True
     assert "interaction_validation" in data
     assert "visual_validation" in data
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")

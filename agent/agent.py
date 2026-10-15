@@ -57,7 +57,7 @@ sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(BASE_DIR / "agent"))
 sys.path.insert(0, str(BASE_DIR / "training"))
 
-from agent_protocol import (
+from agent.agent_protocol import (
     AGENT_SYSTEM_PROMPT,
     SITE_AGENT_SYSTEM_PROMPT,
     AgentTurn,
@@ -87,7 +87,7 @@ from evaluate import (
     resolve_expected_exports,
     run_command,
 )
-from style_ingest import (
+from agent.style_ingest import (
     StyleSpec,
     validate_css_conformance,
     sanitize_css_for_spec,
@@ -95,7 +95,7 @@ from style_ingest import (
     validate_structural_quality,
     auto_fix_structural_violations,
 )
-from output_budget import (
+from agent.output_budget import (
     BudgetTier,
     OutputTokenBudget,
     TaskComplexityFactors,
@@ -379,9 +379,8 @@ class AgentModelRunner:
                 torch_dtype=torch.float32,
             )
             self.model.eval()
-            _sdt = globals().get("set_default_tokenizer")
-            if callable(_sdt):
-                _sdt(self.tokenizer)
+            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
+            _set_tokenizer(self.tokenizer)
             print("Loaded CPU model with transformers float32.")
             return
 
@@ -393,9 +392,8 @@ class AgentModelRunner:
                 load_in_4bit=True,
             )
             FastLanguageModel.for_inference(self.model)
-            _sdt = globals().get("set_default_tokenizer")
-            if callable(_sdt):
-                _sdt(self.tokenizer)
+            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
+            _set_tokenizer(self.tokenizer)
             print("Loaded successfully with Unsloth inference optimizations.")
         except ImportError:
             print("Unsloth unavailable, loading with standard transformers...")
@@ -406,9 +404,8 @@ class AgentModelRunner:
                 torch_dtype=torch.float16,
                 device_map="auto"
             )
-            _sdt = globals().get("set_default_tokenizer")
-            if callable(_sdt):
-                _sdt(self.tokenizer)
+            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
+            _set_tokenizer(self.tokenizer)
             print("Loaded with transformers.")
 
     def generate_turn(
@@ -421,6 +418,8 @@ class AgentModelRunner:
         repetition_penalty: float = 1.05,
         stop_check=None,
         max_time_seconds=None,
+        top_p: "Optional[float]" = None,
+        top_k: "Optional[int]" = None,
         **kwargs,
     ) -> str:
         effective_stop = stop_check or getattr(self, "stop_check", None)
@@ -567,6 +566,8 @@ class AgentModelRunner:
                 pad_token_id=self.tokenizer.eos_token_id,
                 stopping_criteria=stopping_criteria,
                 **({"max_time": max_time_seconds} if max_time_seconds is not None else {}),
+                **({"top_p": top_p} if top_p is not None and temperature > 0 else {}),
+                **({"top_k": top_k} if top_k is not None and temperature > 0 else {}),
             )
 
         self.last_generation_tokens = max(0, output_tokens.shape[1] - prompt_len)
@@ -580,6 +581,7 @@ class AgentModelRunner:
             "generated_tokens": self.last_generation_tokens, "max_new_tokens": max_new_tokens,
             "seconds": elapsed, "tokens_per_second": self.last_generation_tokens / max(elapsed, .001),
             "temperature": temperature, "repetition_penalty": repetition_penalty,
+            "top_p": top_p, "top_k": top_k,
             "max_time_seconds": max_time_seconds,
             "prompt_sha256": _hashlib.sha256(prompt_str.encode("utf-8")).hexdigest(),
             "raw_output_sha256": _hashlib.sha256(raw.encode("utf-8")).hexdigest(),
@@ -2143,6 +2145,193 @@ def rewrite_fallback_sections(
     return repaired_sections, new_written_files, rewrite_logs
 
 
+SITE_STRATEGIES = ("kit", "freeform")
+
+
+def resolve_site_strategy(strategy: Optional[str]) -> str:
+    """Explicit argument, then SITE_STRATEGY, then the design kit."""
+    for candidate in (strategy, os.environ.get("SITE_STRATEGY")):
+        if candidate and str(candidate).strip().lower() in SITE_STRATEGIES:
+            return str(candidate).strip().lower()
+    return "kit"
+
+
+def _run_kit_site(
+    orig_idx: int,
+    prompt: str,
+    project_name: str,
+    sections: List[str],
+    runner: "AgentModelRunner",
+    workspace_root: Path,
+    brief: Optional[Dict[str, Any]],
+    event_callback: Optional[Any],
+    stop_check: Optional[Any],
+    business_type: str,
+    diagnostics_dir: Optional[Path],
+) -> Dict[str, Any]:
+    """Design-kit generation: the model writes compact JSON copy per section and
+    the kit renders token-driven, accessible TSX/CSS. Same events and result shape
+    as the freeform loop; a section is never blocked (fallback copy instead)."""
+    from agent.site_kit import KitSite
+
+    case_dir = workspace_root / f"site_{orig_idx:03d}"
+    if case_dir.exists():
+        shutil.rmtree(case_dir)
+    case_dir.mkdir(parents=True, exist_ok=True)
+    if not getattr(runner, "is_mock", False):
+        runner.generation_log_dir = diagnostics_dir or case_dir / "raw_generation"
+
+    if brief is None:
+        from agent.site_brief import generate_content_brief
+        brief = generate_content_brief(prompt)
+    brief = dict(brief or {})
+    brief.setdefault("business_type", business_type)
+    kit = KitSite(prompt, brief, sections or brief.get("sections"))
+    planned = list(kit.sections)
+
+    def emit(event: Dict[str, Any]) -> None:
+        if event_callback:
+            try:
+                event_callback(event)
+            except Exception:
+                pass
+
+    emit({"type": "plan",
+          "plan": [{"name": kit.component(s), "slug": s, "status": "pending"} for s in planned],
+          "budget": {"turn": 0, "max_turns": len(planned), "completed": 0, "total": len(planned)}})
+    emit({"type": "design_plan", "design_plan": kit.theme_summary()})
+
+    print(f"\n{'='*75}\nSITE TASK #{orig_idx}: {project_name} (design kit: {kit.theme.name})")
+    print(f"Sections planned: {' -> '.join(planned)}\n{'='*75}")
+
+    all_written_files: List[tuple[str, str]] = []
+    section_states: Dict[str, str] = {s: "pending" for s in planned}
+    turn_logs: List[Dict[str, Any]] = []
+    generation_metrics: List[Dict[str, Any]] = []
+    fallback_sections: List[str] = []
+    cancelled = False
+    completed = 0
+
+    for turn_num, slug in enumerate(planned, start=1):
+        if stop_check and stop_check():
+            print(f"  --> [Kit]: Stop requested. {completed}/{len(planned)} sections written.")
+            cancelled = True
+            break
+        emit({"type": "plan_update", "section": slug, "status": "in_progress", "turn": turn_num,
+              "max_turns": len(planned), "completed": completed, "total": len(planned)})
+        text = ""
+        attempts = 0
+        seconds = 0.0
+        if kit.needs_model(slug):
+            for temperature in (0.7, 0.55):
+                attempts += 1
+                started = time.perf_counter()
+                progress_done = threading.Event()
+
+                def report_progress(label=kit.labels[slug], attempt=attempts, start=started):
+                    while not progress_done.is_set():
+                        emit({"type": "status", "phase": "generating",
+                              "status": f"Writing {label} · attempt {attempt} · {int(time.perf_counter() - start)}s elapsed"})
+                        progress_done.wait(10)
+
+                progress_thread = threading.Thread(target=report_progress, daemon=True) if event_callback else None
+                if progress_thread:
+                    progress_thread.start()
+                try:
+                    text = runner.generate_turn(
+                        example_idx=orig_idx, history=kit.messages(slug), primary_symbol=project_name,
+                        max_new_tokens=kit.max_tokens(slug), temperature=temperature, top_p=0.8, top_k=20,
+                        repetition_penalty=1.0, stop_check=stop_check,
+                    )
+                except InterruptedError:
+                    cancelled = True
+                finally:
+                    progress_done.set()
+                    if progress_thread:
+                        progress_thread.join(timeout=1)
+                elapsed = max(0.001, time.perf_counter() - started)
+                seconds += elapsed
+                generated = getattr(runner, "last_generation_tokens", None)
+                generation_metrics.append({
+                    "turn": turn_num, "section": slug, "attempt": attempts, "seconds": round(elapsed, 2),
+                    "generated_tokens": generated if isinstance(generated, int) else None,
+                    "tokens_per_second": round(generated / elapsed, 2) if isinstance(generated, int) else None,
+                    "stop_reason": (getattr(runner, "last_generation_diagnostics", {}) or {}).get("stop_reason"),
+                })
+                if cancelled or kit.is_usable(slug, text):
+                    break
+        if cancelled:
+            break
+        content, notes = kit.accept(slug, text)
+        used_fallback = kit.needs_model(slug) and not kit.is_usable(slug, text)
+        files = kit.render(slug)
+        parser_errors = preflight_section_files(files)
+        if parser_errors and not any("unavailable" in e for e in parser_errors):
+            print(f"  --> [Kit]: {slug} failed parser preflight; re-rendering with fallback copy: {parser_errors[:2]}")
+            kit.accept(slug, "")
+            files = kit.render(slug)
+            used_fallback = True
+            notes.append("re-rendered with fallback copy after parser preflight")
+        if used_fallback and slug not in fallback_sections and kit.needs_model(slug):
+            fallback_sections.append(slug)
+        for path, source in files:
+            dest = resolve_project_path(case_dir, path)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(source, encoding="utf-8")
+            all_written_files.append((path, source))
+        completed += 1
+        section_states[slug] = "completed"
+        turn_logs.append({"turn": turn_num, "action": "write_site_ok", "section": slug, "strategy": "kit",
+                          "files": [p for p, _ in files], "attempts": attempts, "fallback_copy": used_fallback,
+                          "notes": notes, "seconds": round(seconds, 2)})
+        print(f"  --> [Kit]: {slug} written ({kit.kinds[slug]}){' with fallback copy' if used_fallback else ''}.")
+        emit({"type": "plan_update", "section": slug, "status": "completed", "turn": turn_num,
+              "max_turns": len(planned), "completed": completed, "total": len(planned),
+              "notes": notes, "fallback_copy": used_fallback})
+
+    generation_complete = completed == len(planned) and not cancelled
+    generation_quality = "repaired" if fallback_sections else "native"
+    (case_dir / "generation_turns.jsonl").write_text(
+        "\n".join(json.dumps(entry, default=str) for entry in turn_logs) + "\n", encoding="utf-8")
+    return {
+        "index": orig_idx,
+        "project_name": project_name,
+        "mode": "site",
+        "strategy": "kit",
+        "prompt": prompt,
+        "sections_planned": planned,
+        "sections_completed": completed,
+        "generation_complete": generation_complete,
+        "section_completion": f"{completed} / {len(planned)}",
+        "project_validation": "pending",
+        "generation_quality": generation_quality,
+        "validation": None,
+        "interaction_validation": None,
+        "visual_validation": None,
+        "final_passed": False,
+        "acceptance": None,
+        "blocked_sections": [],
+        "section_states": section_states,
+        "fallback_sections": [],
+        "fallback_copy_sections": fallback_sections,
+        "repaired_sections": fallback_sections,
+        "normalized_files": [],
+        "unrepaired_fallbacks": [],
+        "auto_recovered_sections": [],
+        "files": {p: c for p, c in all_written_files},
+        "workspace_dir": str(case_dir),
+        "turn_logs": turn_logs,
+        "generation_metrics": generation_metrics,
+        "trajectory": [],
+        "output_token_budgets": [],
+        "design_plan": kit.theme_summary(),
+        "cancelled": cancelled,
+        "kit": {"base_css": kit.base_css(), "font_href": kit.font_href(), "head_tags": kit.head_tags(),
+                "public_files": kit.public_files(), "theme": kit.theme_summary(),
+                "edit_summary": kit.edit_summary()},
+    }
+
+
 def run_site_agent_on_example(
     orig_idx: int,
     prompt: str,
@@ -2160,6 +2349,8 @@ def run_site_agent_on_example(
     stop_check: Optional[Any] = None,
     business_type: str = "general",
     diagnostics_dir: Optional[Path] = None,
+    strategy: Optional[str] = None,
+    brief: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Multi-turn site generation loop. Generates one section per turn, enforces
@@ -2168,8 +2359,13 @@ def run_site_agent_on_example(
     Section order drives the conversation: the observation after each successful
     write tells the model exactly what to write next, keeping it on-track without
     relying on the 3B model to self-plan a multi-file output.
+
+    strategy="kit" (the default, see resolve_site_strategy) delegates to the
+    design kit: the model writes JSON copy and the kit renders the code.
     """
-    from site_brief import brief_to_xml  # lazy import to avoid circular dep
+    if resolve_site_strategy(strategy) == "kit":
+        return _run_kit_site(orig_idx, prompt, project_name, sections, runner, workspace_root, brief,
+                             event_callback, stop_check, business_type, diagnostics_dir)
 
     case_dir = workspace_root / f"site_{orig_idx:03d}"
     if case_dir.exists():
@@ -3036,58 +3232,50 @@ def run_site_agent_on_example(
                 errors=[f"[Validation Error] {type(_pv_err).__name__}: {_pv_err}"],
             )
 
+    # Without a full project (App.tsx lives at the project root, written later
+    # by the server scaffold) nothing has been validated yet. Report "pending"
+    # instead of synthesising passes; verify_and_repair_project is the source
+    # of truth (audit A14). Static evidence is kept for diagnostics only.
+    static_checks = {
+        "typecheck_passed": ts_ok,
+        "static_passed": static_passed,
+        "errors": list(ts_errs) + (list(acceptance_result.get("errors", [])) if isinstance(acceptance_result, dict) else []),
+    }
     if validation is None:
-        val_errors = list(ts_errs)
-        if not static_passed and acceptance_result:
-            val_errors.extend(acceptance_result.get("errors", []))
-        is_code_ok = ts_ok and static_passed
-        validation = ValidationResult(
-            typecheck_passed=ts_ok,
-            build_passed=ts_ok,
-            lint_passed=static_passed,
-            contract_passed=static_passed,
-            accessibility_passed=static_passed,
-            motion_passed=True,
-            runtime_passed=is_code_ok,
-            preview_running=is_code_ok,
-            interaction_passed=is_code_ok,
-            errors=val_errors,
+        project_validation = "pending"
+        interaction_validation = None
+        visual_validation = None
+        final_passed = False
+    else:
+        project_validation = "passed" if validation.passed else "failed"
+        interaction_validation = getattr(
+            validation,
+            "interaction_validation",
+            InteractionValidationResult(
+                passed=validation.interaction_passed,
+                status="passed" if validation.interaction_passed else "failed",
+                errors=[e for e in validation.errors if "[Interaction Error]" in str(e)],
+            )
         )
-
-    project_validation = "passed" if validation.passed else "failed"
-
-    # Interaction validation
-    interaction_validation = getattr(
-        validation,
-        "interaction_validation",
-        InteractionValidationResult(
-            passed=validation.interaction_passed,
-            status="passed" if validation.interaction_passed else "failed",
-            errors=[e for e in validation.errors if "[Interaction Error]" in str(e)],
+        visual_validation = getattr(
+            validation,
+            "visual_validation",
+            VisualValidationResult(
+                passed=validation.passed and not any("[Visual Error]" in str(e) for e in validation.errors),
+                status="passed" if validation.passed else "failed",
+                score=5.0 if validation.passed else 0.0,
+                issues=[e for e in validation.errors if "[Visual" in str(e)],
+            )
         )
-    )
-
-    # Visual validation
-    visual_validation = getattr(
-        validation,
-        "visual_validation",
-        VisualValidationResult(
-            passed=validation.passed and not any("[Visual Error]" in str(e) for e in validation.errors),
-            status="passed" if validation.passed else "failed",
-            score=5.0 if validation.passed else 0.0,
-            issues=[e for e in validation.errors if "[Visual" in str(e)],
+        # Authoritative multi-gate completion rule:
+        # NEVER 6/6 sections => final_passed!
+        final_passed = bool(
+            generation_complete
+            and not blocked_sections
+            and validation.passed
+            and interaction_validation.passed
+            and visual_validation.passed
         )
-    )
-
-    # Authoritative multi-gate completion rule:
-    # NEVER 6/6 sections => final_passed!
-    final_passed = bool(
-        generation_complete
-        and not blocked_sections
-        and validation.passed
-        and interaction_validation.passed
-        and visual_validation.passed
-    )
 
     status = "COMPLETE" if final_passed else f"PARTIAL/FAILED (sections: {section_completion}, project_validation={project_validation}, quality={generation_quality})"
     print(f"\n[Site Result]: {status} - {len(all_written_files)} files written")
@@ -3108,6 +3296,7 @@ def run_site_agent_on_example(
         "visual_validation": visual_validation,
         "final_passed": final_passed,
         "acceptance": acceptance_result,
+        "static_checks": static_checks,
         "blocked_sections": blocked_sections,
         "section_states": section_states,
         "fallback_sections": fallback_sections,

@@ -303,3 +303,9 @@ def test_token_budget_logged_in_run_site_agent_on_example(tmp_path):
     budget = res["output_token_budgets"][0]
     assert budget["tier"] == BudgetTier.SIMPLE_SITE_SECTION.value
     assert 1536 <= budget["recommended_tokens"] <= 2048
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")

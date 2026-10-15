@@ -315,3 +315,9 @@ def test_structural_gate_does_not_block_clean_section(tmp_path, monkeypatch):
     # Exactly one write_site_ok log
     ok_logs = [e for e in res["turn_logs"] if e.get("action") == "write_site_ok"]
     assert len(ok_logs) == 1
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")

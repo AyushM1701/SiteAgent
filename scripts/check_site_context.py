@@ -31,7 +31,8 @@ def main():
     try:
         run_site_agent_on_example(0,prompt,'NexaFlow',brief_to_xml(brief),brief['sections'],runner,workspace,
                                   brief=brief,style_spec=brief.get('style_spec'),
-                                  custom_section_instructions=brief.get('custom_section_instructions'))
+                                  custom_section_instructions=brief.get('custom_section_instructions'),
+                                  strategy='freeform')
     except Captured:
         pass
     tokenizer = Tokenizer.from_file(str(ROOT/'base-model/tokenizer.json'))

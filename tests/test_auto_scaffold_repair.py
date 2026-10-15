@@ -288,3 +288,9 @@ def test_run_site_agent_quality_transitions_to_repaired_on_successful_qwen_rewri
     # Generation quality MUST be 'repaired', not 'fallback'!
     assert res["generation_quality"] == "repaired"
     assert "Authentic Header" in res["files"]["src/components/Header.tsx"]
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")

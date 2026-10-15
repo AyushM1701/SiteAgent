@@ -125,3 +125,9 @@ def test_cancellation_keeps_unattempted_sections_pending(tmp_path, fast_gates):
     assert result["section_states"] == {"Hero": "pending", "Footer": "pending"}
     assert result["sections_completed"] == 0
     assert result["files"] == {}
+
+
+@pytest.fixture(autouse=True)
+def _freeform_site_strategy(monkeypatch):
+    """These tests exercise the legacy code-writing loop, not the design kit."""
+    monkeypatch.setenv("SITE_STRATEGY", "freeform")
