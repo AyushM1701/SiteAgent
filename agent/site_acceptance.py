@@ -75,6 +75,29 @@ _COUNT_LEAK_RE = re.compile(
 )
 
 
+# Instruction or style directions printed as copy (A17). Kept narrow: the
+# privacy note "fonts load from Google Fonts" and an honest "Illustrative
+# interface" caption are legitimate copy.
+_INSTRUCTION_LEAK_RE = re.compile(
+    r'\b(?:colou?r\s+palette|palette|typography|typeface|font\s+pairing|design\s+system|colou?r\s+scheme|'
+    r'lorem\s+ipsum|placeholder\s+(?:text|copy|image|content)|as\s+requested|the\s+user\b|this\s+section|'
+    r'user[- ]supplied|(?:no|not)\s+invented|fabricated|coming\s+soon)\b', re.I)
+_PLACEHOLDER_HOST_RE = re.compile(
+    r'(?:via\.placeholder\.com|placehold\.(?:co|it)|placekitten\.com|picsum\.photos|dummyimage\.com|'
+    r'example\.com/[^\s"\']*\.(?:png|jpe?g|webp|gif|svg|avif))', re.I)
+_DEBUG_TEXT_RE = re.compile(r'has no valid React export', re.I)
+
+
+def _visible_strings(source):
+    """JSX text nodes and prose-like string literals (3+ words)."""
+    texts = [t.strip() for t in re.findall(r'>([^<>{}]+)<', source) if t.strip()]
+    for literal in re.findall(r'"((?:[^"\\\n]|\\.){12,})"|\'((?:[^\'\\\n]|\\.){12,})\'', source):
+        value = literal[0] or literal[1]
+        if len(value.split()) >= 3 and not re.search(r'[{};=<>]|^\s*[@.#]|\(\s*\w+-\w+', value):
+            texts.append(value)
+    return texts
+
+
 def check_site_files(files):
     """Run static checks on all generated files.
 
@@ -99,6 +122,9 @@ def check_site_files(files):
         'count_leak': 'ok',
         'fabricated_contacts': 'ok',
         'fabricated_testimonials': 'ok',
+        'instruction_leak': 'ok',
+        'placeholder_assets': 'ok',
+        'debug_text': 'ok',
     }
 
     for path, source in files.items():
@@ -138,6 +164,15 @@ def check_site_files(files):
                     f'(example.com, 555 numbers) — replace with real or clearly-illustrative values'
                 )
 
+            leaks = [text for text in _visible_strings(source) if _INSTRUCTION_LEAK_RE.search(text)]
+            if leaks:
+                checks['instruction_leak'] = 'fail'
+                errors.append(f'{path}: instruction or style direction printed as copy: {leaks[0][:120]!r}')
+
+            if _DEBUG_TEXT_RE.search(source):
+                checks['debug_text'] = 'fail'
+                errors.append(f'{path}: debug text rendered in the site ("has no valid React export")')
+
             if _FABRICATED_TESTIMONIAL_RE.search(source):
                 # P0-06: HARD FAIL — ContentProvenance.GENERATED_PLACEHOLDER is blocked
                 # for the 'testimonials' category. Fabricated named endorsements must not ship.
@@ -148,6 +183,12 @@ def check_site_files(files):
                     f'Provenance: generated_placeholder — blocked for testimonials/people. '
                     f'Use only user-supplied or explicitly-illustrative endorsements.'
                 )
+
+    for path, source in files.items():
+        if path.endswith(('.tsx', '.ts', '.jsx', '.js', '.css', '.html')) and _PLACEHOLDER_HOST_RE.search(source):
+            checks['placeholder_assets'] = 'fail'
+            errors.append(f'{path}: placeholder image host used ({_PLACEHOLDER_HOST_RE.search(source).group(0)}); '
+                          f'use real, subject-matched imagery or a designed panel')
 
     # Hard errors block static_passed.  Warnings do not.
     # Hard errors: CSS syntax/scope failures, count leaks, fabricated testimonials

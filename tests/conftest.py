@@ -8,3 +8,26 @@ def isolate_default_tokenizer():
     orig = get_default_tokenizer()
     yield
     set_default_tokenizer(orig)
+
+
+def write_real_context_report(path, selected=8192, decision="choose_8192",
+                              rationale="Full-site trajectories need more than 6144 tokens."):
+    """A context benchmark report shaped like a real (mock=false) execution.
+
+    training.context_decision refuses synthetic or incomplete reports, so tests
+    that exercise training preflight supply one explicitly."""
+    import json
+    report = {
+        "provenance": "real",
+        "mock": False,
+        "model_sha256": "0" * 64,
+        "environment": {"model": "Qwen/Qwen3-4B", "model_path": "base-model"},
+        "recommendation": {"selected_context_length": selected, "policy_decision": decision, "rationale": rationale},
+    }
+    path.write_text(json.dumps(report), encoding="utf-8")
+    return str(path)
+
+
+@pytest.fixture
+def real_context_report(tmp_path):
+    return write_real_context_report(tmp_path / "qwen3_context_benchmark.json")

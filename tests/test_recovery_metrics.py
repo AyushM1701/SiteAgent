@@ -187,7 +187,9 @@ def test_recovery_metrics_and_penalty_for_auto_scaffolding(base_valid_files):
     assert native_score.recovery_metrics["model_native_success_rate"] == 1.0
     assert native_score.recovery_metrics["fallback_free_completion_rate"] == 1.0
     assert native_score.auto_scaffold_usage_rate == 0.0
-    assert native_score.passed is True
+    # No live workspace was supplied, so the pass gate stays closed even for a
+    # model-native run; recovery metrics are still computed.
+    assert native_score.passed is False
 
     # Case 2: Self-repair generation (Turn 1 error, Turn 2 model fixed natively)
     repaired_score = scorer.evaluate_site(spec, base_valid_files, turn_logs=[
@@ -199,7 +201,7 @@ def test_recovery_metrics_and_penalty_for_auto_scaffolding(base_valid_files):
     assert repaired_score.recovery_metrics["auto_scaffold_usage_rate"] == 0.0
     assert repaired_score.recovery_metrics["repair_success_rate"] == 1.0
     assert repaired_score.auto_scaffold_usage_rate == 0.0
-    assert repaired_score.passed is True
+    assert repaired_score.passed is False  # fail-closed without a live workspace
 
     # Case 3: Recovery-dependent generation (50% auto-scaffolded)
     scaffolded_score = scorer.evaluate_site(spec, base_valid_files, turn_logs=[

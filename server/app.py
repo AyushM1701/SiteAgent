@@ -933,7 +933,12 @@ def _worker():
         except Exception as e:
             import traceback
             traceback.print_exc()
-            _store_task_failure(task, e)
+            # Recording the failure must never stop the supervisor: if it raises,
+            # the queue would stall and every later task would hang.
+            try:
+                _store_task_failure(task, e)
+            except Exception as store_err:
+                print(f"[Worker] Could not record failure for {task_id}: {store_err}")
             if q:
                 q.put({"type": "error", "text": str(e)})
                 q.put({"type": "done"})

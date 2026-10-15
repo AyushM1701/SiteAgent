@@ -79,20 +79,21 @@ def test_protect_existing_output_and_served_model(tmp_path):
     with pytest.raises(ValueError,match='separate'): output_paths(ROOT,tmp_path/'new',tmp_path/'new/checkpoints')
 
 
-def test_preflight_only_omits_output_and_checkpoint():
+def test_preflight_only_omits_output_and_checkpoint(real_context_report):
     """Verifies that --preflight-only runs without requiring output or checkpoint directories."""
-    manifest = train(preflight_only=True)
-    assert manifest["status"] == "preflight_passed"
+    manifest = train(preflight_only=True, benchmark_report=real_context_report)
+    assert manifest["status"] == "preflight_only"  # a preflight is never a passed training run
     assert manifest["train_rows"] > 0
     assert "sequence_length_stats" in manifest
     assert manifest["sequence_length_stats"]["count"] > 0
     assert manifest["sequence_length_stats"]["max"] <= manifest["max_seq_length"]
 
 
-def test_training_requires_output_and_checkpoint():
+def test_training_requires_output_and_checkpoint(real_context_report):
     """Verifies that normal training strictly requires both --output and --checkpoint-dir."""
     with pytest.raises(ValueError, match="--output is required for training"):
-        train(preflight_only=False, output_path=None)
+        train(preflight_only=False, output_path=None, benchmark_report=real_context_report)
 
     with pytest.raises(ValueError, match="--checkpoint-dir is required for training"):
-        train(preflight_only=False, output_path="models/test_out", checkpoint_dir=None)
+        train(preflight_only=False, output_path="models/test_out", checkpoint_dir=None,
+              benchmark_report=real_context_report)

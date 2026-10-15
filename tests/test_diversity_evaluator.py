@@ -372,10 +372,12 @@ def test_evaluate_promotion_gate_blocks_template_collapsed_candidate():
 def test_evaluate_promotion_gate_approves_diverse_candidate():
     """Verify that candidate model promotion succeeds when diversity standards are met."""
     candidate_metrics = {
+        "mock": False, "provenance": "real",  # promotion evidence must come from real execution
         "overall_pass_rate": 0.85,
         "typecheck_pass_rate": 0.95,
         "category_pass_rates": {"tsc_render_interact": 0.75},
         "site_benchmark_metrics": {
+            "mock": False, "provenance": "real",  # promotion evidence must come from real execution
             "composite_score_mean": 0.88,
             "metric_means": {
                 "production_build": 0.95,

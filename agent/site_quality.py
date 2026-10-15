@@ -66,6 +66,29 @@ def wants_dimensional_visual(prompt: str) -> bool:
     return bool(re.search(r"\b(?:3[ -]?d|three[ -]dimensional|dimensional|spatial)\b", prompt, re.I))
 
 
+def jsx_open_tags(source: str, tag: str):
+    """Yield (start, attributes) for each <tag ...> open tag, reading attribute
+    values with balanced braces and quotes so `ref={(el) => ...}` does not end
+    the tag at the arrow's '>' (B9b)."""
+    for match in re.finditer(rf'<{tag}\b', source):
+        i, depth, quote = match.end(), 0, ''
+        while i < len(source):
+            ch = source[i]
+            if quote:
+                if ch == quote and source[i - 1] != '\\':
+                    quote = ''
+            elif ch in '"\'`':
+                quote = ch
+            elif ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth = max(0, depth - 1)
+            elif ch == '>' and depth == 0:
+                break
+            i += 1
+        yield match.start(), source[match.end():i]
+
+
 def collect_site_rendering_diagnostics(files: dict[str, str], prompt: str = "") -> list[str]:
     """Return source evidence of rendering failures, never a browser pass certificate.
 
@@ -168,9 +191,8 @@ def collect_site_rendering_diagnostics(files: dict[str, str], prompt: str = "") 
     ids = set(re.findall(r'\bid\s*=\s*["\']([^"\']+)["\']', jsx))
     for path, source in jsx_files.items():
         form_ranges = [(m.start(), m.end()) for m in re.finditer(r'<form\b[\s\S]*?</form>', source, re.I)]
-        for button in re.finditer(r'<button\b([^>]*)>', source, re.I):
-            attributes = button.group(1)
-            within_form = any(start <= button.start() < end for start, end in form_ranges)
+        for button_start, attributes in jsx_open_tags(source, 'button'):
+            within_form = any(start <= button_start < end for start, end in form_ranges)
             if (not within_form and not re.search(r'\bon[A-Z]\w*\s*=|\bonclick\s*=|\{\s*\.\.\.|\bdisabled(?:\s|$|=\{true\})', attributes)):
                 errors.append(f'[{path}] [INERT BUTTON]: button has no event handler or containing form; use a real section link for navigation or implement its visible action.')
         for target in re.findall(r'\bhref\s*=\s*["\']#([^"\']+)["\']', source):

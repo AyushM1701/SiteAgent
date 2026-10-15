@@ -89,8 +89,11 @@ def test_step_d_context_benchmark_determination():
 def test_step_e_tokenizer_preflight(monkeypatch):
     """Verify Step E tokenizer preflight enforces Qwen3 chat template, zero thoughts, and disjointness."""
     monkeypatch.setenv("ALLOW_LEGACY_BASE_MODEL", "1")
+    # The repository's context report is a synthetic mock, which training
+    # refuses; SLM_CONTEXT_LENGTH is the supported override for the default report.
+    monkeypatch.setenv("SLM_CONTEXT_LENGTH", "8192")
     manifest = execute_step_e()
-    assert manifest["status"] == "preflight_passed"
+    assert manifest["status"] == "preflight_only"  # a preflight is never a passed training run
     assert manifest["max_seq_length"] == 8192
     assert manifest["train_rows"] > 0
     assert manifest["rank"] == 16

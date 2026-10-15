@@ -100,11 +100,14 @@ def _score_screenshot_heuristic(screenshot_path: Path) -> dict:
             g_vals = [p[1] for p in pixels]
             b_vals = [p[2] for p in pixels]
 
-            # Check if >85% of pixels are nearly white (blank page)
-            white_count = sum(1 for p in pixels if p[0] > 240 and p[1] > 240 and p[2] > 240)
-            white_ratio = white_count / len(pixels)
-            if white_ratio > 0.85:
-                issues.append(f"Page appears blank ({white_ratio:.0%} near-white pixels)")
+            # A blank page is a uniform frame. A light, airy layout with generous
+            # whitespace is not blank, however much of it is near-white (A15).
+            lum = [0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2] for p in pixels]
+            mean_lum = sum(lum) / len(lum)
+            spread = (sum((v - mean_lum) ** 2 for v in lum) / len(lum)) ** 0.5
+            distinct = sum(1 for v in lum if abs(v - mean_lum) > 24)
+            if spread < 4 or distinct < max(3, len(lum) // 200):
+                issues.append(f"Page appears blank (uniform frame, luminance spread {spread:.1f})")
                 score -= 3
 
             # Check color variance (distinct regions = layout present)

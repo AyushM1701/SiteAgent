@@ -12,16 +12,16 @@ pip install -r requirements.txt
 echo "=== 2/3: Installing Node.js & Testing Harness Dependencies ==="
 npm install
 
-echo "=== 3/3: Downloading Qwen2.5-Coder-3B-Instruct Base Model ==="
+echo "=== 3/3: Downloading Qwen3-4B Base Model ==="
 python -c "
 from huggingface_hub import snapshot_download
 import os
 
 target_dir = 'base-model'
 if not os.path.exists(target_dir) or len(os.listdir(target_dir)) == 0:
-    print('Downloading Qwen/Qwen2.5-Coder-3B-Instruct to ./base-model...')
+    print('Downloading Qwen/Qwen3-4B to ./base-model...')
     snapshot_download(
-        'Qwen/Qwen2.5-Coder-3B-Instruct',
+        'Qwen/Qwen3-4B',
         local_dir=target_dir,
         ignore_patterns=['*.msgpack', '*.h5']
     )

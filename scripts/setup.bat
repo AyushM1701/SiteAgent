@@ -25,9 +25,9 @@ if %errorlevel% neq 0 (
 )
 
 echo ==============================================================================
-echo [3/3] Downloading Qwen2.5-Coder-3B-Instruct Base Model...
+echo [3/3] Downloading Qwen3-4B Base Model...
 echo ==============================================================================
-python -c "from huggingface_hub import snapshot_download; import os; target='base-model'; (print('Downloading...') or snapshot_download('Qwen/Qwen2.5-Coder-3B-Instruct', local_dir=target, ignore_patterns=['*.msgpack', '*.h5'])) if not os.path.exists(target) or len(os.listdir(target))==0 else print('Base model already present in ./base-model')"
+python -c "from huggingface_hub import snapshot_download; import os; target='base-model'; (print('Downloading...') or snapshot_download('Qwen/Qwen3-4B', local_dir=target, ignore_patterns=['*.msgpack', '*.h5'])) if not os.path.exists(target) or len(os.listdir(target))==0 else print('Base model already present in ./base-model')"
 
 echo ==============================================================================
 echo Setup Complete!

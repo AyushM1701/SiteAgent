@@ -161,7 +161,7 @@ def test_run_comparison_mock_generates_standard_table_and_report(tmp_path):
     assert "Interactive UI & State" in table
 
 
-def test_train_sft_preflight_enforces_methodology_guard(tmp_path):
+def test_train_sft_preflight_enforces_methodology_guard(tmp_path, real_context_report):
     """Verify train_sft preflight rejects unprincipled rank sweeps without justification or override."""
     from training.train_sft import train
 
@@ -171,7 +171,7 @@ def test_train_sft_preflight_enforces_methodology_guard(tmp_path):
             dataset_path="data/interactive_curriculum_trajectories.jsonl",
             rank=32,
             preflight_only=True,
-            benchmark_report="runs/qwen3_context_benchmark.json",
+            benchmark_report=real_context_report,
         )
 
     # With override_methodology_gate=True, preflight passes cleanly
@@ -180,6 +180,6 @@ def test_train_sft_preflight_enforces_methodology_guard(tmp_path):
         rank=32,
         preflight_only=True,
         override_methodology_gate=True,
-        benchmark_report="runs/qwen3_context_benchmark.json",
+        benchmark_report=real_context_report,
     )
 

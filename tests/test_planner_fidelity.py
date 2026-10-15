@@ -153,3 +153,18 @@ def test_synonym_sections_merge():
     assert len(price_like) == 1
     for wanted in ("coaches", "faq", "contact"):
         assert wanted in sections
+
+
+def test_include_colon_lists_of_section_names_are_explicit():
+    from agent.site_brief import extract_explicit_sections
+    found = extract_explicit_sections("Build a shop for North Goods. Include: header, hero, features, footer. Add to cart.")
+    assert [slug for slug, _ in found] == ["header", "hero", "features", "footer"]
+    # An "Include:" list of styling or behaviour is not a section list.
+    assert extract_explicit_sections("A bakery site. Include: dark mode, subtle animations, warm colours.") is None
+
+
+def test_descriptive_include_lists_stay_with_the_heuristic_planner():
+    from agent.site_brief import extract_explicit_sections
+    prompt = ("A SaaS startup called NexaFlow. Include: a sticky nav with a CTA, a hero section with animated "
+              "gradient text, a features grid (6 cards), a pricing section with a monthly/annual toggle, and a footer.")
+    assert extract_explicit_sections(prompt) is None

@@ -165,7 +165,8 @@ def test_scorer_evaluation_on_mock_site():
     )
 
     assert isinstance(score, SiteBenchmarkScore)
-    assert score.passed is True
+    # Scored from files alone: no live workspace, so the pass gate stays closed.
+    assert score.passed is False
     assert score.composite_score >= 0.70
 
     score_dict = score.to_dict()["scores"]
@@ -396,10 +397,12 @@ def test_promotion_gate_permits_when_all_gates_pass():
         },
     }
     cand_metrics = {
+        "mock": False, "provenance": "real",  # promotion evidence must come from real execution
         "overall_pass_rate": 0.60,
         "typecheck_pass_rate": 0.85,
         "category_pass_rates": {"tsc_render_interact": 0.58},
         "site_benchmark_metrics": {
+            "mock": False, "provenance": "real",  # promotion evidence must come from real execution
             "composite_score_mean": 0.88,  # Healthy gain
             "metric_means": {"production_build": 0.95, "runtime": 0.92, "required_section_completion": 0.95},
         },
@@ -423,7 +426,9 @@ def test_cli_runner_mock_mode_execution(tmp_path):
     )
 
     assert summary["total_sites"] == 2
-    assert summary["overall_pass_rate"] >= 0.50
+    # Mock-harness sites have no live workspace and can never count as passes.
+    assert summary["overall_pass_rate"] == 0.0
+    assert summary["mock"] is True
     assert output_json.exists()
     saved = json.loads(output_json.read_text(encoding="utf-8"))
     assert saved["total_sites"] == 2

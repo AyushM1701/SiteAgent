@@ -18,6 +18,7 @@ from training.context_decision import (
     resolve_context_length,
 )
 from training.train_sft import train
+from conftest import write_real_context_report
 
 
 def test_calculate_percentiles():
@@ -46,16 +47,7 @@ def test_format_preflight_histogram():
 
 def test_resolve_context_length_from_benchmark_report_8192(tmp_path):
     report_file = tmp_path / "qwen3_context_benchmark.json"
-    data = {
-        "6144": {"coverage": 0.95, "stable": True, "peakVramGiB": 3.2},
-        "8192": {"coverage": 1.0, "stable": True, "peakVramGiB": 3.3},
-        "recommendation": {
-            "selected_context_length": 8192,
-            "policy_decision": "choose_8192",
-            "rationale": "High-value full-site trajectories require >6144 tokens.",
-        }
-    }
-    report_file.write_text(json.dumps(data), encoding="utf-8")
+    write_real_context_report(report_file, 8192, "choose_8192", "High-value full-site trajectories require >6144 tokens.")
 
     selected, info = resolve_context_length(str(report_file))
     assert selected == 8192
@@ -65,16 +57,7 @@ def test_resolve_context_length_from_benchmark_report_8192(tmp_path):
 
 def test_resolve_context_length_from_benchmark_report_6144(tmp_path):
     report_file = tmp_path / "qwen3_context_benchmark.json"
-    data = {
-        "6144": {"coverage": 0.99, "stable": True, "peakVramGiB": 3.2},
-        "8192": {"coverage": 1.0, "stable": False, "peakVramGiB": 5.8},
-        "recommendation": {
-            "selected_context_length": 6144,
-            "policy_decision": "choose_6144",
-            "rationale": "8192 exceeds VRAM ceiling.",
-        }
-    }
-    report_file.write_text(json.dumps(data), encoding="utf-8")
+    write_real_context_report(report_file, 6144, "choose_6144", "8192 exceeds VRAM ceiling.")
 
     selected, info = resolve_context_length(str(report_file))
     assert selected == 6144
@@ -94,16 +77,24 @@ def test_resolve_context_length_explicit_cli_override(tmp_path):
     assert info["policy_decision"] == "explicit_user_override"
 
 
-def test_resolve_context_length_fallback_when_report_missing(tmp_path):
+def test_resolve_context_length_refuses_when_report_missing(tmp_path):
+    """No silent default: training refuses without a real benchmark report."""
     missing_file = tmp_path / "non_existent_report.json"
-    selected, info = resolve_context_length(str(missing_file), default_length=8192)
-    assert selected == 8192
-    assert info["source"] == "default_fallback"
+    with pytest.raises(FileNotFoundError, match="refusing training"):
+        resolve_context_length(str(missing_file), default_length=8192)
 
 
-def test_train_sft_preflight_uses_benchmark_report_selection():
-    manifest = train(preflight_only=True)
-    assert manifest["status"] == "preflight_passed"
+def test_resolve_context_length_rejects_synthetic_reports(tmp_path):
+    report_file = tmp_path / "mock_report.json"
+    report_file.write_text(json.dumps({"provenance": "synthetic_mock", "mock": True,
+                                       "recommendation": {"selected_context_length": 8192}}), encoding="utf-8")
+    with pytest.raises(ValueError, match="mock=false"):
+        resolve_context_length(str(report_file))
+
+
+def test_train_sft_preflight_uses_benchmark_report_selection(real_context_report):
+    manifest = train(preflight_only=True, benchmark_report=real_context_report)
+    assert manifest["status"] == "preflight_only"  # a preflight is never a passed training run
     assert manifest["max_seq_length"] == 8192
     assert "context_decision" in manifest
     assert manifest["context_decision"]["selected_context_length"] == 8192
@@ -115,14 +106,7 @@ def test_train_sft_preflight_uses_benchmark_report_selection():
 
 def test_train_sft_preflight_with_custom_benchmark_report(tmp_path):
     custom_report = tmp_path / "custom_benchmark.json"
-    data = {
-        "recommendation": {
-            "selected_context_length": 6144,
-            "policy_decision": "choose_6144",
-            "rationale": "Mock constraint test.",
-        }
-    }
-    custom_report.write_text(json.dumps(data), encoding="utf-8")
+    write_real_context_report(custom_report, 6144, "choose_6144", "Constraint test.")
 
     # Create a 10-row valid dataset fitting inside 6144
     dataset_file = tmp_path / "train_fit_6144.jsonl"

@@ -414,12 +414,12 @@ class AgentModelRunner:
         history: List[Dict[str, str]],
         primary_symbol: str,
         max_new_tokens: int = 768,
-        temperature: float = 0.2,
-        repetition_penalty: float = 1.05,
+        temperature: float = 0.7,
+        repetition_penalty: float = 1.0,
         stop_check=None,
         max_time_seconds=None,
-        top_p: "Optional[float]" = None,
-        top_k: "Optional[int]" = None,
+        top_p: "Optional[float]" = 0.8,
+        top_k: "Optional[int]" = 20,
         **kwargs,
     ) -> str:
         effective_stop = stop_check or getattr(self, "stop_check", None)
@@ -1559,6 +1559,22 @@ def _compact_site_history(history: List[Dict[str, str]]) -> None:
                 )
 
 
+_CARD_SELECTOR_RE = re.compile(r'card|panel|tile|media|image|figure|thumb|frame', re.I)
+_BUTTON_SELECTOR_RE = re.compile(r'btn|button|cta|pill|chip|tag|badge|toggle', re.I)
+
+
+def _adapt_radii(css: str, btn_radius: str, card_radius: str) -> str:
+    """Bring card radii in line with the design system without squaring pill
+    buttons: only card-like rules are rewritten (audit A9)."""
+    def fix_block(match: "re.Match[str]") -> str:
+        selector, body = match.group(1), match.group(2)
+        if _BUTTON_SELECTOR_RE.search(selector) or not _CARD_SELECTOR_RE.search(selector):
+            return match.group(0)
+        body = re.sub(r'border-radius\s*:\s*(?:[4-9]|[1-6][0-9]|7[0-4])px\b', f'border-radius: {card_radius}', body, flags=re.I)
+        return f"{selector}{{{body}}}"
+    return re.sub(r'([^{}]+)\{([^{}]*)\}', fix_block, css)
+
+
 def synthesize_section_css(section_name: str, tsx_content: str, style_spec: Optional[Any] = None) -> str:
     """
     Synthesizes a minimal but compliant CSS file for a section matching active design tokens.
@@ -1572,38 +1588,43 @@ def synthesize_section_css(section_name: str, tsx_content: str, style_spec: Opti
                 all_classes.add(single)
 
     prefix = f"sa-{section_name.replace('_', '-')}"
+    # Every selector is scoped under the section's own root class so the
+    # fallback never restyles other sections (audit A10).
+    root_match = re.search(r'className=["\']([^"\'\s{]+)', tsx_content)
+    root = root_match.group(1) if root_match else prefix
     pri_color = style_spec.get_primary_color() if (style_spec and hasattr(style_spec, "get_primary_color")) else "var(--color-obsidian, #000000)"
     accent_color = style_spec.get_accent_color() if (style_spec and hasattr(style_spec, "get_accent_color")) else "var(--color-iridescent-fade, #a02d25)"
     head_font = style_spec.get_heading_font() if (style_spec and hasattr(style_spec, "get_heading_font")) else "var(--font-heading, sans-serif)"
     body_font = style_spec.get_body_font() if (style_spec and hasattr(style_spec, "get_body_font")) else "var(--font-body, sans-serif)"
     btn_radius = style_spec.radius.get("--radius-buttons", "75px") if (style_spec and hasattr(style_spec, "radius") and style_spec.radius) else "75px"
     card_radius = style_spec.radius.get("--radius-cards", "0px") if (style_spec and hasattr(style_spec, "radius") and style_spec.radius) else "0px"
+    r = f".{root}"
 
     rules = [
         f"/* Auto-synthesized CSS fallback for {section_name} */",
-        f".{prefix}, section {{",
+        f"{r} {{",
         f"  width: 100%;",
         f"  padding: 5rem 2rem;",
         f"  background: {pri_color};",
         f"  color: var(--surface-paper, #ffffff);",
         f"  box-sizing: border-box;",
         f"}}",
-        f".{prefix}__inner, section > div {{",
+        f"{r} > div {{",
         f"  max-width: var(--page-max-width, 1200px);",
         f"  margin: 0 auto;",
         f"}}",
-        f".{prefix}__title, h1, h2 {{",
+        f"{r} h1, {r} h2 {{",
         f"  font-family: {head_font}, sans-serif;",
         f"  color: var(--surface-paper, #ffffff);",
         f"  margin-bottom: 1.5rem;",
         f"}}",
-        f".{prefix}__grid, [class*='grid'] {{",
+        f"{r} [class*='grid'] {{",
         f"  display: grid;",
         f"  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));",
         f"  gap: 2rem;",
         f"  margin-top: 2rem;",
         f"}}",
-        f".{prefix}__card, [class*='card'] {{",
+        f"{r} [class*='card'] {{",
         f"  background: rgba(255, 255, 255, 0.03);",
         f"  border: 1px solid rgba(255, 255, 255, 0.08);",
         f"  border-radius: {card_radius};",
@@ -1611,11 +1632,11 @@ def synthesize_section_css(section_name: str, tsx_content: str, style_spec: Opti
         f"  box-shadow: none;",
         f"  transition: border-color 0.2s ease, transform 0.2s ease;",
         f"}}",
-        f".{prefix}__card:hover, [class*='card']:hover {{",
+        f"{r} [class*='card']:hover, {r} [class*='card']:focus-within {{",
         f"  border-color: {accent_color};",
         f"  transform: translateY(-2px);",
         f"}}",
-        f".{prefix}__btn, button, a[class*='btn'], a[class*='cta'] {{",
+        f"{r} button, {r} a[class*='btn'], {r} a[class*='cta'] {{",
         f"  display: inline-flex;",
         f"  align-items: center;",
         f"  justify-content: center;",
@@ -1633,20 +1654,21 @@ def synthesize_section_css(section_name: str, tsx_content: str, style_spec: Opti
     ]
 
     for cls in sorted(all_classes):
+        scoped = f"{r} .{cls}" if cls != root else r
         if any(k in cls.lower() for k in ["label"]):
-            rules.append(f".{cls} {{ display: block; font-family: {body_font}, sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.65; margin-bottom: 4px; color: var(--surface-paper, #ffffff); }}")
+            rules.append(f"{scoped} {{ display: block; font-family: {body_font}, sans-serif; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.65; margin-bottom: 4px; color: var(--surface-paper, #ffffff); }}")
         elif any(k in cls.lower() for k in ["field"]):
-            rules.append(f".{cls} {{ margin-bottom: 12px; }}")
+            rules.append(f"{scoped} {{ margin-bottom: 12px; }}")
         elif any(k in cls.lower() for k in ["badge", "tag"]):
-            rules.append(f".{cls} {{ display: inline-block; padding: 0.25rem 0.65rem; border-radius: {btn_radius}; font-size: 0.8rem; font-weight: 600; color: {accent_color}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }}")
+            rules.append(f"{scoped} {{ display: inline-block; padding: 0.25rem 0.65rem; border-radius: {btn_radius}; font-size: 0.8rem; font-weight: 600; color: {accent_color}; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }}")
         elif any(k in cls.lower() for k in ["spec"]):
-            rules.append(f".{cls} {{ font-family: {body_font}, sans-serif; font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.5; margin: 4px 0 0; }}")
+            rules.append(f"{scoped} {{ font-family: {body_font}, sans-serif; font-size: 0.88rem; color: rgba(255,255,255,0.85); line-height: 1.5; margin: 4px 0 0; }}")
         elif any(k in cls.lower() for k in ["desc", "text", "sub", "para"]):
-            rules.append(f".{cls} {{ font-family: {body_font}, sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }}")
+            rules.append(f"{scoped} {{ font-family: {body_font}, sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }}")
 
     rules.append(
         "@media (prefers-reduced-motion: reduce) {\n"
-        f"  .{prefix}, .{prefix}__card, .{prefix}__btn, [class*='card'], [class*='btn'], [class*='fade'], * {{\n"
+        f"  {r}, {r} * {{\n"
         "    animation: none !important;\n"
         "    transition: none !important;\n"
         "    transform: none !important;\n"
@@ -1902,249 +1924,6 @@ def _build_section_synonyms(sections: List[str]) -> Dict[str, List[str]]:
     return syns_map
 
 
-def rewrite_fallback_sections(
-    case_dir: Path,
-    fallback_sections: List[str],
-    runner: Any,
-    original_prompt: str,
-    project_name: str,
-    section_instructions: Dict[str, str],
-    style_spec: Optional[Any] = None,
-    event_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
-    stop_check: Optional[Callable[[], bool]] = None,
-    max_rewrite_turns: int = 1,
-) -> tuple[List[str], List[tuple[str, str]], List[Dict[str, Any]]]:
-    """
-    Post-assembly Qwen rewrite loop.
-    For every section where a fallback scaffold was generated:
-      1. Gathers compiler diagnostics & typecheck results for the assembled site.
-      2. Feeds Qwen:
-         - original section requirements (from section_instructions / prompt)
-         - current fallback code (TSX & CSS) on disk
-         - compiler & project feedback
-      3. Prompts Qwen to emit a full, high-fidelity <tool_call name="write_site"> replacing the fallback.
-      4. Validates rewritten TSX and CSS syntax before writing to disk.
-      5. If successful: updates disk files, marks section as repaired, logs [FALLBACK REPAIRED].
-      6. If rewrite fails: retains minimal deterministic scaffold to avoid breaking the build.
-
-    Returns (repaired_sections, new_written_files, rewrite_logs).
-    """
-    from agent.project_validator import run_project_typecheck
-    from agent.site_prompt import SITE_AGENT_SYSTEM_PROMPT
-
-    repaired_sections: List[str] = []
-    new_written_files: List[tuple[str, str]] = []
-    rewrite_logs: List[Dict[str, Any]] = []
-    base_dir = BASE_DIR
-
-    # Deduplicate fallback sections while maintaining order
-    unique_fallbacks = []
-    for s in fallback_sections:
-        if s not in unique_fallbacks:
-            unique_fallbacks.append(s)
-
-    for sec in unique_fallbacks:
-        if stop_check and stop_check():
-            break
-
-        pascal_name = "".join(w.capitalize() for w in re.split(r'[-_]', sec))
-        if not pascal_name or not (pascal_name[0].isalpha() or pascal_name[0] == '_'):
-            pascal_name = f"Sec{pascal_name}"
-        t_path = f"src/components/{pascal_name}.tsx"
-        c_path = f"src/components/{pascal_name}.css"
-
-        try:
-            dest_t = resolve_project_path(case_dir, t_path)
-            dest_c = resolve_project_path(case_dir, c_path)
-        except PermissionError:
-            continue
-
-        curr_t = dest_t.read_text(encoding="utf-8") if dest_t.exists() else ""
-        curr_c = dest_c.read_text(encoding="utf-8") if dest_c.exists() else ""
-
-        # Gather compiler/typecheck diagnostics from assembled site
-        ts_ok, ts_errs = run_project_typecheck(case_dir)
-        compiler_feedback = "Workspace compiles cleanly. Ready for authentic component implementation." if ts_ok else "\n".join(ts_errs[:8])
-
-        sec_instr = (
-            section_instructions.get(sec)
-            or section_instructions.get(sec.lower())
-            or f"Write the {sec} section for {original_prompt}. Files: {t_path} + {c_path}"
-        )
-
-        print(f"\n[Fallback Rewrite Loop]: Requesting Qwen rewrite for fallback section '{sec}'...")
-        if event_callback:
-            try:
-                event_callback({
-                    "type": "status",
-                    "status": f"Rewriting fallback section '{sec}' with real implementation…",
-                })
-                event_callback({
-                    "type": "log",
-                    "text": f"[FALLBACK REWRITE] Feeding original requirement and compiler context to Qwen for '{sec}'…",
-                })
-            except Exception:
-                pass
-
-        repair_note = (
-            f"[FALLBACK REWRITE REQUIRED — Section '{sec}']\n"
-            f"The site has been assembled, but section '{sec}' currently contains a minimal fallback scaffold.\n"
-            f"You MUST now replace this fallback scaffold with a complete, authentic, high-fidelity implementation "
-            f"strictly adhering to the original requirements.\n\n"
-            f"ORIGINAL SECTION REQUIREMENTS:\n"
-            f"{sec_instr}\n\n"
-            f"CRITICAL RULES:\n"
-            f"- Do NOT invent fake metrics, testimonials, contacts, or pricing unless explicitly requested in the prompt.\n"
-            f"- Implement meaningful, interactive UI behavior with accessible semantic markup.\n"
-            f"- You MUST emit both {t_path} AND {c_path} using <tool_call name=\"write_site\">.\n\n"
-            f"CURRENT FALLBACK CODE ON DISK TO REPLACE:\n"
-            f"--- File: {t_path} ---\n{curr_t}\n\n"
-            f"--- File: {c_path} ---\n{curr_c}\n\n"
-            f"COMPILER & WORKSPACE DIAGNOSTICS:\n{compiler_feedback}\n\n"
-            f"Emit the complete replacement files now using <tool_call name=\"write_site\">."
-        )
-
-        rewrite_history = [
-            {"role": "system", "content": SITE_AGENT_SYSTEM_PROMPT},
-            {"role": "user", "content": f"Project '{project_name}': {original_prompt}"},
-            {"role": "user", "content": repair_note},
-        ]
-
-        try:
-            reply = runner.generate_turn(
-                example_idx=0,
-                history=rewrite_history,
-                primary_symbol=project_name,
-                max_new_tokens=2048,
-                temperature=0.18,
-                repetition_penalty=1.05,
-                stop_check=stop_check,
-            )
-        except InterruptedError:
-            break
-        except Exception as _gen_err:
-            print(f"  --> [Fallback Rewrite] Generation error: {_gen_err}")
-            continue
-
-        from agent.agent_protocol import close_complete_site_envelope
-        reply = close_complete_site_envelope(reply)
-        turn = parse_agent_output(reply)
-        repaired = False
-
-        if isinstance(turn.action, WriteSiteAction) and turn.action.files:
-            tsx_matches = [(p, c) for p, c in turn.action.files if p.endswith(".tsx")]
-            css_matches = [(p, c) for p, c in turn.action.files if p.endswith(".css")]
-
-            if tsx_matches and turn.action.has_real_css():
-                new_t_path, new_t_code = tsx_matches[0]
-                new_c_path, new_c_code = css_matches[0] if css_matches else (c_path, synthesize_section_css(sec, new_t_code, style_spec=style_spec))
-                from agent.site_file_normalizer import normalize_site_section_files
-                from agent.tailwind_support import site_uses_tailwind
-                normalized_rewrite = dict(normalize_site_section_files(
-                    [(new_t_path, new_t_code), (new_c_path, new_c_code)], sec,
-                    original_prompt=original_prompt,
-                ))
-                new_t_code = normalized_rewrite[new_t_path]
-                new_c_code = normalized_rewrite[new_c_path]
-
-                if (new_t_path != t_path or new_c_path != c_path
-                        or _site_output_truncated(reply)
-                        or _site_import_violations([(new_t_path, new_t_code)], case_dir)
-                        or validate_structural_quality(
-                            [(new_t_path, new_t_code), (new_c_path, new_c_code)],
-                            section_name=sec, check_coverage=True,
-                            tailwind_enabled=site_uses_tailwind(normalized_rewrite),
-                        )):
-                    rewrite_logs.append({"action": "fallback_rewrite_failed", "section": sec, "reason": "acceptance_gate"})
-                    continue
-
-                if style_spec:
-                    new_c_code = sanitize_css_for_spec(new_c_code, style_spec)
-
-                parser_errors = preflight_section_files([(new_t_path, new_t_code), (new_c_path, new_c_code)])
-                if parser_errors:
-                    rewrite_logs.append({"action": "fallback_rewrite_failed", "section": sec,
-                                         "reason": "parser_preflight", "details": parser_errors})
-                    continue
-
-                # Write to temp file and test compile via tsc
-                try:
-                    temp_dest = resolve_project_path(case_dir, new_t_path)
-                except PermissionError:
-                    continue
-                temp_dest.parent.mkdir(parents=True, exist_ok=True)
-                old_source = temp_dest.read_text(encoding="utf-8") if temp_dest.exists() else None
-                try:
-                    temp_dest.write_text(new_t_code, encoding="utf-8")
-                    tsc_proc = run_command([
-                    "npx", "tsc", "--noEmit",
-                    "--jsx", "react-jsx",
-                    "--target", "ES2022",
-                    "--moduleResolution", "bundler",
-                    "--esModuleInterop",
-                    "--skipLibCheck",
-                    temp_dest.as_posix(),
-                    "css.d.ts"
-                    ], cwd=base_dir)
-                finally:
-                    if old_source is None:
-                        temp_dest.unlink(missing_ok=True)
-                    else:
-                        temp_dest.write_text(old_source, encoding="utf-8")
-
-                if tsc_proc.returncode == 0:
-                    # Write final CSS file
-                    dest_c = resolve_project_path(case_dir, new_c_path)
-                    dest_c.parent.mkdir(parents=True, exist_ok=True)
-                    dest_c.write_text(new_c_code, encoding="utf-8")
-
-                    repaired = True
-                    repaired_sections.append(sec)
-                    new_written_files.append((new_t_path, new_t_code))
-                    new_written_files.append((new_c_path, new_c_code))
-                    rewrite_logs.append({
-                        "action": "fallback_repaired",
-                        "section": sec,
-                        "files": [new_t_path, new_c_path],
-                    })
-                    print(f"  --> [FALLBACK REPAIRED]: Section '{sec}' successfully rewritten by Qwen with real implementation.")
-                    if event_callback:
-                        try:
-                            event_callback({
-                                "type": "plan_update",
-                                "section": sec,
-                                "status": "completed",
-                                "repaired": True,
-                                "needs_model_repair": False,
-                            })
-                            event_callback({
-                                "type": "log",
-                                "text": f"[FALLBACK REPAIRED] ✓ Section '{sec}' replaced with verified implementation.",
-                            })
-                        except Exception:
-                            pass
-                else:
-                    # TSC failed: revert back to fallback minimal scaffold so the build remains intact
-                    err_msg = prune_stack_trace(tsc_proc.stdout + "\n" + tsc_proc.stderr, max_lines=4)
-                    print(f"  --> [FALLBACK REWRITE FAILED]: Section '{sec}' rewrite failed TypeScript syntax check:\n{err_msg}\nRetaining safe fallback scaffold.")
-                    rewrite_logs.append({
-                        "action": "fallback_rewrite_failed",
-                        "section": sec,
-                        "reason": "tsc_error",
-                        "details": err_msg,
-                    })
-
-        if not repaired:
-            print(f"  --> [FALLBACK REWRITE FAILED]: Section '{sec}' could not be rewritten. Retaining safe minimal scaffold.")
-            rewrite_logs.append({
-                "action": "fallback_rewrite_failed",
-                "section": sec,
-                "reason": "model_output_invalid",
-            })
-
-    return repaired_sections, new_written_files, rewrite_logs
-
-
 SITE_STRATEGIES = ("kit", "freeform")
 
 
@@ -2341,7 +2120,7 @@ def run_site_agent_on_example(
     runner: "AgentModelRunner",
     workspace_root: Path,
     max_turns: int = 8,
-    temperature: float = 0.25,
+    temperature: float = 0.7,
     max_new_tokens: Optional[int] = None,
     style_spec: Optional[Any] = None,
     custom_section_instructions: Optional[Dict[str, str]] = None,
@@ -2446,7 +2225,10 @@ def run_site_agent_on_example(
             )
 
     active_synonyms = _build_section_synonyms(sections)
-    per_section_cap = max(2, max_turns // max(1, len(sections)))
+    # Every section gets the same repair budget; the last section is not
+    # starved because earlier ones used retries (audit A7).
+    per_section_cap = 3
+    max_turns = max(max_turns, per_section_cap * len(sections))
 
     # Synthesize deterministic structured design plan (Section 3.C)
     try:
@@ -2544,11 +2326,28 @@ def run_site_agent_on_example(
         # consume their context budget before producing the final CSS files.
         accepted = ", ".join(name for name, state in section_states.items() if state == "completed")
         saved_paths = ", ".join(path for path, _ in all_written_files)
+        root_classes = []
+        token_lines: List[str] = []
+        for path, content in all_written_files:
+            if path.endswith(".tsx"):
+                first = re.search(r'className=["\']([^"\'\s]+)', content)
+                if first and first.group(1) not in root_classes:
+                    root_classes.append(first.group(1))
+            elif path.endswith(".css"):
+                for block in re.findall(r':root\s*\{([^}]*)\}', content):
+                    for decl in re.findall(r'(--[\w-]+\s*:\s*[^;]+);', block):
+                        if decl not in token_lines:
+                            token_lines.append(decl)
+        shared = ""
+        if root_classes or token_lines:
+            shared = (f"Accepted section root classes (keep your own distinct root class): {', '.join(root_classes) or 'none'}. "
+                      f"Shared tokens already defined: {'; '.join(token_lines[:24]) or 'none'}. Reuse these tokens.\n")
         history[:] = [
             {"role": "system", "content": SITE_AGENT_SYSTEM_PROMPT},
             {"role": "user", "content": initial_user_msg +
              f"Accepted sections: {accepted or 'none'}. Existing files: {saved_paths or 'none'}. "
-             f"Blocked sections: {', '.join(blocked_sections) or 'none'}. Do not overwrite other sections.\n\n"
+             f"Blocked sections: {', '.join(blocked_sections) or 'none'}. Do not overwrite other sections.\n"
+             f"{shared}\n"
              f"CURRENT SECTION REQUIRED: {_SECTION_INSTRUCTIONS.get(sec, sec)}"},
         ]
 
@@ -2593,7 +2392,7 @@ def run_site_agent_on_example(
         # Dynamic reserved-turns guarantee:
         sections_remaining = len(sections) - section_idx
         turns_remaining = max_turns - turn_num + 1
-        effective_cap = 1 if (turns_remaining <= sections_remaining) else per_section_cap
+        effective_cap = per_section_cap
 
         if event_callback:
             try:
@@ -2648,7 +2447,9 @@ def run_site_agent_on_example(
                 primary_symbol=project_name,
                 max_new_tokens=turn_max_tokens,
                 temperature=current_temp,
-                repetition_penalty=1.05,
+                top_p=0.8,
+                top_k=20,
+                repetition_penalty=1.0,
                 stop_check=stop_check,
             )
         except InterruptedError:
@@ -2890,7 +2691,7 @@ def run_site_agent_on_example(
                                 if any("border-radius" in v for v in style_violations):
                                     btn_rad = style_spec.radius.get("--radius-buttons", "75px")
                                     card_rad = style_spec.radius.get("--radius-cards", "0px")
-                                    fcontent = re.sub(r'border-radius\s*:\s*(?:[4-9]|[1-6][0-9]|7[0-4])px\b', f'border-radius: {card_rad}', fcontent, flags=re.I)
+                                    fcontent = _adapt_radii(fcontent, btn_rad, card_rad)
                                 recovered_files.append((fpath, fcontent))
                             else:
                                 recovered_files.append((fpath, fcontent))

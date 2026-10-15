@@ -305,8 +305,8 @@ def test_run_site_agent_returns_three_concepts(monkeypatch, tmp_path):
     runner_mock = MagicMock()
     # Model generates Header then Hero
     runner_mock.generate_turn.side_effect = [
-        '<tool_call name="write_site">\n<file path="src/components/Header.tsx">\nexport function Header() { return <header>Header</header>; }\n</file>\n<file path="src/components/Header.css">\n.header { display: block; }\n</file>\n</tool_call>',
-        '<tool_call name="write_site">\n<file path="src/components/Hero.tsx">\nexport function Hero() { return <main>Hero</main>; }\n</file>\n<file path="src/components/Hero.css">\n.hero { display: block; }\n</file>\n</tool_call>',
+        '<tool_call name="write_site">\n<file path="src/components/Header.tsx">\nimport \'./Header.css\';\nexport function Header() { return <header id="header" className="header">Header</header>; }\nexport default Header;\n</file>\n<file path="src/components/Header.css">\n.header { display: block; }\n</file>\n</tool_call>',
+        '<tool_call name="write_site">\n<file path="src/components/Hero.tsx">\nimport \'./Hero.css\';\nexport function Hero() { return <section id="hero" className="hero">Hero</section>; }\nexport default Hero;\n</file>\n<file path="src/components/Hero.css">\n.hero { display: block; }\n</file>\n</tool_call>',
     ]
 
     monkeypatch.setattr("agent.agent.run_command", lambda *a, **kw: MagicMock(returncode=0, stdout="", stderr=""))
@@ -328,15 +328,16 @@ def test_run_site_agent_returns_three_concepts(monkeypatch, tmp_path):
     assert res["sections_completed"] == 2
     assert res["sections_planned"] == ["header", "hero"]
     assert res["generation_complete"] is True
-    assert res["project_validation"] == "passed"
     assert res["generation_quality"] == "native"
-    assert res["final_passed"] is True
-    assert res["interaction_validation"].passed is True
-    assert res["visual_validation"].passed is True
+    # The agent has no full project yet (the server scaffolds App.tsx), so
+    # nothing is validated here; the server's verify loop decides (audit A14).
+    assert res["project_validation"] == "pending"
+    assert res["validation"] is None
+    assert res["final_passed"] is False
 
 
-def test_run_site_agent_classifies_fallback_when_auto_scaffolded(monkeypatch, tmp_path):
-    """Verifies that run_site_agent_on_example classifies quality as fallback when sections are auto-scaffolded."""
+def test_run_site_agent_blocks_instead_of_auto_scaffolding(monkeypatch, tmp_path):
+    """A model that never calls a tool blocks its sections; no scaffold is fabricated."""
     from agent import run_site_agent_on_example
 
     runner_mock = MagicMock()
@@ -357,10 +358,11 @@ def test_run_site_agent_classifies_fallback_when_auto_scaffolded(monkeypatch, tm
         max_turns=1,
     )
 
-    assert res["section_completion"] == "2 / 2"
-    assert res["generation_complete"] is True
-    assert res["generation_quality"] == "fallback"
-    assert len(res["auto_recovered_sections"]) > 0
+    assert res["section_completion"] == "0 / 2"
+    assert res["generation_complete"] is False
+    assert res["generation_quality"] == "blocked"
+    assert res["auto_recovered_sections"] == []
+    assert res["files"] == {}
 
 
 # ── 5. _run_site_generation State Propagation Tests ───────────────────────────

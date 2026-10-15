@@ -1327,6 +1327,12 @@ def extract_explicit_sections(prompt: str) -> Optional[List[Tuple[str, str]]]:
     # category lists inside parentheses do not become separate site sections.
     if len(matches) < 2:
         inline_m = re.search(r"\bsections?\s*:\s*([^\n]+)", prompt, re.I)
+        include_list = False
+        if not inline_m:
+            # "Include: header, hero, features, footer." is a section list only
+            # when its items name sections (not "Include: dark mode, animations").
+            inline_m = re.search(r"\b(?:include|includes|including)\s*:\s*([^\n]+)", prompt, re.I)
+            include_list = bool(inline_m)
         if inline_m:
             candidate = inline_m.group(1)
             chunks: List[str] = []
@@ -1350,6 +1356,17 @@ def extract_explicit_sections(prompt: str) -> Optional[List[Tuple[str, str]]]:
                 label, desc = _parse_section_line(chunk)
                 if label and label.lower().split()[0] not in NON_SECTION_PREFIXES:
                     inline_matches.append((label, desc or chunk))
+            if include_list and any(len(_LEADING_DETERMINERS_RE.sub("", re.sub(r"^and\s+", "", c.strip(), flags=re.I)).split()) > 3
+                                    for c in chunks if c.strip()):
+                # Descriptive items ("a sticky nav with a CTA") are left to the
+                # heuristic planner, which maps them onto canonical sections.
+                inline_matches = []
+            if include_list:
+                known = [label for label, _ in inline_matches
+                         if re.fullmatch(r"(?:header|nav|navbar|navigation|hero|footer|banner)", label.lower())
+                         or any(re.search(pattern, label.lower()) for pattern in _SECTION_KEYWORD_PATTERNS.values())]
+                if len(known) * 2 < max(1, len(inline_matches)):
+                    inline_matches = []
             if len(inline_matches) >= 2:
                 matches = inline_matches
 

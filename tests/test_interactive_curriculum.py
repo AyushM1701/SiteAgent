@@ -183,6 +183,7 @@ def test_promotion_gate_permits_when_criteria_satisfied():
         },
     }
     cand_metrics = {
+        "mock": False, "provenance": "real",  # promotion evidence must come from real execution
         "overall_pass_rate": 0.45,
         "typecheck_pass_rate": 0.75,
         "category_pass_rates": {
@@ -190,6 +191,7 @@ def test_promotion_gate_permits_when_criteria_satisfied():
             "tsc_and_render": 0.50,
         },
         "site_benchmark_metrics": {
+            "mock": False, "provenance": "real",  # promotion evidence must come from real execution
             "composite_score_mean": 0.85,
             "overall_pass_rate": 0.90,
             "metric_means": {

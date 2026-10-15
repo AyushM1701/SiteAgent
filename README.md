@@ -1,7 +1,7 @@
 # ReactAgent SLM 🚀
 
 > **Autonomous Small Language Model (SLM) for React, TypeScript, and Modern CSS.**  
-> Fine-tuned from `Qwen/Qwen2.5-Coder-3B-Instruct` to generate, test, and self-correct production-grade web components and complete websites. Runs locally on consumer GPUs (e.g., 6GB RTX 4050).
+> Built on `Qwen/Qwen3-4B` to generate, test, and self-correct web components and complete websites. Runs locally on consumer GPUs (e.g., 6GB RTX 4050).
 
 ---
 
@@ -16,7 +16,7 @@ bash scripts/setup.sh
 # Windows Command Prompt
 scripts\setup.bat
 ```
-*Installs Python and npm dependencies, and downloads `Qwen/Qwen2.5-Coder-3B-Instruct` base weights into `./base-model`.*
+*Installs Python and npm dependencies, and downloads `Qwen/Qwen3-4B` base weights into `./base-model`.*
 
 ### 2. Launch the Web Workbench (One Command)
 ```bash
@@ -34,6 +34,21 @@ python slm.py serve
 ### Website requests
 
 The site planner supports portfolios, stores, publications, restaurants, events, dashboards, SaaS sites, and requests outside those categories. Describe the audience, content, visual style, and interactions you want. For an unusual layout, include an inline `Sections:` list or a numbered section list; the planner preserves those sections. Products, projects, prices, testimonials, and contact details should be supplied in the request when they need to appear as real business facts.
+
+**How sites are built (design kit).** By default (`SITE_STRATEGY=kit`) the model writes only the *copy* for
+each section as a small JSON object; `agent/site_kit/` renders it into token-driven, accessible TSX/CSS:
+
+- 12 contrast-checked art directions chosen from the prompt's subject (`themes.py`), with Google Fonts that
+  actually ship the requested weights;
+- vetted, subject-matched Unsplash photography or a designed art panel — never a placeholder (`imagery.py`);
+- integrity filters that drop instructions, style words and invented facts from the copy (`content.py`);
+- renderers for headers, heroes, menus (ARIA tabs), scrollytelling steps, galleries, products/cart, FAQ,
+  pricing, contact forms and footers, with a native motion system that respects reduced motion (`render.py`);
+- favicon, Apple touch icon, OpenGraph tags and a themed `404.html` for every site.
+
+Unusable model output never blocks a section: the kit falls back to honest, deterministic copy.
+Set `SITE_STRATEGY=freeform` (or send `"strategy": "freeform"` to `/api/generate`) to use the legacy loop
+in which the model writes each section's TSX/CSS itself.
 
 ### 3. Full Training Pipeline (One Command)
 To rebuild datasets and retrain from scratch:
@@ -71,6 +86,7 @@ reactagent-slm/
 │   ├── agent.py                   # Multi-turn autonomous agent loop & self-correction
 │   ├── agent_protocol.py          # XML ChatML schema, system prompts & output parser
 │   ├── site_brief.py              # Two-stage XML content brief synthesizer (15+ domains)
+│   ├── site_kit/                  # Design kit: themes, imagery, base CSS, content model, renderers
 │   ├── style_ingest.py            # Zero-LLM CSS design system parser, presets & conformance validator
 │   └── visual_judge.py            # Playwright visual quality & aesthetic scoring judge
 │
@@ -138,14 +154,19 @@ reactagent-slm/
 
 ---
 
-## 🧠 Shipped Model & LoRA Configuration
+## 🧠 Model & LoRA Configuration
 
-The production model adapter is located in `my-react-agent-lora/`. The adapter was fine-tuned using Unsloth QLoRA 4-bit on multi-turn agentic trajectories.
+**Adapter status:** no adapter has passed the promotion gate (`models/promoted_model.json` is `BLOCKED`), so the
+workbench runs the **base `Qwen/Qwen3-4B` model** by default — with the design kit it only writes section copy.
+Candidate adapters under `models/` are unpromoted; set `MODEL_PATH` to try one explicitly.
+`my-react-agent-lora/` holds the historical Qwen2.5 adapter and is not loaded by default.
 
-| Hyperparameter | Shipped Value | Notes |
+The QLoRA training profile used for Qwen3 candidates:
+
+| Hyperparameter | Value | Notes |
 |---|---|---|
-| **Base Model** | `Qwen/Qwen2.5-Coder-3B-Instruct` | 3.09B parameter foundation coder |
-| **LoRA Rank (`r`)** | `16` | Shipped adapter rank (shapes: `[16, 11008]`, `[2048, 16]`) |
+| **Base Model** | `Qwen/Qwen3-4B` | 4B-parameter base model in `./base-model` |
+| **LoRA Rank (`r`)** | `16` | Adapter rank |
 | **LoRA Alpha (`alpha`)** | `16` | Scaling factor $\alpha / r = 1.0$ |
 | **Target Modules** | `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, `down_proj` | All 7 attention & MLP projections |
 | **LoRA Dropout** | `0.0` | 0.0 for Unsloth fast kernel patching |

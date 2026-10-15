@@ -428,6 +428,15 @@ class MotionRulesValidationResult:
         }
 
 
+def _hijacks_scroll(tsx_lower: str) -> bool:
+    """A wheel/touchmove listener (or onWheel/onTouchMove handler) that calls
+    preventDefault. A form submit's preventDefault next to the word "wheel" in
+    copy is not hijacking (B9c)."""
+    listener = re.search(r'addeventlistener\(\s*["\'](?:wheel|touchmove|mousewheel)["\']', tsx_lower) \
+        or re.search(r'\bon(?:wheel|touchmove)\s*=', tsx_lower)
+    return bool(listener and re.search(r'\.\s*preventdefault\s*\(\s*\)', tsx_lower))
+
+
 def _clean_code_for_analysis(code: str) -> str:
     """Removes single-line, multi-line, and JSX comments to avoid false-positive detections."""
     code = re.sub(r'//[^\n]*', '', code)
@@ -496,16 +505,16 @@ def validate_motion_rules(
         if "intersectionobserver" in tsx_lower:
             active_types.add(MotionType.SCROLL_REVEAL)
         if (
-            "requestanimationframe" in tsx_lower
-            or "parallax" in tsx_lower
-            or "parallax" in css_lower
-            or ("wheel" in tsx_lower and "preventdefault" in tsx_lower)
-            or ("touchmove" in tsx_lower and "preventdefault" in tsx_lower)
+            ("requestanimationframe" in tsx_lower and "scroll" in tsx_lower)
+            or re.search(r'data-motion=["\'][^"\']*parallax', tsx_lower)
+            or _hijacks_scroll(tsx_lower)
         ):
             active_types.add(MotionType.PARALLAX)
-        if "horizontal" in tsx_lower or "horizontal" in css_lower or "translate3d" in css_lower or "translatex" in css_lower:
+        if (re.search(r'data-motion=["\'][^"\']*horizontal', tsx_lower)
+                or re.search(r'scroll-snap-type\s*:\s*x\b', css_lower)
+                or _hijacks_scroll(tsx_lower)):
             active_types.add(MotionType.HORIZONTAL_SCROLL)
-        if "sticky" in css_lower:
+        if re.search(r'position\s*:\s*sticky', css_lower):
             active_types.add(MotionType.STICKY_STORY)
         if re.search(r'<h[1-6][^>]*>[\s\S]*?aria-hidden[\s\S]*?</h[1-6]>', tsx_lower) or "text-reveal" in tsx_lower:
             active_types.add(MotionType.TEXT_REVEAL)
@@ -554,18 +563,16 @@ def validate_motion_rules(
     r2_violations = []
     r2_warnings = []
     has_parallax = (
-        "parallax" in tsx_lower
-        or "parallax" in css_lower
+        bool(re.search(r'data-motion=["\'][^"\']*parallax', tsx_lower))
         or ("scroll" in tsx_lower and "requestanimationframe" in tsx_lower)
-        or ("wheel" in tsx_lower and "preventdefault" in tsx_lower)
-        or ("touchmove" in tsx_lower and "preventdefault" in tsx_lower)
+        or _hijacks_scroll(tsx_lower)
     )
     if MotionType.PARALLAX in active_types or (eval_all and has_parallax):
         if "prefers-reduced-motion" not in css_lower:
             r2_violations.append("Parallax missing mandatory prefers-reduced-motion fallback.")
             r2_pass = False
         # Strict forbidden event hijacking check
-        if re.search(r'(?:wheel|touchmove)\s*\.\s*preventdefault\s*\(\s*\)', tsx_lower) or (re.search(r'e\s*\.\s*preventdefault\s*\(\s*\)', tsx_lower) and "wheel" in tsx_lower):
+        if _hijacks_scroll(tsx_lower):
             r2_violations.append("Forbidden event hijacking: never use wheel.preventDefault() or touchmove.preventDefault() for parallax.")
             r2_pass = False
 
@@ -601,10 +608,10 @@ def validate_motion_rules(
     r3_pass = True
     r3_violations = []
     r3_warnings = []
-    has_horizontal = "horizontal" in tsx_lower or "horizontal" in css_lower or ("translate3d" in css_lower and "100vh" in css_lower)
+    has_horizontal = bool(re.search(r'data-motion=["\'][^"\']*horizontal', tsx_lower)) or ("translate3d" in css_lower and "100vh" in css_lower)
     if MotionType.HORIZONTAL_SCROLL in active_types or (eval_all and has_horizontal):
         # Check no wheel or touch hijacking
-        if re.search(r'wheel.*preventdefault', tsx_lower) or re.search(r'touchmove.*preventdefault', tsx_lower):
+        if _hijacks_scroll(tsx_lower):
             r3_violations.append("Horizontal scroll must not hijack native wheel or touch events.")
             r3_pass = False
 

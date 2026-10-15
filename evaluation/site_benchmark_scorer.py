@@ -208,24 +208,24 @@ class SiteBenchmarkScore:
             "passed": self.passed,
             "motion_quality": round(self.motion_quality, 4),
             "scores": {
-                "prompt_fidelity": round(self.prompt_fidelity, 4),
-                "required_section_completion": round(self.required_section_completion, 4),
-                "typescript": round(self.typescript, 4),
-                "production_build": round(self.production_build, 4),
-                "runtime": round(self.runtime, 4),
-                "interactions": round(self.interactions, 4),
-                "responsive_design": round(self.responsive_design, 4),
-                "accessibility": round(self.accessibility, 4),
-                "visual_structure": round(self.visual_structure, 4),
-                "content_quality": round(self.content_quality, 4),
-                "design_diversity": round(self.design_diversity, 4),
-                "dependencies": round(self.dependencies, 4),
-                "assets": round(self.assets, 4),
-                "three_d_runtime_performance": round(self.three_d_runtime_performance, 4),
-                "repair_attempts": round(self.repair_attempts, 4),
-                "time_to_preview": round(self.time_to_preview, 4),
+                "prompt_fidelity": _round(self.prompt_fidelity),
+                "required_section_completion": _round(self.required_section_completion),
+                "typescript": _round(self.typescript),
+                "production_build": _round(self.production_build),
+                "runtime": _round(self.runtime),
+                "interactions": _round(self.interactions),
+                "responsive_design": _round(self.responsive_design),
+                "accessibility": _round(self.accessibility),
+                "visual_structure": _round(self.visual_structure),
+                "content_quality": _round(self.content_quality),
+                "design_diversity": _round(self.design_diversity),
+                "dependencies": _round(self.dependencies),
+                "assets": _round(self.assets),
+                "three_d_runtime_performance": _round(self.three_d_runtime_performance),
+                "repair_attempts": _round(self.repair_attempts),
+                "time_to_preview": _round(self.time_to_preview),
             },
-            "independent_scores": {k: round(v, 4) for k, v in self.independent_scores.items()},
+            "independent_scores": {k: _round(v) for k, v in self.independent_scores.items()},
             "recovery_metrics": self.recovery_metrics,
             "auto_scaffold_usage_rate": round(self.auto_scaffold_usage_rate, 4),
             "model_native_success_rate": round(self.model_native_success_rate, 4),
@@ -238,6 +238,17 @@ class SiteBenchmarkScore:
             "is_3d_site": self.is_3d_site,
             "three_d_performance_checks": self.three_d_performance_checks,
         }
+
+
+def _round(value):
+    """Scores may be None when a check does not apply."""
+    return None if value is None else round(value, 4)
+
+
+def _applicable_mean(values) -> Optional[float]:
+    """Mean over applicable scores; None when no site had the check (A16)."""
+    present = [v for v in values if v is not None]
+    return round(sum(present) / len(present), 4) if present else None
 
 
 class SiteBenchmarkScorer:
@@ -253,36 +264,48 @@ class SiteBenchmarkScorer:
         combined_text = " ".join(files.values()).lower()
         details: Dict[str, Any] = {}
 
-        # 1a. Domain keywords matching
+        # Each part counts only when the spec gives something to check (A16).
+        parts: List[Tuple[float, float]] = []
         expected_kws = [k.lower() for k in prompt_spec.get("domain_keywords", [])]
         matched_kws = [k for k in expected_kws if k in combined_text]
-        kw_ratio = (len(matched_kws) / max(1, len(expected_kws))) if expected_kws else 1.0
-
-        # 1b. Brand/Project name matching
+        if expected_kws:
+            parts.append((0.50, len(matched_kws) / len(expected_kws)))
         project_name = prompt_spec.get("name", "").lower()
-        has_brand = (project_name in combined_text) if project_name else True
-
-        # 1c. Title / domain theme presence
+        has_brand = (project_name in combined_text) if project_name else None
+        if has_brand is not None:
+            parts.append((0.30, 1.0 if has_brand else 0.0))
         title = prompt_spec.get("title", "").lower()
         title_tokens = [w for w in re.findall(r"\w+", title) if len(w) > 3]
         matched_title_tokens = [t for t in title_tokens if t in combined_text]
-        title_ratio = (len(matched_title_tokens) / max(1, len(title_tokens))) if title_tokens else 1.0
+        if title_tokens:
+            parts.append((0.20, len(matched_title_tokens) / len(title_tokens)))
 
-        score = 0.50 * kw_ratio + 0.30 * (1.0 if has_brand else 0.0) + 0.20 * title_ratio
         details["matched_keywords"] = matched_kws
         details["total_keywords"] = expected_kws
         details["has_brand"] = has_brand
-        details["keyword_coverage"] = round(kw_ratio, 3)
-
+        details["applicable"] = bool(parts)
+        if not parts:
+            return None, details
+        score = sum(w * v for w, v in parts) / sum(w for w, _ in parts)
+        details["keyword_coverage"] = round(len(matched_kws) / len(expected_kws), 3) if expected_kws else None
         return min(1.0, max(0.0, score)), details
 
     # 2. Required Section Completion
     def score_required_section_completion(
         self, prompt_spec: Dict[str, Any], files: Dict[str, str]
     ) -> Tuple[float, Dict[str, Any]]:
-        required = prompt_spec.get("required_sections", [])
+        required = list(prompt_spec.get("required_sections", []))
+        if not required and prompt_spec.get("prompt"):
+            # Feed the planner's sections in when the spec lists none (A16).
+            try:
+                from agent.site_brief import detect_business_type, extract_sections_from_prompt
+                text = prompt_spec["prompt"]
+                required = [s for s in extract_sections_from_prompt(text, detect_business_type(text))
+                            if s not in {"header", "hero", "footer"}]
+            except Exception:
+                required = []
         if not required:
-            return 1.0, {"completed": [], "missing": []}
+            return None, {"completed": [], "missing": [], "applicable": False}
 
         # Normalize existing file stems and code content
         file_stems = {
@@ -593,9 +616,19 @@ class SiteBenchmarkScorer:
         total_text = " ".join(w.strip() for w in jsx_words if w.strip())
         word_count = len(total_text.split())
 
-        richness_score = min(1.0, word_count / 150.0)
+        # Score by the absence of placeholder content, not by word count (A16):
+        # concise, honest copy is not a defect.
+        has_placeholder_names = bool(re.search(
+            r"\b(?:John|Jane)\s+(?:Doe|Smith)\b|\bAcme(?:\s+(?:Corp|Inc|Co))?\b|\bYour (?:Company|Brand|Name)\b|\bCompany Name\b",
+            combined_text))
+        has_placeholder_hosts = bool(re.search(
+            r"via\.placeholder\.com|placehold\.(?:co|it)|placekitten\.com|picsum\.photos|dummyimage\.com", combined_text, re.I))
 
-        score = richness_score
+        score = 1.0
+        if has_placeholder_names:
+            score -= 0.25
+        if has_placeholder_hosts:
+            score -= 0.25
         if has_lorem:
             score -= 0.40
         if has_fake_contacts:
@@ -607,6 +640,8 @@ class SiteBenchmarkScorer:
         details["has_fake_contacts"] = has_fake_contacts
         details["has_fake_testimonials"] = has_fake_testimonials
         details["copy_word_count"] = word_count
+        details["has_placeholder_names"] = has_placeholder_names
+        details["has_placeholder_hosts"] = has_placeholder_hosts
 
         return min(1.0, max(0.0, score)), details
 
@@ -1059,7 +1094,10 @@ class SiteBenchmarkScorer:
             "time_to_preview": s_ttp,
         }
 
-        base_composite = sum(raw_scores[dim] * weights[dim] for dim in REQUIRED_SCORING_DIMENSIONS) / total_weight
+        # Not-applicable dimensions (None) are excluded from the mean (A16).
+        applicable = [dim for dim in REQUIRED_SCORING_DIMENSIONS if raw_scores[dim] is not None]
+        total_weight = sum(weights[dim] for dim in applicable) or 1.0
+        base_composite = sum(raw_scores[dim] * weights[dim] for dim in applicable) / total_weight
 
         # Section 3.E: Penalize recovery dependence
         # A model that needs auto-scaffolding for every site is not stronger.
@@ -1069,7 +1107,7 @@ class SiteBenchmarkScorer:
 
         # Section 3.D: 10 Decoupled Independent Outcome Axes
         correctness_build_runtime = round(0.40 * s_ts + 0.40 * s_build + 0.20 * s_rt, 4)
-        prompt_fidelity_score = round(s_prompt, 4)
+        prompt_fidelity_score = round(s_prompt, 4) if s_prompt is not None else None
         interaction_behavior_score = round(s_inter, 4)
         responsive_behavior_score = round(s_resp, 4)
         accessibility_score = round(s_a11y, 4)
@@ -1108,7 +1146,7 @@ class SiteBenchmarkScorer:
             s_ts >= 0.99
             and has_live_workspace
             and s_build >= 0.99 and s_rt >= 0.99
-            and s_sections >= 0.99 and composite >= 0.65
+            and (s_sections is None or s_sections >= 0.99) and composite >= 0.65
             and not remaining_fallbacks and auto_usage <= 0.50
             and (not d_3d.get("needs_3d") or d_3d.get("all_checks_passed", False))
             and s_inter >= 0.99
@@ -1122,7 +1160,7 @@ class SiteBenchmarkScorer:
             errors.append("Production build failed.")
         if s_rt < 0.99:
             errors.append("Browser runtime failed.")
-        if s_sections < 0.99:
+        if s_sections is not None and s_sections < 0.99:
             errors.append(f"Section completion too low ({s_sections:.1%}).")
         if d_3d.get("needs_3d") and not d_3d.get("all_checks_passed", False):
             errors.append("3D scene contract or static performance validation failed.")
@@ -1263,8 +1301,7 @@ def aggregate_site_benchmark_scores(
 
     metric_means: Dict[str, float] = {}
     for dim in REQUIRED_SCORING_DIMENSIONS:
-        val = sum(getattr(s, dim) for s in scores) / n
-        metric_means[dim] = round(val, 4)
+        metric_means[dim] = _applicable_mean(getattr(s, dim) for s in scores)
 
     # Group by domain
     domain_scores: Dict[str, List[SiteBenchmarkScore]] = {}
@@ -1282,7 +1319,7 @@ def aggregate_site_benchmark_scores(
             "composite_score": round(dom_comp, 4),
             "typescript_pass_rate": round(sum(s.typescript for s in dom_list) / dom_n, 4),
             "production_build_rate": round(sum(s.production_build for s in dom_list) / dom_n, 4),
-            "section_completion_rate": round(sum(s.required_section_completion for s in dom_list) / dom_n, 4),
+            "section_completion_rate": _applicable_mean(s.required_section_completion for s in dom_list),
         }
 
     # Anti-Template-Collapse / Batch Diversity Evaluation (Issue #27)
@@ -1310,7 +1347,7 @@ def aggregate_site_benchmark_scores(
         p_n = len(partition)
         p_pass = sum(1 for s in partition if s.passed)
         p_means = {
-            dim: round(sum(getattr(s, dim) for s in partition) / p_n, 4)
+            dim: _applicable_mean(getattr(s, dim) for s in partition)
             for dim in REQUIRED_SCORING_DIMENSIONS
         }
         return {
@@ -1356,8 +1393,7 @@ def aggregate_site_benchmark_scores(
     # Section 3.D: Aggregate 10 Decoupled Independent Outcome Axes
     independent_axes_means: Dict[str, float] = {}
     for axis in INDEPENDENT_EVALUATION_AXES:
-        axis_vals = [s.independent_scores.get(axis, 0.0) for s in scores]
-        independent_axes_means[axis] = round(sum(axis_vals) / n, 4)
+        independent_axes_means[axis] = _applicable_mean(s.independent_scores.get(axis, 0.0) for s in scores)
 
     # Section 3.E: Aggregate 4 First-Class Recovery Metrics
     recovery_metrics_summary = {

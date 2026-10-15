@@ -60,9 +60,11 @@ def assert_blocked(result, sections):
 
 
 def test_exhausted_retries_preserve_accepted_files_and_skip_rewrite(tmp_path, fast_gates, monkeypatch):
-    monkeypatch.setattr(site_agent, "rewrite_fallback_sections", lambda **kw: pytest.fail("blocked section must not be rewritten"))
+    assert not hasattr(site_agent, "rewrite_fallback_sections")  # blocked sections are never rewritten
+    # Every section gets three attempts (audit A7).
     outputs = [section_write("Header"), '<tool_call name="write_site"></tool_call>',
-               '<tool_call name="write_site"></tool_call>', section_write("Footer")]
+               '<tool_call name="write_site"></tool_call>', '<tool_call name="write_site"></tool_call>',
+               section_write("Footer")]
     result, runner, events = run_site(tmp_path, outputs, ["Header", "Hero", "Footer"], 6)
     assert_blocked(result, ["Hero"])
     assert result["sections_completed"] == 2
@@ -70,13 +72,13 @@ def test_exhausted_retries_preserve_accepted_files_and_skip_rewrite(tmp_path, fa
     assert result["section_states"] == {"Header": "completed", "Hero": "blocked", "Footer": "completed"}
     assert (tmp_path / "site_000/src/components/Header.tsx").read_text() == result["files"]["src/components/Header.tsx"]
     assert not (tmp_path / "site_000/src/components/Hero.tsx").exists()
-    assert len(runner.calls) == 4
+    assert len(runner.calls) == 5
     blocked_event = next(e for e in events if e.get("section") == "Hero" and e.get("status") == "blocked")
     assert blocked_event["completed"] == 1
 
 
 def test_syntax_failures_do_not_write_draft_or_fallback(tmp_path, fast_gates):
-    result, _, _ = run_site(tmp_path, [section_write("Hero", "BROKEN"), section_write("Hero", "BROKEN")], ["Hero"], 2)
+    result, _, _ = run_site(tmp_path, [section_write("Hero", "BROKEN")] * 3, ["Hero"], 2)
     assert_blocked(result, ["Hero"])
     assert result["sections_completed"] == 0
     assert result["section_states"] == {"Hero": "blocked"}
@@ -91,7 +93,7 @@ def test_typescript_failure_blocks_without_overwriting_accepted_section(tmp_path
         return SimpleNamespace(returncode=1 if broken else 0, stdout="TS1005: syntax error" if broken else "", stderr="")
 
     monkeypatch.setattr(site_agent, "run_command", tsc)
-    result, _, _ = run_site(tmp_path, [section_write("Header"), section_write("Hero")], ["Header", "Hero"], 2)
+    result, _, _ = run_site(tmp_path, [section_write("Header")] + [section_write("Hero")] * 3, ["Header", "Hero"], 2)
     assert_blocked(result, ["Hero"])
     assert result["sections_completed"] == 1
     assert result["section_states"] == {"Header": "completed", "Hero": "blocked"}
@@ -100,18 +102,21 @@ def test_typescript_failure_blocks_without_overwriting_accepted_section(tmp_path
     assert next(log for log in result["turn_logs"] if log["action"] == "section_blocked")["reason"] == "typescript_error"
 
 
-def test_budget_exhaustion_blocks_remaining_without_files(tmp_path, fast_gates):
-    result, _, events = run_site(tmp_path, [section_write("Header")], ["Header", "Hero", "Footer"], 1)
+def test_small_turn_budget_still_gives_every_section_three_attempts(tmp_path, fast_gates):
+    """max_turns no longer starves later sections (audit A7): each gets three tries."""
+    outputs = [section_write("Header")] + ["not a tool call"] * 6
+    result, runner, events = run_site(tmp_path, outputs, ["Header", "Hero", "Footer"], 1)
     assert_blocked(result, ["Hero", "Footer"])
     assert result["section_states"] == {"Header": "completed", "Hero": "blocked", "Footer": "blocked"}
     assert result["sections_completed"] == 1
     assert len(result["files"]) == 2
-    assert all(log["reason"] == "budget_exhausted" for log in result["turn_logs"] if log["action"] == "section_blocked")
+    assert len(runner.calls) == 7
+    assert all(log["reason"] == "no_action" for log in result["turn_logs"] if log["action"] == "section_blocked")
     assert all(e["completed"] == 1 for e in events if e.get("status") == "blocked")
 
 
 def test_no_action_cap_writes_no_fallback_files(tmp_path, fast_gates):
-    result, _, _ = run_site(tmp_path, ["not a tool call", "still not a tool call"], ["Hero"], 2)
+    result, _, _ = run_site(tmp_path, ["not a tool call", "still not a tool call", "nope"], ["Hero"], 2)
     assert_blocked(result, ["Hero"])
     assert result["files"] == {}
     assert not list((tmp_path / "site_000").rglob("*.tsx"))

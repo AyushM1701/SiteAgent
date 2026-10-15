@@ -134,14 +134,21 @@ class PackagePolicy:
             )
 
 
+# Import/export statements start a line; a "from" inside a string literal
+# ('Order from ' + name) is not an import (B9a).
+_STATIC_IMPORT_RE = re.compile(
+    r"""^[ \t]*(?:import|export)\b(?:[\s\w*{},$]*?\bfrom)?\s*['"]([^'"\n]+)['"]""", re.M)
+_DYNAMIC_IMPORT_RE = re.compile(r"""\bimport\(\s*['"]([^'"\n]+)['"]\s*\)""")
+
+
 def external_imports(files: Dict[str, str]) -> Set[str]:
     """Return package roots imported by generated JS/TS source files."""
     packages: Set[str] = set()
-    pattern = re.compile(r"(?:\bfrom\s*|\bimport\s*\(|\bimport\s*)['\"]([^'\"]+)['\"]")
     for path, content in files.items():
         if not path.endswith((".js", ".jsx", ".ts", ".tsx")):
             continue
-        for spec in pattern.findall(content):
+        specs = _STATIC_IMPORT_RE.findall(content) + _DYNAMIC_IMPORT_RE.findall(content)
+        for spec in specs:
             if spec.startswith((".", "/")):
                 continue
             packages.add("/".join(spec.split("/")[:2]) if spec.startswith("@") else spec.split("/")[0])

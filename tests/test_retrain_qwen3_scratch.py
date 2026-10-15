@@ -110,7 +110,7 @@ def test_safetensors_weights_valid():
         assert sample_tensor_b.shape[1] == 16, f"Expected lora_B rank dimension 16, got {sample_tensor_b.shape}"
 
 
-def test_train_sft_rejects_qwen25_adapter(tmp_path):
+def test_train_sft_rejects_qwen25_adapter(tmp_path, real_context_report):
     """Verify train_sft fail-closed logic rejects any legacy Qwen2.5 adapter."""
     from training.train_sft import train
 
@@ -129,4 +129,5 @@ def test_train_sft_rejects_qwen25_adapter(tmp_path):
             dataset_path="data/quality_candidate/train.jsonl",
             initial_adapter=str(fake_legacy_adapter),
             preflight_only=True,
+            benchmark_report=real_context_report,
         )

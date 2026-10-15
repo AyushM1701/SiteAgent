@@ -8,7 +8,6 @@ __all__ = [
     "run_agent_on_example",
     "run_site_agent_on_example",
     "auto_scaffold_section",
-    "rewrite_fallback_sections",
     "parse_agent_output",
     "WriteSiteAction",
     "sanitize_css_for_spec",
