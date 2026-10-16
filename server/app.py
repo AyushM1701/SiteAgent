@@ -1698,7 +1698,7 @@ export default function App() {{
         app_css_path.write_text(full_app_css, encoding="utf-8")
 
         # P0-4: HTML-escape project name and description to prevent stored HTML injection
-        safe_project_name = html.escape(project_name.replace('_', ' '))
+        safe_project_name = html.escape((brief or {}).get("kit_title") or project_name.replace('_', ' '))
         display_name = project_name.replace('_', ' ')
         tagline = str((brief or {}).get("description") or (brief or {}).get("tagline") or "").strip()
         meta_desc = tagline if tagline and tagline.lower() != display_name.lower() else display_name
@@ -3542,6 +3542,7 @@ def _run_site_generation(task: dict, q: queue.Queue):
             "kit_head_tags": kit_output.get("head_tags"),
             "kit_public_files": kit_output.get("public_files") or [],
             "kit_edit_summary": kit_output.get("edit_summary", ""),
+            "kit_title": kit_output.get("title", ""),
         })
         sections = list(result.get("sections_planned") or sections)
 
@@ -4129,7 +4130,9 @@ def generate():
         })
 
     # ── Intent classification: site vs component ───────────────────────────
-    user_intent = data.get("intent")
+    # The composer's Full Site / Component toggle arrives as "mode"; an explicit
+    # choice outranks the keyword classifier.
+    user_intent = data.get("intent") or (data.get("mode") if data.get("mode") in ("site", "component") else None)
     if user_intent:
         intent = user_intent.lower()
         intent_conf = 1.0

@@ -335,3 +335,41 @@ def test_single_image_sections_get_photos_before_grids():
     assert kit.section_images["care-guide"], "steps visual should not be starved by the collection grid"
     ids = [p.id for photos in kit.section_images.values() for p in photos]
     assert len(ids) == len(set(ids))
+
+
+def test_model_copy_is_sentence_cased():
+    kit = make_kit(ASTER)
+    content, _ = kit.accept("studio-notes", json.dumps({
+        "title": "studio notes", "intro": "notes from the bench.",
+        "items": [{"title": "clay is shaped by hand", "excerpt": "each piece begins as a lump of clay.", "tag": "process"}]}))
+    assert content["title"] == "Studio notes"
+    assert content["intro"] == "Notes from the bench."
+    assert content["items"][0]["title"] == "Clay is shaped by hand"
+    assert content["items"][0]["excerpt"].startswith("Each piece")
+
+
+def test_kit_output_carries_the_brand_as_page_title(tmp_path):
+    from server.app import _scaffold_site_vite_runner
+    kit = make_kit(ASTER)
+    files = {}
+    for slug in kit.sections:
+        kit.accept(slug, "")
+        files.update(dict(kit.render(slug)))
+    brief = {"kit_base_css": kit.base_css(), "kit_font_href": kit.font_href(), "kit_head_tags": kit.head_tags(),
+             "kit_public_files": kit.public_files(), "kit_title": kit.brand}
+    _scaffold_site_vite_runner(tmp_path, "Aster_Kiln", files, brief=brief)
+    assert "<title>Aster &amp; Kiln</title>" in (tmp_path / "index.html").read_text(encoding="utf-8")
+
+
+def test_integrity_drops_vague_client_claims():
+    integrity = Integrity(MAYA)
+    assert integrity.clean_text("Maya Chen has rebranded clients across multiple industries.") == ""
+    assert integrity.clean_text("Trusted by leading brands.") == ""
+    assert integrity.clean_text("Identity work for a new mobile app.") == "Identity work for a new mobile app."
+
+
+def test_hero_prompt_says_where_each_button_goes():
+    kit = make_kit(SAFFRON)
+    user = kit.messages("hero")[-1]["content"]
+    assert "primary_cta opens the Menu section" in user
+    assert "secondary_cta opens the Contact section" in user

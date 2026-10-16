@@ -168,3 +168,11 @@ def test_descriptive_include_lists_stay_with_the_heuristic_planner():
     prompt = ("A SaaS startup called NexaFlow. Include: a sticky nav with a CTA, a hero section with animated "
               "gradient text, a features grid (6 cards), a pricing section with a monthly/annual toggle, and a footer.")
     assert extract_explicit_sections(prompt) is None
+
+
+@pytest.mark.parametrize("prompt, name", [
+    ("A summer coding camp for kids in Bengaluru with schedule, pricing and FAQ", "Summer Coding Camp"),
+    ("A small bakery in Leeds with a menu and contact", "Small Bakery"),
+])
+def test_a_place_is_not_a_business_name(prompt, name):
+    assert extract_business_name(prompt) == name

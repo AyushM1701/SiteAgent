@@ -163,3 +163,15 @@ def test_freeform_run_without_a_project_reports_pending_validation(tmp_path, mon
                                        ["hero"], runner, tmp_path, max_turns=2)
     assert result["validation"] is None
     assert result["project_validation"] == "pending"
+
+
+def test_contact_check_ignores_digits_inside_urls(tmp_path):
+    from agent.project_validator import find_unverified_contact_files
+    comp = tmp_path / "src" / "components"
+    comp.mkdir(parents=True)
+    (comp / "Hero.tsx").write_text(
+        'const DATA = {"src": "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&w=1200"};',
+        encoding="utf-8")
+    (comp / "Contact.tsx").write_text("<p>Call +1 415 555 0132 or write to hi@made-up.com</p>", encoding="utf-8")
+    flagged = find_unverified_contact_files(tmp_path, "A pottery studio. Email hello@asterkiln.com.")
+    assert flagged == ["src/components/Contact.tsx"]

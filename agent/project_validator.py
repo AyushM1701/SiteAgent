@@ -2188,6 +2188,26 @@ class BrowserRuntimeCheckResult(tuple):
         return instance
 
 
+def _wait_for_scroll_settle(page, timeout_ms: int = 2000) -> None:
+    """An in-page link may start a smooth scroll; wait until the page stops
+    moving so the next control is stable enough to exercise."""
+    try:
+        page.wait_for_function(
+            """() => new Promise(resolve => {
+                let last = window.scrollY, still = 0;
+                const tick = () => {
+                    still = window.scrollY === last ? still + 1 : 0;
+                    last = window.scrollY;
+                    if (still >= 3) resolve(true); else requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            })""",
+            timeout=timeout_ms,
+        )
+    except Exception:
+        pass
+
+
 def check_broken_rendered_images(page) -> List[str]:
     """A mounted page with failed product/hero images is not a valid preview."""
     broken = page.evaluate("""() => [...document.images].filter(image => {
@@ -2369,6 +2389,7 @@ def run_browser_runtime_check(
                             elem.hover(timeout=500)
                             elem.click(timeout=500)
                             page.wait_for_timeout(100)
+                            _wait_for_scroll_settle(page)
                             interaction_evidence.append(InteractionEvidence(
                                 requirement_id=f"generic_control_{idx}",
                                 locator=f"{tag}[role={role}]",
@@ -2524,9 +2545,11 @@ def find_unverified_contact_files(workspace_dir: Path, original_prompt: str) -> 
     for component in components_dir.rglob("*.tsx"):
         source = component.read_text(encoding="utf-8", errors="replace")
         emails = {match.lower() for match in re.findall(r'[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}', source)}
+        # A phone number stands alone: digit runs inside URLs or ids (an
+        # Unsplash "photo-1578749556568-…") are not contact details.
         phones = {
             re.sub(r'\D', '', match) for match in re.findall(
-                r'(?:\+?\d{1,3}[\s.-]*)?\(?\d{3}\)?[\s.-]*\d{3}[\s.-]*\d{4}', source
+                r'(?<![\w/.=-])(?:\+?\d{1,3}[\s.-]*)?\(?\d{3}\)?[\s.-]*\d{3}[\s.-]*\d{4}(?![\w-])', source
             )
         }
         if emails - prompt_emails or phones - prompt_phone_digits:

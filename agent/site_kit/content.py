@@ -220,13 +220,22 @@ _COUNT_RE = re.compile(
 _TITLE_ORG_RE = re.compile(r"\b(?:CEO|CTO|CPO|COO|VP|Director|Head|Founder|Co-founder|President|Manager)\s+(?:of|at)\s+[A-Z][a-z]")
 _CLAIM_RE = re.compile(
     r"\b(?:award[- ]winning|best\s+in|#\s?1\b|number\s+one|voted\b|featured\s+in|as\s+seen\s+(?:in|on)|trusted\s+by\s+\d|"
-    r"rated\s+\d|five[- ]star|5[- ]star|michelin|certified\s+by|industry[- ]leading|world[- ]class|leading\s+provider)", re.I)
+    r"rated\s+\d|five[- ]star|5[- ]star|michelin|certified\s+by|industry[- ]leading|world[- ]class|leading\s+provider|"
+    # Vague track-record claims the request never made ("clients across multiple industries").
+    r"(?:clients|brands|companies|customers|businesses)\s+(?:across|in|from)\s+(?:multiple|many|various|several|diverse|numerous|all)\b|"
+    r"(?:multiple|many|numerous|countless|dozens\s+of|hundreds\s+of|leading|top|major|global)\s+(?:clients|brands|companies|customers|businesses))",
+    re.I)
 _HOURS_RE = re.compile(
     r"\b\d{1,2}(?::\d{2})?\s?(?:am|pm)\b|\b(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)(?:day)?s?\s*(?:-|–|to|through)\s*"
     r"(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)|\bopen\s+(?:daily|every\s+day|seven\s+days|24/7)\b|\b24/7\b", re.I)
 _COUNT_LEAK_RE = re.compile(r"\(\d+ (?:cards?|items?|tiers?)\)|\b\d+ cards\b", re.I)
 _CLICHE_RE = re.compile(r"\b(?:elevate|elevates|elevating|unlock|unlocks|seamless(?:ly)?|world-class|cutting-edge|"
                         r"game-chang\w+|revolutioni[sz]\w*|synerg\w+|next-level|best-in-class)\b", re.I)
+
+
+def _sentence_case(text: str) -> str:
+    """Capitalise the first letter of each sentence the model left lowercase."""
+    return re.sub(r"(^|[.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
 
 
 def _words(text: str) -> list[str]:
@@ -300,7 +309,7 @@ class Integrity:
 
     def clean_text(self, text: Any) -> str:
         sentences = [s for s in split_sentences(str(text or "")) if self.sentence_ok(s)]
-        cleaned = " ".join(sentences)
+        cleaned = _sentence_case(" ".join(sentences))
         return _CLICHE_RE.sub(lambda m: {"elevate": "lift", "elevates": "lifts", "unlock": "open",
                                           "unlocks": "opens"}.get(m.group(0).lower(), m.group(0)), cleaned).strip()
 
@@ -312,7 +321,7 @@ class Integrity:
         words = value.split()
         if len(words) > max_words:
             value = " ".join(words[:max_words]).rstrip(",;:—–-")
-        return value
+        return _sentence_case(value)
 
 
 # ── Context, normalisation and fallback ─────────────────────────────────────
@@ -644,7 +653,8 @@ def normalise(ctx: SectionContext, data: Optional[dict], integrity: Integrity) -
 
 # ── Prompting ───────────────────────────────────────────────────────────────
 
-def build_messages(ctx: SectionContext, prompt: str, item_count: int, voice: list[str]) -> list[dict]:
+def build_messages(ctx: SectionContext, prompt: str, item_count: int, voice: list[str],
+                   cta_targets: Optional[tuple[str, str]] = None) -> list[dict]:
     lines = [
         f"Request: {prompt.strip()}",
         f"Business name: {ctx.brand}",
@@ -657,6 +667,9 @@ def build_messages(ctx: SectionContext, prompt: str, item_count: int, voice: lis
         lines.append("Use exactly these items from the request, in this order: " + ", ".join(ctx.supplied_items) + ".")
     elif ctx.kind in COUNTS:
         lines.append(f"Write {item_count} items.")
+    if ctx.kind == "hero" and cta_targets:
+        lines.append(f"Button labels must match where they go: primary_cta opens the {cta_targets[0]} section; "
+                     f"secondary_cta opens the {cta_targets[1]} section.")
     if voice:
         lines.append("Headlines already on the page (keep the same voice, don't repeat them): " + " | ".join(voice[:3]))
     lines.append(f"Reply with JSON in this shape: {SHAPES.get(ctx.kind, SHAPES['split'])}")

@@ -115,3 +115,11 @@ def test_menu_tabs_use_view_transitions_and_keyboard():
     assert "startViewTransition" in menu and "flushSync" in menu
     for key in ("ArrowRight", "ArrowLeft", "Home", "End"):
         assert key in menu
+
+
+def test_footer_wordmark_is_a_44px_target():
+    kit, files = site(ASTER)
+    css = files["src/components/Footer.css"]
+    rule = css[css.index(".k-footer .k-footer__wordmark {"):]
+    rule = rule[:rule.index("}")]
+    assert "min-height: var(--k-tap)" in rule

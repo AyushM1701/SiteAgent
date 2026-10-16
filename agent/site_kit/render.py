@@ -672,7 +672,7 @@ export function __NAME__() {
 .k-footer { padding-block: clamp(56px, 8vw, 96px) 32px; background-color: var(--k-surface); color: var(--k-ink); border-top: 1px solid var(--k-line); }
 .k-footer .k-footer__grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: var(--k-space-6); }
 .k-footer .k-footer__brand { display: grid; gap: var(--k-space-2); align-content: start; justify-items: start; }
-.k-footer .k-footer__wordmark { font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; text-transform: var(--k-display-case); text-decoration: none; }
+.k-footer .k-footer__wordmark { display: inline-flex; align-items: center; min-height: var(--k-tap); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; text-transform: var(--k-display-case); text-decoration: none; }
 .k-footer .k-footer__tagline { max-width: 34ch; color: var(--k-muted); }
 .k-footer .k-footer__cta { margin-top: var(--k-space-1); }
 .k-footer .k-footer__label { margin-bottom: var(--k-space-1); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }

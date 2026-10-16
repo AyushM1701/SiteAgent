@@ -1082,9 +1082,22 @@ def extract_business_name(prompt: str) -> str:
         return m.group(1).strip()
 
     name = _extract_business_name_legacy(prompt)
+    # A capitalised place after "in/from/based in" is where the business is,
+    # not what it is called ("A summer coding camp for kids in Bengaluru").
+    if name != "My Business" and re.search(rf"\b(?:in|from|based in|near)\s+{re.escape(name)}\b", prompt):
+        name = "My Business"
     if name == "My Business":
-        return _descriptive_business_name(prompt) or name
+        return _descriptive_business_name(prompt) or _leading_noun_phrase_name(prompt) or name
     return name
+
+
+def _leading_noun_phrase_name(prompt: str) -> Optional[str]:
+    """"A summer coding camp for kids in …" -> "Summer Coding Camp"."""
+    m = re.match(r"\s*(?:a|an)\s+([a-z][\w-]*(?:\s+[a-z][\w-]*){0,3}?)\s+(?:for|in|with|that|which|near|from|called|named)\b", prompt, re.I)
+    if not m:
+        return None
+    words = [w for w in m.group(1).split() if w.lower() not in {"website", "site", "landing", "page", "homepage"}]
+    return " ".join(w.capitalize() for w in words) or None
 
 
 def _extract_business_name_legacy(prompt: str) -> str:

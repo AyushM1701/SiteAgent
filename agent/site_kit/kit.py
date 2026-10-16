@@ -227,7 +227,13 @@ class KitSite:
         kind = self.kinds[slug]
         supplied = self.supplied_items(slug)
         ask = COUNTS.get(kind, (0, 0, 3))[2]
-        return build_messages(self._ctx(slug), self.prompt, len(supplied) or ask, self.voice)
+        targets = None
+        if kind == "hero":
+            first = next((s for s in self._content_sections() if self.kinds[s] not in _CLOSING_KINDS), "")
+            contact = next((s for s in self.sections if self.kinds[s] == "contact"), "")
+            targets = (self.labels[first] if first else "Contact",
+                       self.labels[contact] if contact else ("email" if self.email else "Contact"))
+        return build_messages(self._ctx(slug), self.prompt, len(supplied) or ask, self.voice, targets)
 
     def is_usable(self, slug: str, text: str) -> bool:
         return is_usable(self.kinds[slug], parse_json_object(text), self.integrity)

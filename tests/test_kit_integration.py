@@ -273,3 +273,20 @@ def test_edit_turns_receive_the_kit_design_summary(tmp_path):
     assert _kit_edit_note(tmp_path) == ""
     (tmp_path / "content_brief.json").write_text(json.dumps({"kit_edit_summary": "DESIGN KIT: theme 'Atelier'"}), encoding="utf-8")
     assert "DESIGN KIT: theme 'Atelier'" in _kit_edit_note(tmp_path)
+
+
+def test_generate_endpoint_honours_the_full_site_toggle(monkeypatch):
+    """The composer sends mode="site" from its Full Site / Component toggle; the
+    keyword classifier must not override an explicit choice."""
+    import queue as _queue
+    import server.app as app_module
+    captured = _queue.Queue()
+    monkeypatch.setattr(app_module, "_generation_queue", captured)
+    monkeypatch.setattr(app_module, "_model_status", "ready")
+    monkeypatch.setattr(app_module, "_runner", object())
+    client = app_module.app.test_client()
+    prompt = "Northwind — a B2B analytics SaaS for logistics teams. Dark, technical look. Include a product preview and FAQ."
+    assert app_module._classify_intent_with_confidence(prompt)[0] == "component"  # the keyword guess
+    response = client.post("/api/generate", json={"prompt": prompt, "mode": "site"})
+    assert response.get_json()["mode"] == "site"
+    assert captured.get_nowait()["mode"] == "site"

@@ -2107,7 +2107,7 @@ def _run_kit_site(
         "cancelled": cancelled,
         "kit": {"base_css": kit.base_css(), "font_href": kit.font_href(), "head_tags": kit.head_tags(),
                 "public_files": kit.public_files(), "theme": kit.theme_summary(),
-                "edit_summary": kit.edit_summary()},
+                "edit_summary": kit.edit_summary(), "title": kit.brand},
     }
 
 
