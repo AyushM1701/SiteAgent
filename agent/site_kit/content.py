@@ -11,6 +11,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+try:
+    from agent.design_leaks import is_design_direction
+except ImportError:  # pragma: no cover - script context
+    from design_leaks import is_design_direction  # type: ignore
+
 # ── Section kinds ───────────────────────────────────────────────────────────
 
 KIND_PATTERNS: list[tuple[str, str]] = [
@@ -191,11 +196,12 @@ def parse_json_object(text: str) -> Optional[dict]:
 
 # ── Integrity ───────────────────────────────────────────────────────────────
 
+# Design words (palette, typography, fonts, layout…) are judged per sentence by
+# is_design_direction, so business copy that uses them survives.
 META_RE = re.compile(
-    r"\b(?:palettes?|hex(?:\s+code)?|#[0-9a-f]{3,6}\b|fonts?|typefaces?|typography|colou?r\s+scheme|design\s+system|"
-    r"design\s+language|css|this\s+section|placeholders?|lorem|ipsum|illustrative|demo\s+data|sample\s+(?:copy|text|data)|"
-    r"this\s+(?:website|site|page)|the\s+user|as\s+requested|(?:not\s+)?invented|fabricat\w*|user[- ]supplied|"
-    r"supplied\s+by|json|tbd|coming\s+soon|aesthetic|layout|art\s+direction|mock-?up|wireframe|"
+    r"\b(?:hex(?:\s+code)?|#[0-9a-f]{3,6}\b|css|this\s+section|placeholders?|lorem|ipsum|illustrative|demo\s+data|"
+    r"sample\s+(?:copy|text|data)|this\s+(?:website|site|page)|the\s+user|as\s+requested|(?:not\s+)?invented|"
+    r"fabricat\w*|user[- ]supplied|supplied\s+by|json|tbd|coming\s+soon|mock-?up|wireframe|"
     r"no\s+online\s+(?:checkout|reservations?|booking)\b(?=[.!]?$))", re.I)
 
 _STYLE_WORDS = re.compile(
@@ -282,7 +288,8 @@ class Integrity:
         if not s:
             return False
         lower = s.lower()
-        if META_RE.search(s) or _COUNT_LEAK_RE.search(s) or _TITLE_ORG_RE.search(s) or _CLAIM_RE.search(s):
+        if (META_RE.search(s) or is_design_direction(s) or _COUNT_LEAK_RE.search(s) or _TITLE_ORG_RE.search(s)
+                or _CLAIM_RE.search(s)):
             return False
         # Verbatim restatement of a prompt clause that is an instruction or style direction.
         bare = lower.rstrip(".!? ")

@@ -165,7 +165,10 @@ def resolve_site_images(brief: Dict[str, Any]) -> Dict[str, Any]:
     biz_type = str(brief.get("archetype") or brief.get("business_type") or "general")
     used: Set[str] = set()
     hero = brief.get("hero") or {}
-    hero_query = str((hero.get("title") if isinstance(hero, dict) else "") or brief.get("business_name", ""))
+    business_name = str(brief.get("business_name", ""))
+    if business_name.strip().lower() == "my business":
+        business_name = ""  # the planner's placeholder is not a subject ("business" would match office stock)
+    hero_query = str((hero.get("title") if isinstance(hero, dict) else "") or business_name)
     hero_photo = fetch_single_image(hero_query, biz_type, used)
     if hero_photo:
         used.add(hero_photo["url"])

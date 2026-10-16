@@ -1481,6 +1481,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         print(f"[Server] Note: could not scaffold Vite preview: {e}")
 
 
+from agent.agent import CODE_SAMPLING  # noqa: E402  (explicit sampling for code-writing turns)
+
+
 def _scaffold_site_vite_runner(target_dir: Path, project_name: str, files: dict[str, str], brief: dict = None, q: Any = None):
     """
     Scaffolds a runnable Vite environment for the multi-file site output.
@@ -2196,6 +2199,8 @@ def verify_and_repair_project(
                     max_new_tokens=repair_tokens,
                     temperature=0.15 + 0.05 * (attempt - 1),
                     repetition_penalty=1.05,
+                    top_p=CODE_SAMPLING["top_p"],
+                    top_k=CODE_SAMPLING["top_k"],
                     stop_check=repair_stop_check,
                 )
             except InterruptedError:
@@ -2498,6 +2503,8 @@ def verify_and_repair_project(
                             )).clamped_tokens,
                             temperature=0.15,
                             repetition_penalty=1.05,
+                            top_p=CODE_SAMPLING["top_p"],
+                            top_k=CODE_SAMPLING["top_k"],
                         )
                         from agent.agent_protocol import site_envelope_errors
                         if site_envelope_errors(v_reply):
@@ -2972,6 +2979,8 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
                     max_new_tokens=task.get("max_tokens", 1536),
                     temperature=0.15,
                     repetition_penalty=1.05,
+                    top_p=CODE_SAMPLING["top_p"],
+                    top_k=CODE_SAMPLING["top_k"],
                     stop_check=lambda: task_id in cancelled_tasks,
                 )
             except InterruptedError:

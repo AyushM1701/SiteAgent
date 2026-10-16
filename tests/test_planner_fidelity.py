@@ -176,3 +176,41 @@ def test_descriptive_include_lists_stay_with_the_heuristic_planner():
 ])
 def test_a_place_is_not_a_business_name(prompt, name):
     assert extract_business_name(prompt) == name
+
+
+@pytest.mark.parametrize("prompt, name", [
+    ("Name: Lumen Studio. A bakery in Leeds with a menu and contact.", "Lumen Studio"),
+    ("Brand: Lumen — a warm neighbourhood bakery.", "Lumen"),
+    ("Business name - Copperleaf\nA florist in York with a shop and FAQ.", "Copperleaf"),
+    ("Audience: young parents\nTone: friendly\nName: Little Oak Nursery", "Little Oak Nursery"),
+    ("Important: no stock photos. A portfolio for Ada Park, a photographer.", "Ada Park"),
+    ("Goal - more bookings for Pine Physio. Services, team, contact.", "Pine Physio"),
+    ("I'm Maya, a ceramicist in Porto — build my portfolio.", "Maya"),
+    ("Hi — we are Copper Kettle, a tea room in Bath.", "Copper Kettle"),
+    ("Make a site with Warm Tones and Big Type for my bakery.", "Bakery"),
+    ("Build a rustic artisan sourdough bakery website for 'Crust & Crumb Bakery' with a menu.", "Crust & Crumb Bakery"),
+    ("Build a dark-mode landing page for ApexCloud telemetry platform with features and pricing.", "ApexCloud"),
+    ("Build a warm coffee roastery website for 'Kōhī Roasters' with a sticky CTA.", "Kōhī Roasters"),
+    ("Build a coffee roastery website for Kōhī Lab with a sticky CTA bar.", "Kōhī Lab"),
+    ("Build an architectural portfolio site for Kéré Studio, pioneers in Cultural buildings.", "Kéré Studio"),
+])
+def test_unusual_phrasing_still_finds_the_business_name(prompt, name):
+    assert extract_business_name(prompt) == name
+
+
+
+@pytest.mark.parametrize("prompt", [
+    "Write a React TypeScript component with a CTA button and SVG icon.",
+    "A landing page with Guidelines for accessibility and Backspace handling.",
+])
+def test_stray_capitalised_words_are_not_names(prompt):
+    assert extract_business_name(prompt) == "My Business"
+
+
+@pytest.mark.parametrize("prompt, wrong", [
+    ("Hero: a big headline about our coffee. Sections: menu, contact.", "Hero"),
+    ("Hi — I need a website for my bakery.", "Hi"),
+    ("Tone: calm and clinical. A physiotherapy clinic site.", "Tone"),
+])
+def test_labels_and_greetings_are_never_names(prompt, wrong):
+    assert extract_business_name(prompt) != wrong

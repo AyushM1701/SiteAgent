@@ -26,6 +26,10 @@ try:
     from css_validation import css_syntax_errors, css_shared_selectors
 except ImportError:
     from agent.css_validation import css_syntax_errors, css_shared_selectors
+try:
+    from agent.design_leaks import is_design_direction
+except ImportError:  # script context with agent/ on sys.path
+    from design_leaks import is_design_direction
 
 
 class ContentProvenance(enum.Enum):
@@ -75,13 +79,19 @@ _COUNT_LEAK_RE = re.compile(
 )
 
 
-# Instruction or style directions printed as copy (A17). Kept narrow: the
-# privacy note "fonts load from Google Fonts" and an honest "Illustrative
-# interface" caption are legitimate copy.
+# Instructions printed as copy (A17). Design words (palette, typography, fonts…)
+# are judged per sentence by is_design_direction, so a paint shop's "palette of
+# 200 colours" or a foundry's "fonts licensed for print" is not a leak.
 _INSTRUCTION_LEAK_RE = re.compile(
-    r'\b(?:colou?r\s+palette|palette|typography|typeface|font\s+pairing|design\s+system|colou?r\s+scheme|'
-    r'lorem\s+ipsum|placeholder\s+(?:text|copy|image|content)|as\s+requested|the\s+user\b|this\s+section|'
+    r'\b(?:lorem\s+ipsum|placeholder\s+(?:text|copy|image|content)|as\s+requested|the\s+user\b|this\s+section|'
     r'user[- ]supplied|(?:no|not)\s+invented|fabricated|coming\s+soon)\b', re.I)
+
+
+def _is_instruction_leak(text):
+    if _INSTRUCTION_LEAK_RE.search(text):
+        return True
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    return any(is_design_direction(sentence) for sentence in sentences)
 _PLACEHOLDER_HOST_RE = re.compile(
     r'(?:via\.placeholder\.com|placehold\.(?:co|it)|placekitten\.com|picsum\.photos|dummyimage\.com|'
     r'example\.com/[^\s"\']*\.(?:png|jpe?g|webp|gif|svg|avif))', re.I)
@@ -164,7 +174,7 @@ def check_site_files(files):
                     f'(example.com, 555 numbers) — replace with real or clearly-illustrative values'
                 )
 
-            leaks = [text for text in _visible_strings(source) if _INSTRUCTION_LEAK_RE.search(text)]
+            leaks = [text for text in _visible_strings(source) if _is_instruction_leak(text)]
             if leaks:
                 checks['instruction_leak'] = 'fail'
                 errors.append(f'{path}: instruction or style direction printed as copy: {leaks[0][:120]!r}')

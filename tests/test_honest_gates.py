@@ -175,3 +175,26 @@ def test_contact_check_ignores_digits_inside_urls(tmp_path):
     (comp / "Contact.tsx").write_text("<p>Call +1 415 555 0132 or write to hi@made-up.com</p>", encoding="utf-8")
     flagged = find_unverified_contact_files(tmp_path, "A pottery studio. Email hello@asterkiln.com.")
     assert flagged == ["src/components/Contact.tsx"]
+
+
+@pytest.mark.parametrize("copy", [
+    "Explore our palette of 200 paint colours.",
+    "Palette knives in three sizes, from fine detail to broad strokes.",
+    "Fonts licensed for print, web and packaging.",
+    "We build design systems for product teams.",
+    "Typography workshops every Saturday morning.",
+])
+def test_design_words_in_genuine_business_copy_are_not_leaks(copy):
+    result = check_site_files({"src/components/Shop.tsx": f"export function Shop() {{ return <section><p>{copy}</p></section>; }}"})
+    assert result["static_passed"] is True, result["errors"]
+
+
+@pytest.mark.parametrize("copy", [
+    "Warm ivory palette with editorial typography.",
+    "Use a clean layout with generous white space.",
+    "This website uses a muted colour scheme.",
+    "The hero section pairs serif fonts with soft tones.",
+])
+def test_design_directions_are_still_leaks(copy):
+    result = check_site_files({"src/components/Hero.tsx": f"export function Hero() {{ return <section><p>{copy}</p></section>; }}"})
+    assert result["static_passed"] is False, copy

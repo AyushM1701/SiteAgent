@@ -5895,7 +5895,7 @@ safe_executor = SafeExecutor()
 #### `agent/site_acceptance.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_acceptance.py`
-- **Lines**: 212 | **Size**: 9,761 bytes | **SHA-256**: `fefedb109eb5f98d7b99c2323698b6e5d616be030cd318f28f282cf5a4f21251` | **Newline**: `True`
+- **Lines**: 222 | **Size**: 10,103 bytes | **SHA-256**: `c800b4e378d17a5b6c91ee6ae5785dbb1819ab6fd03190cceac7b68d8149381f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated site acceptance criteria evaluator checking landmarks, skip-links, and headings.
 
@@ -5928,6 +5928,10 @@ try:
     from css_validation import css_syntax_errors, css_shared_selectors
 except ImportError:
     from agent.css_validation import css_syntax_errors, css_shared_selectors
+try:
+    from agent.design_leaks import is_design_direction
+except ImportError:  # script context with agent/ on sys.path
+    from design_leaks import is_design_direction
 
 
 class ContentProvenance(enum.Enum):
@@ -5977,13 +5981,19 @@ _COUNT_LEAK_RE = re.compile(
 )
 
 
-# Instruction or style directions printed as copy (A17). Kept narrow: the
-# privacy note "fonts load from Google Fonts" and an honest "Illustrative
-# interface" caption are legitimate copy.
+# Instructions printed as copy (A17). Design words (palette, typography, fonts…)
+# are judged per sentence by is_design_direction, so a paint shop's "palette of
+# 200 colours" or a foundry's "fonts licensed for print" is not a leak.
 _INSTRUCTION_LEAK_RE = re.compile(
-    r'\b(?:colou?r\s+palette|palette|typography|typeface|font\s+pairing|design\s+system|colou?r\s+scheme|'
-    r'lorem\s+ipsum|placeholder\s+(?:text|copy|image|content)|as\s+requested|the\s+user\b|this\s+section|'
+    r'\b(?:lorem\s+ipsum|placeholder\s+(?:text|copy|image|content)|as\s+requested|the\s+user\b|this\s+section|'
     r'user[- ]supplied|(?:no|not)\s+invented|fabricated|coming\s+soon)\b', re.I)
+
+
+def _is_instruction_leak(text):
+    if _INSTRUCTION_LEAK_RE.search(text):
+        return True
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    return any(is_design_direction(sentence) for sentence in sentences)
 _PLACEHOLDER_HOST_RE = re.compile(
     r'(?:via\.placeholder\.com|placehold\.(?:co|it)|placekitten\.com|picsum\.photos|dummyimage\.com|'
     r'example\.com/[^\s"\']*\.(?:png|jpe?g|webp|gif|svg|avif))', re.I)
@@ -6066,7 +6076,7 @@ def check_site_files(files):
                     f'(example.com, 555 numbers) — replace with real or clearly-illustrative values'
                 )
 
-            leaks = [text for text in _visible_strings(source) if _INSTRUCTION_LEAK_RE.search(text)]
+            leaks = [text for text in _visible_strings(source) if _is_instruction_leak(text)]
             if leaks:
                 checks['instruction_leak'] = 'fail'
                 errors.append(f'{path}: instruction or style direction printed as copy: {leaks[0][:120]!r}')
@@ -6676,7 +6686,7 @@ def compact_brief_context(brief):
 #### `agent/agent.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/agent.py`
-- **Lines**: 3,204 | **Size**: 163,635 bytes | **SHA-256**: `289e49d376f0a6ed5074bdf8928bd8e3d4782383b79d8ef014d234f84a442284` | **Newline**: `True`
+- **Lines**: 3,227 | **Size**: 164,854 bytes | **SHA-256**: `cad8a32bc474b2cda76f9f961d719488bd8264cee534f76742cf718b0a3d764f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Autonomous ReAct agent & multi-section site runner with resolve_project_path security sandbox, auto-recovery, and context clamping.
 
@@ -7021,6 +7031,16 @@ export function {name}(props: any) {{
         return f"""<finish>
 {name} component successfully implemented, self-corrected, and verified.
 </finish>"""
+
+
+# Sampling for code-writing turns (component mode, runtime edits, project repair).
+# Those callers choose a low temperature per call; the nucleus/top-k bounds and the
+# repetition penalty are stated here so a change to the runner's defaults (tuned for
+# the design kit's JSON copy) never silently changes how code is written.
+# Measured 2026-10-16 on the base model, 10 STaR component tasks at temperature 0.15:
+# top_p 0.8 / top_k 20 passed 6/10 (3 first-try) vs 4/10 (2) with no truncation,
+# and never failed a task the untruncated run solved.
+CODE_SAMPLING: Dict[str, Any] = {"top_p": 0.8, "top_k": 20, "repetition_penalty": 1.05}
 
 
 class AgentModelRunner:
@@ -7381,6 +7401,8 @@ def run_agent_on_example(
     max_new_tokens: Optional[int] = None,
     best_of_2: bool = True,
     stop_check: Optional[Callable[[], bool]] = None,
+    top_p: Optional[float] = CODE_SAMPLING["top_p"],
+    top_k: Optional[int] = CODE_SAMPLING["top_k"],
 ) -> Dict[str, Any]:
     """
     Runs the multi-turn agent loop for a single React+TS+CSS component task.
@@ -7450,7 +7472,7 @@ def run_agent_on_example(
 
     # Dynamic Anti-Stuck & Regression Guard State
     base_temp = temperature
-    base_rep_penalty = 1.05
+    base_rep_penalty = CODE_SAMPLING["repetition_penalty"]
     current_temp = base_temp
     current_rep_penalty = base_rep_penalty
     last_tsx_hash: Optional[str] = None
@@ -7501,6 +7523,8 @@ def run_agent_on_example(
                     max_new_tokens=current_turn_tokens,
                     temperature=current_temp,
                     repetition_penalty=current_rep_penalty,
+                    top_p=top_p,
+                    top_k=top_k,
                     stop_check=stop_check,
                 )
 
@@ -7545,6 +7569,8 @@ def run_agent_on_example(
                             max_new_tokens=current_turn_tokens,
                             temperature=0.45,
                             repetition_penalty=1.10,
+                            top_p=top_p,
+                            top_k=top_k,
                             stop_check=stop_check,
                         )
                     except InterruptedError:
@@ -7620,6 +7646,8 @@ def run_agent_on_example(
                     max_new_tokens=current_turn_tokens,
                     temperature=current_temp,
                     repetition_penalty=current_rep_penalty,
+                    top_p=top_p,
+                    top_k=top_k,
                     stop_check=stop_check,
                 )
             except InterruptedError:
@@ -7930,6 +7958,8 @@ def execute_runtime_edit_policy(
     max_turns: int = 5,
     temperature: float = 0.2,
     max_new_tokens: Optional[int] = None,
+    top_p: Optional[float] = CODE_SAMPLING["top_p"],
+    top_k: Optional[int] = CODE_SAMPLING["top_k"],
 ) -> Dict[str, Any]:
     """
     Executes a code modification / edit adhering strictly to the 4-step runtime policy:
@@ -8014,6 +8044,9 @@ def execute_runtime_edit_policy(
         primary_symbol=primary_symbol,
         max_new_tokens=allocated_tokens,
         temperature=temperature,
+        repetition_penalty=CODE_SAMPLING["repetition_penalty"],
+        top_p=top_p,
+        top_k=top_k,
     )
     turn = parse_agent_output(assistant_out)
 
@@ -11398,7 +11431,7 @@ export default function PremiumScene({ label = 'Interactive dimensional product 
 #### `agent/site_brief.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_brief.py`
-- **Lines**: 2,699 | **Size**: 139,056 bytes | **SHA-256**: `c1ae4bffce06afb3b2ee5387d76f1380cbfac0b10fbdc5e3a321ab8a3e4f39d4` | **Newline**: `True`
+- **Lines**: 2,770 | **Size**: 143,142 bytes | **SHA-256**: `4851ac5239ccbebefbfe285a7780a0eb3be25e80de0315a0af8506819b950cd0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Content brief generator with 15+ domains, 3 curated palette variants per domain, explicit section extractor, deterministic theme hashing, and stock-photo catalog resolution.
 
@@ -12453,6 +12486,15 @@ _NAME_REJECT_FIRST = {
     "build", "create", "make", "design", "generate", "website", "portfolio", "landing", "a", "an", "the",
     "sections", "section", "include", "modern", "minimal", "note", "notes", "style", "colors", "colours",
     "palette", "requirements", "my", "our", "restaurant", "bakery", "shop", "store", "new", "please", "write",
+    # Field labels that start structured prompts ("Tone: calm", "Hero: big headline").
+    "name", "brand", "business", "company", "client", "project", "title", "tagline", "goal", "goals", "audience",
+    "tone", "vibe", "mood", "fonts", "font", "typography", "pages", "page", "home", "homepage", "site", "hero",
+    "header", "footer", "nav", "navigation", "features", "products", "services", "menu", "contact", "about",
+    "faq", "pricing", "important", "update", "request", "brief", "task", "idea", "concept", "summary", "context",
+    "background", "overview", "description", "target", "theme", "layout", "look", "feel", "images", "photos",
+    "content", "copy", "requirement", "constraints", "must", "avoid", "no", "todo", "deadline", "budget",
+    # Greetings and pronouns ("Hi — I need…", "I'm Maya, a…").
+    "hi", "hello", "hey", "dear", "i", "i'm", "i’m", "im", "we", "we're", "we’re", "me", "us", "you", "this",
 }
 _DESCRIPTIVE_NAME_STOP = {"with", "in", "at", "that", "which", "called", "named", "and", "or", "for", "from", "near", "on", "by"}
 
@@ -12475,8 +12517,34 @@ def _descriptive_business_name(prompt: str) -> Optional[str]:
     return " ".join(w.capitalize() for w in words) or None
 
 
+_LABELLED_NAME_RES = (
+    re.compile(r"""(?im)^[ \t]*(?:(?:business|brand|company|studio|shop|store|project|site|website|restaurant|product)\s+)?"""
+               r"""name\s*(?:[:—–]|\s-\s)\s*["“']?([^\n"”'.;,—–]+)"""),
+    re.compile(r"""(?im)^[ \t]*(?:brand|business|company|client|studio)\s*(?:[:—–]|\s-\s)\s*["“']?([^\n"”'.;,—–]+)"""),
+)
+_SELF_INTRO_RE = re.compile(
+    r"""^\s*(?i:(?:hi|hello|hey)\b[\s,!.—–-]*)?(?i:i['’]m|i\s+am|we['’]re|we\s+are|this\s+is)\s+["“']?"""
+    r"""([A-Z][\w&'’.+-]*(?:\s+(?:&|and|of|the|[A-Z][\w&'’.+-]*)){0,3})""")
+
+
+def _labelled_or_introduced_name(prompt: str) -> Optional[str]:
+    """"Name: Lumen Studio", "Business name - Copperleaf", "I'm Maya, a…", "we are Copper Kettle"."""
+    for pattern in _LABELLED_NAME_RES:
+        for m in pattern.finditer(prompt):
+            value = re.split(r"\s+-\s+", m.group(1).strip())[0].strip()
+            if value and (value[0].isupper() or value[0].isdigit()) and len(value) <= 40:
+                return value
+    m = _SELF_INTRO_RE.match(prompt)
+    if m and _valid_lead_name(m.group(1).strip()):
+        return m.group(1).strip()
+    return None
+
+
 def extract_business_name(prompt: str) -> str:
     """Attempts to pull a business/project name from the prompt."""
+    labelled = _labelled_or_introduced_name(prompt)
+    if labelled:
+        return labelled
     # Priority 0: a leading name followed by a dash, colon, ", a …" or " is a …"
     # ("Aster & Kiln — handmade ceramics…", "Northwind: a B2B SaaS").
     m = _NAME_LEAD_RE.match(prompt)
@@ -12505,44 +12573,80 @@ def _leading_noun_phrase_name(prompt: str) -> Optional[str]:
     return " ".join(w.capitalize() for w in words) or None
 
 
+_RUN_CONNECTORS = {"&", "and", "of", "the", "de", "la", "du", "von", "van"}
+_RUN_TRAIL_STOP = {"showcase", "website", "landing", "page", "app", "platform", "tool", "site", "portfolio"}
+_QUOTES = "\"'“”‘’`"
+
+
+def _name_blocklist() -> set[str]:
+    try:
+        from agent.design_leaks import _DIRECTION_VOCAB as style_vocab
+    except ImportError:  # pragma: no cover - script context
+        from design_leaks import _DIRECTION_VOCAB as style_vocab  # type: ignore
+    return {
+        "write", "create", "build", "make", "design", "generate", "develop", "a", "an", "the", "my", "our", "new",
+        "react", "typescript", "javascript", "website", "page", "site", "landing", "full", "complete", "modern",
+        "beautiful", "restaurant", "portfolio", "saas", "blog", "event", "shop", "store", "sections", "include",
+        "email", "cta", "svg", "css", "html", "api", "ui", "ux", "seo", "faq", "nav",
+    } | style_vocab | _NON_SECTION_ITEM_WORDS | _NAME_REJECT_FIRST
+
+
+def _capitalised_run(text: str) -> str:
+    """Read a name from the start of text: capitalised words (any script) joined by
+    connectors like "&" or "of"; a closing quote, comma or full stop ends it."""
+    words: list[str] = []
+    opened = text[:1] in _QUOTES
+    body = text[1:] if opened else text
+    for raw in body.split():
+        token = raw.strip(_QUOTES + ",.;:!?()")
+        if not token:
+            break
+        is_name_word = token[0].isupper() or token[0].isdigit()
+        if not is_name_word and not (words and token.lower() in _RUN_CONNECTORS):
+            break
+        words.append(token)
+        if raw[-1:] in _QUOTES + ",.;:!?)" or (opened and raw[-1:] in _QUOTES):
+            break
+        if len(words) >= 5:
+            break
+    while words and words[-1].lower() in _RUN_CONNECTORS | _RUN_TRAIL_STOP:
+        words.pop()
+    return " ".join(words)
+
+
 def _extract_business_name_legacy(prompt: str) -> str:
-    # Priority 1: Explicit "for <Name>", "called <Name>", "named <Name>"
-    m = re.search(
-        r'''(?:for|called|named)\s+["']?([A-Z][a-zA-Z0-9&]*(?:\s+[A-Za-z0-9&][a-zA-Z0-9&]*)*)["']?(?:\s*$|\s*,|\s*\.)''',
-        prompt
-    )
-    if m:
-        name = m.group(1).strip()
+    blocked = _name_blocklist()
+
+    def acceptable(name: str) -> bool:
+        first = name.split()[0].lower() if name else ""
+        return bool(name) and first not in blocked and len(name) <= 40
+
+    # Priority 1: "for <Name>", "called <Name>", "named <Name>" (quoted or not, any script).
+    for m in re.finditer(r"\b(?:for|called|named|by|at)\s+", prompt):
+        name = _capitalised_run(prompt[m.end():])
+        if m.group(0).split()[0] in {"by", "at"} and len(name.split()) < 2:
+            continue  # "by Monday", "at Home" are not names
+        if acceptable(name):
+            return name
+
+    # Priority 2: a quoted capitalised name near the start of the prompt.
+    for m in re.finditer(r"[\"'“‘](?=[^\W\d_])", prompt[:160]):
+        name = _capitalised_run(prompt[m.start():])
+        if acceptable(name) and not name.lower().startswith(("http", "www")):
+            return name
+
+    # Priority 3: inside a sentence, a run of adjacent capitalised words that is not
+    # style vocabulary or a label — at least two words, or one CamelCase brand word
+    # ("NexaFlow"). Words from different parts of the prompt are never stitched
+    # together ("Kiln Warm Email"), and lone words ("CTA", "Guidelines") are ignored.
+    for m in re.finditer(r"(?<=[a-z,;] )(?=[^\W\d_])", prompt):
+        name = _capitalised_run(prompt[m.start():])
         words = name.split()
-        for i, w in enumerate(words):
-            if w.lower() in {"featuring", "showcasing", "with", "including", "show", "show-casing", "showcasing"}:
-                words = words[:i]
-                break
-        _TRAIL_STOP = {"showcase", "website", "landing", "page", "app", "platform", "tool", "site", "portfolio"}
-        while words and words[-1].lower() in _TRAIL_STOP:
-            words = words[:-1]
-        if words:
-            return " ".join(words)
-
-    # Priority 2: Capitalized quoted business name near start of prompt (first 120 chars)
-    m = re.search(r'''["']([A-Z][a-zA-Z0-9 \-]{2,40})["']''', prompt[:120])
-    if m:
-        cand = m.group(1).strip()
-        if not cand.lower().startswith(("http", "www")) and cand.lower() not in {"feel", "design", "website"}:
-            return cand
-
-    STOP = {
-        "Write", "Create", "Build", "Make", "Design", "Generate", "Develop",
-        "A", "An", "The", "My", "Our", "New", "React", "TypeScript", "Website",
-        "Page", "Site", "Landing", "Full", "Complete", "Modern", "Beautiful",
-        "Restaurant", "Portfolio", "SaaS", "Blog", "Event", "Shop", "Store",
-    }
-    words = re.findall(r' [A-Z][a-zA-Z0-9]+ ', prompt)
-    candidates = [w.strip() for w in words if w.strip() not in STOP]
-    if len(candidates) >= 2:
-        return " ".join(candidates[:3])
-    if candidates:
-        return candidates[0]
+        if not words or any(w.lower() in blocked for w in words if w.lower() not in _RUN_CONNECTORS):
+            continue
+        camel = len(words) == 1 and re.search(r"[a-z][A-Z]", words[0])
+        if len(words) >= 2 or camel:
+            return name
 
     return "My Business"
 
@@ -32707,7 +32811,7 @@ export const ActiveGenerationModal: React.FC = () => {
 #### `server/app.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/app.py`
-- **Lines**: 5,380 | **Size**: 245,436 bytes | **SHA-256**: `23e5ac7d7a031047a974f51b5efb2519bcaa3ac5637cd11427ee79622040fb06` | **Newline**: `True`
+- **Lines**: 5,389 | **Size**: 245,859 bytes | **SHA-256**: `0ad346fe838a62e33a8819f09a7196a34d7021ee308158d2752e9ebb29d0a0d2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Flask application server with 4-gate verification loop (max 3 repairs), resolve_project_path sandbox, /ws/projects WebSocket endpoint, and static esbuild previews.
 
@@ -34195,6 +34299,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         print(f"[Server] Note: could not scaffold Vite preview: {e}")
 
 
+from agent.agent import CODE_SAMPLING  # noqa: E402  (explicit sampling for code-writing turns)
+
+
 def _scaffold_site_vite_runner(target_dir: Path, project_name: str, files: dict[str, str], brief: dict = None, q: Any = None):
     """
     Scaffolds a runnable Vite environment for the multi-file site output.
@@ -34910,6 +35017,8 @@ def verify_and_repair_project(
                     max_new_tokens=repair_tokens,
                     temperature=0.15 + 0.05 * (attempt - 1),
                     repetition_penalty=1.05,
+                    top_p=CODE_SAMPLING["top_p"],
+                    top_k=CODE_SAMPLING["top_k"],
                     stop_check=repair_stop_check,
                 )
             except InterruptedError:
@@ -35212,6 +35321,8 @@ def verify_and_repair_project(
                             )).clamped_tokens,
                             temperature=0.15,
                             repetition_penalty=1.05,
+                            top_p=CODE_SAMPLING["top_p"],
+                            top_k=CODE_SAMPLING["top_k"],
                         )
                         from agent.agent_protocol import site_envelope_errors
                         if site_envelope_errors(v_reply):
@@ -35686,6 +35797,8 @@ def _run_session_edit_turn(task: dict, q: queue.Queue):
                     max_new_tokens=task.get("max_tokens", 1536),
                     temperature=0.15,
                     repetition_penalty=1.05,
+                    top_p=CODE_SAMPLING["top_p"],
+                    top_k=CODE_SAMPLING["top_k"],
                     stop_check=lambda: task_id in cancelled_tasks,
                 )
             except InterruptedError:
@@ -46344,7 +46457,7 @@ def evaluate_site_batch_diversity(
 #### `evaluation/site_benchmark_scorer.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/evaluation/site_benchmark_scorer.py`
-- **Lines**: 1,423 | **Size**: 62,021 bytes | **SHA-256**: `ba0997436f085986fa1201e903d2fc602164487482f2dc0bd5ff3671205d7a30` | **Newline**: `True`
+- **Lines**: 1,423 | **Size**: 63,444 bytes | **SHA-256**: `64d514166f18f095d3dc9116e6fb33d27bcab546af017df2fa0822cd823c631c` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Multi-metric composite scoring engine computing build rate, visual score, and contract pass rates.
 
@@ -64083,7 +64196,7 @@ if __name__ == "__main__":
 #### `tests/test_training_preflight.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_training_preflight.py`
-- **Lines**: 99 | **Size**: 4,730 bytes | **SHA-256**: `ca660d0a6cec2344099e5888f6bd7d6363f762abce9ee02dfab397e5e7a96b71` | **Newline**: `True`
+- **Lines**: 99 | **Size**: 4,829 bytes | **SHA-256**: `a5d52b843a0745d955e470c9a9328437a37028b11dbcde0e97932356a2c1ebb5` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests for dataset preflight validation and ChatML role boundary checks (6 tests).
 
@@ -65050,7 +65163,7 @@ test.describe('Workbench Button and Control Audit (Issue #30)', () => {
 #### `tests/test_execute_qwen3_migration.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_execute_qwen3_migration.py`
-- **Lines**: 156 | **Size**: 6,638 bytes | **SHA-256**: `65c2cb115c7b2ace545326f7865c60de109cab78aeb7538607cf9b5bb79b0792` | **Newline**: `True`
+- **Lines**: 156 | **Size**: 6,794 bytes | **SHA-256**: `47ffa1e8322977366d3f8b1255313772069a71ec6fbfb4b2e410501b2336243f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying the 13-step Qwen3 migration orchestrator (10 tests).
 
@@ -67264,7 +67377,7 @@ def test_cleaned_row_passes_training_preflight(cpu_tokenizer):
 #### `tests/test_context_decision.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_context_decision.py`
-- **Lines**: 132 | **Size**: 5,148 bytes | **SHA-256**: `9fe32e1ca09fcfaaad0b8b2399dab3a14fe32d608dbdc871f829f7aa882a7978` | **Newline**: `True`
+- **Lines**: 132 | **Size**: 5,280 bytes | **SHA-256**: `521c51e338b72627081906877408dba3bff9552cf3cd8a0bade1e1b609a358fe` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying 6144 vs 8192 token context length decision.
 
@@ -68079,7 +68192,7 @@ def test_flag_non_centered_hero_collapse():
 #### `tests/test_dynamic_output_budget.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_dynamic_output_budget.py`
-- **Lines**: 311 | **Size**: 12,932 bytes | **SHA-256**: `6f6bd12102e18178aa57fe454920a95480d8b5da6c940cc4f82484805c7e6341` | **Newline**: `True`
+- **Lines**: 311 | **Size**: 13,243 bytes | **SHA-256**: `e8b53a8230769dd47f6394dd2f54170ae6da10d9a42e44263e4d578af94b045b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying output budget calculation under VRAM constraints.
 
@@ -83418,7 +83531,7 @@ pause
 #### `scripts/setup.bat`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.bat`
-- **Lines**: 36 | **Size**: 1,798 bytes | **SHA-256**: `4a70284c00abe95839a6ad114189c9280a8f7c825d71f1c20dbcc7eabc3d0f21` | **Newline**: `True`
+- **Lines**: 36 | **Size**: 1,834 bytes | **SHA-256**: `f981f51db19e64086135e212ea9896bdd0b1326921e13fb1e0ac1c3d3cd2b411` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Windows.
 
@@ -85118,7 +85231,7 @@ python server/app.py "$@"
 #### `scripts/setup.sh`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.sh`
-- **Lines**: 33 | **Size**: 1,036 bytes | **SHA-256**: `cea81f2662e27e5bb3a6872ff691c1ee36237cf5486c439a75afe442582856bd` | **Newline**: `True`
+- **Lines**: 33 | **Size**: 1,069 bytes | **SHA-256**: `9276bc47810affc30e11bdb0bfbab2352ae1a14857e6a395be1b390d5e4dcf35` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Linux.
 
@@ -85292,12 +85405,1708 @@ echo "Training complete! Model saved to ./my-react-agent-lora"
 #### `web_ui_history.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/web_ui_history.json`
-- **Lines**: 22,711 | **Size**: 1,578,592 bytes | **SHA-256**: `7f02ee7a3cdcde37d4a2868b7226a0c4cef44f63d6d7e50531942a08822cee28` | **Newline**: `False`
+- **Lines**: 22,126 | **Size**: 1,466,577 bytes | **SHA-256**: `5503274e056a82f883f4cb080e0af68dcf493ec53d8e599c97b4f295cccaa77c` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Persistent JSON array of past generation sessions with timestamps, prompts, pass/fail status, and complete source code.
 
 `````json
 [
+  {
+    "task_id": "edit_test_task_456",
+    "session_id": "1792134912_69a67d",
+    "mode": "site",
+    "final_passed": false,
+    "initial_passed": false,
+    "self_corrected": false,
+    "repair_attempts": 0,
+    "turns_used": 3,
+    "sections_completed": 1,
+    "sections_planned": 1,
+    "code": "",
+    "files": {
+      ".gitignore": "# Node & Bundler artifacts\nnode_modules/\n.vite/\ndist/\ndist-ssr/\n*.local\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Snapshots & Media\n.snapshots/\nscreenshot.webp\n*.log\n",
+      "src/components/Hero.tsx": "export function Hero() { return <div>Good Version</div>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Applied targeted edits to `Hero.tsx` based on your instruction.\n- Updated layout structure and functional JSX components.\n\n## Status\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).\n- Use `@Component` mentions to target another specific section.",
+    "symbol": "EditSite",
+    "prompt": "Change hero to broken",
+    "style_preset": null,
+    "style_tokens": null,
+    "file_path": "generated_components/session_1792134912_69a67d/",
+    "filePath": "generated_components/session_1792134912_69a67d/",
+    "folder_name": "session_1792134912_69a67d",
+    "folderName": "session_1792134912_69a67d",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134912_69a67d",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134912_69a67d",
+    "checkpoints_count": 2,
+    "visual_score": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "validation_status": "failed",
+    "validationStatus": "failed",
+    "build_state": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "preview": {
+      "url": "/preview/1792134912_69a67d",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "EditSite",
+      "mode": "site"
+    },
+    "is_edit": true,
+    "timestamp": "2026-10-16 12:45:13"
+  },
+  {
+    "task_id": "site_test_task_123",
+    "session_id": "1792134910_a57c3d",
+    "mode": "site",
+    "final_passed": false,
+    "completion_status": "FAILED",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": false,
+    "section_completion": "2 / 5",
+    "project_validation": "passed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "site_test_task_123",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134910_a57c3d\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 0,
+          "required_sections": 0,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "failed",
+          "section_retries": 0,
+          "project_attempts": 1
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "failed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "self_corrected": true,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 5,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Footer.tsx": "export function Footer() { return <footer>Footer</footer>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/5 planned sections.\n- Generated component modules: `Header.tsx`, `Footer.tsx`.\n\n## Status\n- Section completion: 2 / 5 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 4.5/5\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "TestSite",
+    "prompt": "Build TestSite",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/TestSite_20261016_124510/",
+    "filePath": "generated_components/TestSite_20261016_124510/",
+    "folder_name": "TestSite_20261016_124510",
+    "folderName": "TestSite_20261016_124510",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134910_a57c3d",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134910_a57c3d",
+    "checkpoints_count": 1,
+    "visual_score": 4.5,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "not_requested",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.5,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792134910_a57c3d",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "TestSite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-16 12:45:12"
+  },
+  {
+    "task_id": "test_state_model_01",
+    "session_id": "1792134800_6c7e4f",
+    "mode": "site",
+    "final_passed": true,
+    "completion_status": "COMPLETE",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "2 / 2",
+    "project_validation": "passed",
+    "generation_quality": "native",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "test_state_model_01",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134800_6c7e4f\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "failed",
+          "first_attempt_sections": 0,
+          "required_sections": 2,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "not_applied",
+          "section_retries": 0,
+          "project_attempts": 0
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "passed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "self_corrected": false,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 2,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "CompanySite",
+    "prompt": "Build a modern company website",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/CompanySite_20261016_124320/",
+    "filePath": "generated_components/CompanySite_20261016_124320/",
+    "folder_name": "CompanySite_20261016_124320",
+    "folderName": "CompanySite_20261016_124320",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134800_6c7e4f",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792134800_6c7e4f",
+    "checkpoints_count": 1,
+    "visual_score": 4.2,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "passed",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.2,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792134800_6c7e4f",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "CompanySite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-16 12:43:21"
+  },
+  {
+    "task_id": "edit_test_task_456",
+    "session_id": "1792117613_cf1fa8",
+    "mode": "site",
+    "final_passed": false,
+    "initial_passed": false,
+    "self_corrected": false,
+    "repair_attempts": 0,
+    "turns_used": 3,
+    "sections_completed": 1,
+    "sections_planned": 1,
+    "code": "",
+    "files": {
+      ".gitignore": "# Node & Bundler artifacts\nnode_modules/\n.vite/\ndist/\ndist-ssr/\n*.local\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Snapshots & Media\n.snapshots/\nscreenshot.webp\n*.log\n",
+      "src/components/Hero.tsx": "export function Hero() { return <div>Good Version</div>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Applied targeted edits to `Hero.tsx` based on your instruction.\n- Updated layout structure and functional JSX components.\n\n## Status\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).\n- Use `@Component` mentions to target another specific section.",
+    "symbol": "EditSite",
+    "prompt": "Change hero to broken",
+    "style_preset": null,
+    "style_tokens": null,
+    "file_path": "generated_components/session_1792117613_cf1fa8/",
+    "filePath": "generated_components/session_1792117613_cf1fa8/",
+    "folder_name": "session_1792117613_cf1fa8",
+    "folderName": "session_1792117613_cf1fa8",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117613_cf1fa8",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117613_cf1fa8",
+    "checkpoints_count": 2,
+    "visual_score": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "validation_status": "failed",
+    "validationStatus": "failed",
+    "build_state": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "preview": {
+      "url": "/preview/1792117613_cf1fa8",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "EditSite",
+      "mode": "site"
+    },
+    "is_edit": true,
+    "timestamp": "2026-10-16 07:56:53"
+  },
+  {
+    "task_id": "site_test_task_123",
+    "session_id": "1792117612_6250a8",
+    "mode": "site",
+    "final_passed": false,
+    "completion_status": "FAILED",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": false,
+    "section_completion": "2 / 5",
+    "project_validation": "passed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "site_test_task_123",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117612_6250a8\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 0,
+          "required_sections": 0,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "failed",
+          "section_retries": 0,
+          "project_attempts": 1
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "failed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "self_corrected": true,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 5,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Footer.tsx": "export function Footer() { return <footer>Footer</footer>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/5 planned sections.\n- Generated component modules: `Header.tsx`, `Footer.tsx`.\n\n## Status\n- Section completion: 2 / 5 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 4.5/5\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "TestSite",
+    "prompt": "Build TestSite",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/TestSite_20261016_075652/",
+    "filePath": "generated_components/TestSite_20261016_075652/",
+    "folder_name": "TestSite_20261016_075652",
+    "folderName": "TestSite_20261016_075652",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117612_6250a8",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117612_6250a8",
+    "checkpoints_count": 1,
+    "visual_score": 4.5,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "not_requested",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.5,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792117612_6250a8",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "TestSite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-16 07:56:53"
+  },
+  {
+    "task_id": "test_state_model_01",
+    "session_id": "1792117518_61a8f6",
+    "mode": "site",
+    "final_passed": true,
+    "completion_status": "COMPLETE",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "2 / 2",
+    "project_validation": "passed",
+    "generation_quality": "native",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "test_state_model_01",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117518_61a8f6\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "failed",
+          "first_attempt_sections": 0,
+          "required_sections": 2,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "not_applied",
+          "section_retries": 0,
+          "project_attempts": 0
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "passed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "self_corrected": false,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 2,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "CompanySite",
+    "prompt": "Build a modern company website",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/CompanySite_20261016_075518/",
+    "filePath": "generated_components/CompanySite_20261016_075518/",
+    "folder_name": "CompanySite_20261016_075518",
+    "folderName": "CompanySite_20261016_075518",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117518_61a8f6",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792117518_61a8f6",
+    "checkpoints_count": 1,
+    "visual_score": 4.2,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "passed",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.2,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792117518_61a8f6",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "CompanySite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-16 07:55:18"
+  },
   {
     "task_id": "dec0a36a-17ff-46a4-bc62-294c66572698",
     "session_id": "1792116908_c4a5ce",
@@ -105725,2287 +107534,6 @@ echo "Training complete! Model saved to ./my-react-agent-lora"
     "auto_recovered_sections": [],
     "turn_logs": [],
     "timestamp": "2026-10-06 00:29:44"
-  },
-  {
-    "task_id": "7af9ea0f-c34e-490a-b738-d4e3bbfef6f1",
-    "session_id": "1791225336_5db9cd",
-    "mode": "site",
-    "final_passed": false,
-    "completion_status": "FAILED",
-    "status": "completed",
-    "blocked_sections": [],
-    "blocked_diagnostics": [],
-    "initial_passed": false,
-    "generation_complete": true,
-    "section_completion": "4 / 4",
-    "project_validation": "failed",
-    "generation_quality": "native",
-    "self_corrected": false,
-    "turns_used": 6,
-    "sections_completed": 4,
-    "sections_planned": 4,
-    "code": "import React, { useState, useEffect } from 'react';\nimport './Navbar.css';\nexport function Navbar() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const handleCartAdd = (event: CustomEvent) => {\n      setCount(prev => prev + event.detail.quantity);\n    };\n    window.addEventListener('site-cart-add', handleCartAdd);\n    return () => window.removeEventListener('site-cart-add', handleCartAdd);\n  }, []);\n  return (\n    <nav className=\"navbar\" role=\"navigation\" aria-label=\"Main navigation\">\n      <div className=\"navbar-brand\">\n        <span className=\"brand-text\">Aster Objects</span>\n      </div>\n      <div className=\"navbar-links\">\n        <a href=\"#hero\" className=\"nav-link\" aria-current=\"page\">Home</a>\n        <a href=\"#shop\" className=\"nav-link\">Shop</a>\n        <a href=\"#footer\" className=\"nav-link\">Contact</a>\n      </div>\n      <div className=\"navbar-cart\">\n        <button \n          className=\"cart-button\" \n          aria-label=\"View cart\" \n          onClick={() => {\n            // In a real implementation, this would open a cart panel\n            // For this demo, we just show the count\n          }}\n        >\n          <span className=\"cart-count\">{count}</span>\n        </button>\n      </div>\n    </nav>\n  );\n}\nexport default Navbar;",
-    "files": {
-      "src/components/Navbar.tsx": "import React, { useState, useEffect } from 'react';\nimport './Navbar.css';\nexport function Navbar() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const handleCartAdd = (event: CustomEvent) => {\n      setCount(prev => prev + event.detail.quantity);\n    };\n    window.addEventListener('site-cart-add', handleCartAdd);\n    return () => window.removeEventListener('site-cart-add', handleCartAdd);\n  }, []);\n  return (\n    <nav className=\"navbar\" role=\"navigation\" aria-label=\"Main navigation\">\n      <div className=\"navbar-brand\">\n        <span className=\"brand-text\">Aster Objects</span>\n      </div>\n      <div className=\"navbar-links\">\n        <a href=\"#hero\" className=\"nav-link\" aria-current=\"page\">Home</a>\n        <a href=\"#shop\" className=\"nav-link\">Shop</a>\n        <a href=\"#footer\" className=\"nav-link\">Contact</a>\n      </div>\n      <div className=\"navbar-cart\">\n        <button \n          className=\"cart-button\" \n          aria-label=\"View cart\" \n          onClick={() => {\n            // In a real implementation, this would open a cart panel\n            // For this demo, we just show the count\n          }}\n        >\n          <span className=\"cart-count\">{count}</span>\n        </button>\n      </div>\n    </nav>\n  );\n}\nexport default Navbar;",
-      "src/components/Navbar.css": ".navbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 16px 24px;\n  background-color: var(--background-color);\n  color: var(--on-background);\n  position: sticky;\n  top: 0;\n  z-index: 1000;\n}\n\n.navbar-brand {\n  font-family: var(--font-heading);\n  font-size: 1.25rem;\n  font-weight: 600;\n  color: var(--primary-color);\n  letter-spacing: 0.1em;\n}\n\n.brand-text {\n  font-family: var(--font-heading);\n  font-size: 1.25rem;\n  font-weight: 600;\n  color: var(--primary-color);\n  letter-spacing: 0.1em;\n}\n\n.navbar-links {\n  display: flex;\n  gap: 24px;\n}\n\n.nav-link {\n  font-family: var(--font-body);\n  font-size: 0.9375rem;\n  color: var(--on-accent);\n  text-decoration: none;\n  transition: color 0.2s ease;\n}\n\n.nav-link:hover {\n  color: var(--accent-color);\n}\n\n.navbar-cart {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n}\n\n.cart-button {\n  background: none;\n  border: none;\n  cursor: pointer;\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  color: var(--on-accent);\n  font-size: 1rem;\n  font-weight: 500;\n  transition: color 0.2s ease;\n}\n\n.cart-button:hover {\n  color: var(--accent-color);\n}\n\n.cart-count {\n  font-size: 1.25rem;\n  font-weight: 700;\n  color: var(--accent-color);\n  background-color: var(--accent-color);\n  border-radius: 50%;\n  width: 24px;\n  height: 24px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}",
-      "src/components/Hero.tsx": "import React, { useState, useEffect, useRef } from 'react';\nimport './Hero.css';\nexport function Hero() {\n  const [isParallax, setIsParallax] = useState(true);\n  const [isFlatView, setIsFlatView] = useState(false);\n  const [isRevealed, setIsRevealed] = useState(false);\n  const [scrollProgress, setScrollProgress] = useState(0);\n  const heroRef = useRef<HTMLDivElement>(null);\n\n  useEffect(() => {\n    const handleScroll = () => {\n      if (isParallax) {\n        const scrollTop = window.scrollY;\n        setScrollProgress(scrollTop / (document.body.scrollHeight - window.innerHeight));\n      }\n    };\n\n    window.addEventListener('scroll', handleScroll);\n    return () => window.removeEventListener('scroll', handleScroll);\n  }, [isParallax]);\n\n  useEffect(() => {\n    const observer = new IntersectionObserver((entries) => {\n      if (entries[0].isIntersecting) {\n        setIsRevealed(true);\n      }\n    }, { threshold: 0.1 });\n\n    if (heroRef.current) {\n      observer.observe(heroRef.current);\n    }\n\n    return () => observer.disconnect();\n  }, []);\n\n  return (\n    <section className=\"hero\" id=\"hero\" ref={heroRef}>\n      <div className=\"hero-content\">\n        <h1 className=\"hero-title\">Aster Objects</h1>\n        <p className=\"hero-subtitle\">Handcrafted Ceramics for the Modern Home</p>\n        <div className=\"hero-buttons\">\n          <button className=\"btn btn-accent\">Explore Collection</button>\n          <button className=\"btn btn-accent\">View Cart</button>\n        </div>\n      </div>\n      <div className=\"hero-illustration\">\n        <div className=\"scene\">\n          <div className=\"scene-depth\">\n            <div className=\"scene-depth-plane\" style={{ transform: `translate3d(0, 0, ${isFlatView ? '0' : '100px'})` }}>\n              <div className=\"scene-depth-plane-inner\">\n                <svg width=\"300\" height=\"300\" viewBox=\"0 0 300 300\" className=\"scene-depth-plane-illustration\">\n                  <rect x=\"0\" y=\"0\" width=\"300\" height=\"300\" fill=\"var(--background-color)\" />\n                  <circle cx=\"150\" cy=\"150\" r=\"100\" fill=\"var(--accent-color)\" />\n                </svg>\n              </div>\n            </div>\n            <div className=\"scene-depth-plane\" style={{ transform: `translate3d(0, 0, ${isFlatView ? '0' : '100px'})` }}>\n              <div className=\"scene-depth-plane-inner\">\n                <svg width=\"300\" height=\"300\" viewBox=\"0 0 300 300\" className=\"scene-depth-plane-illustration\">\n                  <rect x=\"0\" y=\"0\" width=\"300\" height=\"300\" fill=\"var(--background-color)\" />\n                  <circle cx=\"150\" cy=\"150\" r=\"100\" fill=\"var(--accent-color)\" />\n                </svg>\n              </div>\n            </div>\n          </div>\n          <div className=\"scene-flat\">\n            <div className=\"scene-flat-plane\" style={{ transform: `translate3d(0, 0, ${isFlatView ? '0' : '100px'})` }}>\n              <div className=\"scene-flat-plane-inner\">\n                <svg width=\"300\" height=\"300\" viewBox=\"0 0 300 300\" className=\"scene-flat-plane-illustration\">\n                  <rect x=\"0\" y=\"0\" width=\"300\" height=\"300\" fill=\"var(--background-color)\" />\n                  <circle cx=\"150\" cy=\"150\" r=\"100\" fill=\"var(--accent-color)\" />\n                </svg>\n              </div>\n            </div>\n          </div>\n        </div>\n        <button \n          className=\"btn btn-accent btn-flat-view\" \n          aria-label=\"Toggle flat view\" \n          onClick={() => setIsFlatView(!isFlatView)}\n        >\n          {isFlatView ? '3D View' : 'Flat View'}\n        </button>\n      </div>\n    </section>\n  );\n}\nexport default Hero;",
-      "src/components/Hero.css": ".hero {\n  position: relative;\n  min-height: 100vh;\n  background-color: var(--background-color);\n  color: var(--on-background);\n  padding: 0 24px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  text-align: center;\n  overflow: hidden;\n}\n\n.hero-content {\n  position: relative;\n  z-index: 1;\n  max-width: 600px;\n  margin-bottom: 48px;\n}\n\n.hero-title {\n  font-family: var(--font-heading);\n  font-size: 3rem;\n  font-weight: 700;\n  color: var(--primary-color);\n  margin-bottom: 16px;\n  opacity: 0;\n  transform: translateY(40px);\n  transition: opacity 0.6s ease, transform 0.6s ease;\n}\n\n.hero-title.revealed {\n  opacity: 1;\n  transform: translateY(0);\n}\n\n.hero-subtitle {\n  font-family: var(--font-body);\n  font-size: 1.25rem;\n  color: var(--on-accent);\n  margin-bottom: 32px;\n}\n\n.hero-buttons {\n  display: flex;\n  gap: 24px;\n  margin-bottom: 48px;\n}\n\n.btn {\n  font-family: var(--font-body);\n  font-size: 1rem;\n  font-weight: 500;\n  padding: 12px 24px;\n  border: none;\n  border-radius: 50px;\n  color: var(--on-accent);\n  background-color: transparent;\n  cursor: pointer;\n  transition: color 0.2s ease, background-color 0.2s ease;\n}\n\n.btn-accent {\n  color: var(--accent-color);\n  background-color: var(--accent-color);\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);\n}\n\n.btn-accent:hover {\n  background-color: var(--accent-color);\n  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);\n}\n\n.hero-illustration {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  width: 100%;\n  height: 50%;\n  overflow: hidden;\n  z-index: 0;\n}\n\n.scene {\n  perspective: 1000px;\n  transform-style: preserve-3d;\n  position: relative;\n  width: 100%;\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.scene-depth {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1;\n}\n\n.scene-depth-plane {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  transform-style: preserve-3d;\n  transform: translate3d(0, 0, 100px) rotateX(20deg) rotateY(30deg);\n  transition: transform 0.6s ease;\n}\n\n.scene-depth-plane-inner {\n  width: 100%;\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.scene-depth-plane-illustration {\n  width: 100%;\n  height: 100%;\n  transform: translate3d(0, 0, 0);\n  transition: transform 0.6s ease;\n}\n\n.scene-flat {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 0;\n}\n\n.scene-flat-plane {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  transform-style: preserve-3d;\n  transform: translate3d(0, 0, 0);\n  transition: transform 0.6s ease;\n}\n\n.scene-flat-plane-inner {\n  width: 100%;\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.scene-flat-plane-illustration {\n  width: 100%;\n  height: 100%;\n  transform: translate3d(0, 0, 0);\n  transition: transform 0.6s ease;\n}\n\n.btn-flat-view {\n  position: absolute;\n  bottom: 24px;\n  left: 50%;\n  transform: translateX(-50%);\n  font-size: 1rem;\n  font-weight: 500;\n  padding: 12px 24px;\n  border: none;\n  border-radius: 50px;\n  color: var(--on-accent);\n  background-color: transparent;\n  cursor: pointer;\n  transition: color 0.2s ease, background-color 0.2s ease;\n}\n\n.btn-flat-view:hover {\n  background-color: var(--accent-color);\n  color: white;\n}",
-      "src/components/Shop.tsx": "import React, { useState, useEffect } from 'react';\nimport './Shop.css';\nexport function Shop() {\n  const [cartCount, setCartCount] = useState(0);\n  const [isFlatView, setIsFlatView] = useState(false);\n  const [isRevealed, setIsRevealed] = useState(false);\n\n  useEffect(() => {\n    const handleCartAdd = (event: CustomEvent) => {\n      const quantity = event.detail.quantity;\n      setCartCount(prev => prev + quantity);\n    };\n\n    window.addEventListener('site-cart-add', handleCartAdd);\n    return () => window.removeEventListener('site-cart-add', handleCartAdd);\n  }, []);\n\n  return (\n    <section className=\"shop\" id=\"shop\">\n      <div className=\"shop-container\">\n        <h2 className=\"shop-title\">Shop</h2>\n        <div className=\"shop-products\">\n          <div className=\"product\">\n            <div className=\"product-image\">\n              <svg width=\"200\" height=\"200\" viewBox=\"0 0 200 200\" className=\"product-illustration\">\n                <rect x=\"0\" y=\"0\" width=\"200\" height=\"200\" fill=\"var(--background-color)\" />\n                <circle cx=\"100\" cy=\"100\" r=\"60\" fill=\"var(--accent-color)\" />\n                <text x=\"100\" y=\"130\" text-anchor=\"middle\" font-size=\"16\" fill=\"var(--on-accent)\" font-family=\"var(--font-body)\">Orbit Mug</text>\n              </svg>\n            </div>\n            <div className=\"product-details\">\n              <h3 className=\"product-name\">Orbit Mug</h3>\n              <p className=\"product-price\">$28</p>\n              <button \n                className=\"btn btn-accent\" \n                onClick={() => {\n                  window.dispatchEvent(new CustomEvent('site-cart-add', { detail: { quantity: 1 } }));\n                }}\n              >\n                Add to Cart\n              </button>\n            </div>\n          </div>\n          <div className=\"product\">\n            <div className=\"product-image\">\n              <svg width=\"200\" height=\"200\" viewBox=\"0 0 200 200\" className=\"product-illustration\">\n                <rect x=\"0\" y=\"0\" width=\"200\" height=\"200\" fill=\"var(--background-color)\" />\n                <circle cx=\"100\" cy=\"100\" r=\"80\" fill=\"var(--accent-color)\" />\n                <text x=\"100\" y=\"130\" text-anchor=\"middle\" font-size=\"16\" fill=\"var(--on-accent)\" font-family=\"var(--font-body)\">Arc Vase</text>\n              </svg>\n            </div>\n            <div className=\"product-details\">\n              <h3 className=\"product-name\">Arc Vase</h3>\n              <p className=\"product-price\">$64</p>\n              <button \n                className=\"btn btn-accent\" \n                onClick={() => {\n                  window.dispatchEvent(new CustomEvent('site-cart-add', { detail: { quantity: 1 } }));\n                }}\n              >\n                Add to Cart\n              </button>\n            </div>\n          </div>\n        </div>\n        <div className=\"shop-cart-count\">\n          <span className=\"cart-count\">Cart: {cartCount}</span>\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default Shop;",
-      "src/components/Shop.css": ".shop {\n  padding: 64px 24px;\n  background-color: var(--background-color);\n  color: var(--on-background);\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n  overflow: hidden;\n}\n\n.shop-container {\n  max-width: 1000px;\n  width: 100%;\n  margin: 0 auto;\n}\n\n.shop-title {\n  font-family: var(--font-heading);\n  font-size: 2.5rem;\n  font-weight: 700;\n  color: var(--primary-color);\n  margin-bottom: 48px;\n  opacity: 0;\n  transform: translateY(40px);\n  transition: opacity 0.6s ease, transform 0.6s ease;\n}\n\n.shop-title.revealed {\n  opacity: 1;\n  transform: translateY(0);\n}\n\n.shop-products {\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: center;\n  gap: 48px;\n  margin-bottom: 48px;\n}\n\n.product {\n  flex: 1 1 300px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n  padding: 24px;\n  background-color: var(--background-color);\n  border: 1px solid var(--on-accent);\n  border-radius: 16px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);\n  transition: transform 0.3s ease, box-shadow 0.3s ease;\n}\n\n.product:hover {\n  transform: scale(1.02);\n  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);\n}\n\n.product-image {\n  width: 100%;\n  height: 200px;\n  margin-bottom: 24px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n\n.product-illustration {\n  width: 100%;\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  background-color: var(--background-color);\n  border-radius: 16px;\n}\n\n.product-details {\n  width: 100%;\n}\n\n.product-name {\n  font-family: var(--font-body);\n  font-size: 1.5rem;\n  font-weight: 500;\n  color: var(--primary-color);\n  margin-bottom: 16px;\n}\n\n.product-price {\n  font-family: var(--font-body);\n  font-size: 1.25rem;\n  color: var(--on-accent);\n  margin-bottom: 24px;\n}\n\n.btn {\n  font-family: var(--font-body);\n  font-size: 1rem;\n  font-weight: 500;\n  padding: 12px 24px;\n  border: none;\n  border-radius: 50px;\n  color: var(--on-accent);\n  background-color: transparent;\n  cursor: pointer;\n  transition: color 0.2s ease, background-color 0.2s ease;\n}\n\n.btn-accent {\n  color: var(--accent-color);\n  background-color: var(--accent-color);\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);\n}\n\n.btn-accent:hover {\n  background-color: var(--accent-color);\n  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);\n}\n\n.shop-cart-count {\n  font-family: var(--font-body);\n  font-size: 1.25rem;\n  color: var(--on-accent);\n  margin-top: 48px;\n}\n\n.cart-count {\n  font-family: var(--font-body);\n  font-size: 1.25rem;\n  color: var(--on-accent);\n  margin-top: 48px;\n}",
-      "src/components/Footer.tsx": "import React from 'react';\nimport './Footer.css';\nexport function Footer() {\n  return (\n    <section className=\"footer\" id=\"footer\">\n      <div className=\"footer-container\">\n        <div className=\"footer-logo\">\n          <h2 className=\"footer-logo-text\">Aster Objects</h2>\n        </div>\n        <div className=\"footer-links\">\n          <a href=\"#hero\" className=\"footer-link\">Home</a>\n          <a href=\"#shop\" className=\"footer-link\">Shop</a>\n          <a href=\"#footer\" className=\"footer-link\">Contact</a>\n        </div>\n        <div className=\"footer-social\">\n          <a href=\"#site-main\" className=\"social-icon\">Instagram</a>\n          <a href=\"#site-main\" className=\"social-icon\">Twitter</a>\n          <a href=\"#site-main\" className=\"social-icon\">Facebook</a>\n        </div>\n        <div className=\"footer-copyright\">\n          <p className=\"footer-copyright-text\">\u00a9 2023 Aster Objects. All rights reserved.</p>\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default Footer;",
-      "src/components/Footer.css": ".footer {\n  padding: 48px 24px;\n  background-color: var(--background-color);\n  color: var(--on-background);\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n  font-family: var(--font-body);\n  font-size: 1rem;\n  line-height: 1.5;\n  overflow: hidden;\n}\n\n.footer-container {\n  max-width: 1000px;\n  width: 100%;\n  margin: 0 auto;\n}\n\n.footer-logo {\n  font-family: var(--font-heading);\n  font-size: 1.5rem;\n  font-weight: 700;\n  color: var(--primary-color);\n  margin-bottom: 24px;\n}\n\n.footer-logo-text {\n  color: var(--primary-color);\n  font-family: var(--font-heading);\n  font-size: 1.5rem;\n  font-weight: 700;\n}\n\n.footer-links {\n  display: flex;\n  justify-content: center;\n  gap: 24px;\n  margin-bottom: 24px;\n}\n\n.footer-link {\n  color: var(--on-accent);\n  text-decoration: none;\n  transition: color 0.2s ease;\n}\n\n.footer-link:hover {\n  color: var(--accent-color);\n}\n\n.footer-social {\n  display: flex;\n  justify-content: center;\n  gap: 24px;\n  margin-bottom: 24px;\n}\n\n.social-icon {\n  color: var(--on-accent);\n  font-size: 1.2rem;\n  text-decoration: none;\n  transition: color 0.2s ease;\n}\n\n.social-icon:hover {\n  color: var(--accent-color);\n}\n\n.footer-copyright {\n  font-size: 0.9rem;\n  color: var(--on-accent);\n}\n\n.footer-copyright-text {\n  color: var(--on-accent);\n  font-size: 0.9rem;\n  font-family: var(--font-body);\n}"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 4/4 planned sections.\n- Generated component modules: `Navbar.tsx`, `Navbar.css`, `Hero.tsx`, `Hero.css`, `Shop.tsx`.\n\n## Status\n- Section completion: 4 / 4 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "Aster_Objects",
-    "prompt": "Build a complete creative ecommerce website for Aster Objects, a fictional ceramics studio. Sections: Navbar, Hero, Shop, Footer. Use warm ivory, ink and terracotta, bold editorial typography and a distinctive asymmetrical composition. Products: Orbit Mug $28 and Arc Vase $64. Show both products with relevant imagery or clearly drawn ceramic illustrations. Both Add to cart buttons must update a visible cart count from 0, with repeated clicks working. Navigation links must scroll to real sections. Include tasteful scrolling text reveals and a parallax hero illustration. Include a visible CSS 3D ceramic composition with a working flat-view toggle, and respect reduced motion. Make every section look polished on a 390px phone with no horizontal overflow. Use supplied facts only; this is a demo shop and checkout must not imply real payment processing.",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 4492,
-    "contextTokens": 4492,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/Aster_Objects_20261006_001605/",
-    "filePath": "generated_components/Aster_Objects_20261006_001605/",
-    "folder_name": "Aster_Objects_20261006_001605",
-    "folderName": "Aster_Objects_20261006_001605",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1791225336_5db9cd",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1791225336_5db9cd",
-    "checkpoints_count": 1,
-    "visual_score": null,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": false,
-      "motionPassed": false,
-      "motion_status": "failed",
-      "motionStatus": "failed",
-      "motion_runtime_status": "failed",
-      "motionRuntimeStatus": "failed",
-      "three_d_passed": false,
-      "threeDPassed": false,
-      "three_d_status": "failed",
-      "threeDStatus": "failed",
-      "three_d_static_status": "passed",
-      "threeDStaticStatus": "passed",
-      "three_d_runtime_status": "failed",
-      "threeDRuntimeStatus": "failed",
-      "motion_plan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "instant",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        },
-        {
-          "type": "parallax",
-          "target_section": "hero",
-          "intensity": "medium",
-          "axis": "y",
-          "trigger": "scroll-progress",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "instant",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        },
-        {
-          "type": "parallax",
-          "target_section": "hero",
-          "intensity": "medium",
-          "axis": "y",
-          "trigger": "scroll-progress",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Hero.css: unscoped shared selector '.btn' can restyle other sections",
-        "[Lint Error] src/components/Shop.css: unscoped shared selector '.btn' can restyle other sections",
-        "[Rendering Contract Error] [src/components/Shop.css] [TEXT CONTRAST]: .btn-accent declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Shop.css] [TEXT CONTRAST]: .btn-accent:hover declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-accent declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-accent:hover declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-flat-view:hover declares 4.26:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Navbar.css] [TEXT CONTRAST]: .cart-count declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[TypeScript Error] src/components/Navbar.tsx(9,12): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Navbar.tsx(10,25): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Shop.tsx(14,12): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Shop.tsx(15,25): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "... (2 more errors omitted)"
-      ],
-      "warnings": [
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1c1917 yields contrast ratio 1.20:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#161f30 yields contrast ratio 1.27:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1e293b yields contrast ratio 1.44:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#161f30 yields contrast ratio 1.27:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1e293b yields contrast ratio 1.44:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#090d16 yields contrast ratio 1.08:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[Motion Rule Warning] Scroll listener for parallax should specify { passive: true } to avoid scroll-thread blocking.",
-        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range.",
-        "[Motion Rule Warning] Interactive toggle buttons should declare aria-pressed or aria-expanded state."
-      ],
-      "repair_attempts": 1,
-      "repairAttempts": 1,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "not_requested",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": false,
-      "status": "failed",
-      "score": null,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": false,
-      "motionPassed": false,
-      "motion_status": "failed",
-      "motionStatus": "failed",
-      "motion_runtime_status": "failed",
-      "motionRuntimeStatus": "failed",
-      "three_d_passed": false,
-      "threeDPassed": false,
-      "three_d_status": "failed",
-      "threeDStatus": "failed",
-      "three_d_static_status": "passed",
-      "threeDStaticStatus": "passed",
-      "three_d_runtime_status": "failed",
-      "threeDRuntimeStatus": "failed",
-      "motion_plan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "instant",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        },
-        {
-          "type": "parallax",
-          "target_section": "hero",
-          "intensity": "medium",
-          "axis": "y",
-          "trigger": "scroll-progress",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "instant",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        },
-        {
-          "type": "parallax",
-          "target_section": "hero",
-          "intensity": "medium",
-          "axis": "y",
-          "trigger": "scroll-progress",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "static",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Hero.css: unscoped shared selector '.btn' can restyle other sections",
-        "[Lint Error] src/components/Shop.css: unscoped shared selector '.btn' can restyle other sections",
-        "[Rendering Contract Error] [src/components/Shop.css] [TEXT CONTRAST]: .btn-accent declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Shop.css] [TEXT CONTRAST]: .btn-accent:hover declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-accent declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-accent:hover declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Hero.css] [TEXT CONTRAST]: .btn-flat-view:hover declares 4.26:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[Rendering Contract Error] [src/components/Navbar.css] [TEXT CONTRAST]: .cart-count declares 1.00:1 foreground/background contrast; check normal, hover and focus rendering.",
-        "[TypeScript Error] src/components/Navbar.tsx(9,12): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Navbar.tsx(10,25): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Shop.tsx(14,12): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "[TypeScript Error] src/components/Shop.tsx(15,25): error TS2769: No overload matches this call.",
-        "[TypeScript Error] Overload 1 of 2, '(type: keyof WindowEventMap, listener: (this: Window, ev: Event | DeviceMotionEvent | DeviceOrientationEvent | GamepadEvent | ... 28 more ... | StorageEvent) => any, options?: boolean | ... 1 more ... | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '\"site-cart-add\"' is not assignable to parameter of type 'keyof WindowEventMap'.",
-        "[TypeScript Error] Overload 2 of 2, '(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions | undefined): void', gave the following error.",
-        "[TypeScript Error] Argument of type '(event: CustomEvent) => void' is not assignable to parameter of type 'EventListenerOrEventListenerObject'.",
-        "[TypeScript Error] Type '(event: CustomEvent) => void' is not assignable to type 'EventListener'.",
-        "[TypeScript Error] Types of parameters 'event' and 'evt' are incompatible.",
-        "[TypeScript Error] Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent",
-        "... (2 more errors omitted)"
-      ],
-      "warnings": [
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1c1917 yields contrast ratio 1.20:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#161f30 yields contrast ratio 1.27:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1e293b yields contrast ratio 1.44:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#161f30 yields contrast ratio 1.27:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#fafafa on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=rgba(250, 250, 250, 0.65) on bg=rgba(255, 255, 255, 0.05) yields contrast ratio 1.04:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#1e293b yields contrast ratio 1.44:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[A11y Warning] src/App.css: Color token pairing fg=#000000 on bg=#090d16 yields contrast ratio 1.08:1 (fails WCAG AA 4.5:1 and AAA 7:1 for normal text).",
-        "[Motion Rule Warning] Scroll listener for parallax should specify { passive: true } to avoid scroll-thread blocking.",
-        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range.",
-        "[Motion Rule Warning] Interactive toggle buttons should declare aria-pressed or aria-expanded state."
-      ],
-      "repair_attempts": 1,
-      "repairAttempts": 1,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "/preview/1791225336_5db9cd",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": true,
-      "entry": "index.html",
-      "symbol": "Aster_Objects",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [
-      {
-        "turn": 1,
-        "action": "write_site_ok",
-        "section": "navbar",
-        "files": [
-          "src/components/Navbar.tsx",
-          "src/components/Navbar.css"
-        ]
-      },
-      {
-        "turn": 2,
-        "action": "write_site_ok",
-        "section": "hero",
-        "files": [
-          "src/components/Hero.tsx",
-          "src/components/Hero.css"
-        ]
-      },
-      {
-        "turn": 3,
-        "action": "write_site_structural_violation",
-        "section": "shop",
-        "violations": [
-          "[src/components/Shop.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.cart-count'"
-        ]
-      },
-      {
-        "turn": 4,
-        "action": "write_site_ok",
-        "section": "shop",
-        "files": [
-          "src/components/Shop.tsx",
-          "src/components/Shop.css"
-        ]
-      },
-      {
-        "turn": 5,
-        "action": "write_site_structural_violation",
-        "section": "footer",
-        "violations": [
-          "[src/components/Footer.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.footer-copyright-text'",
-          "[src/components/Footer.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.footer-logo-text'"
-        ]
-      },
-      {
-        "turn": 6,
-        "action": "write_site_ok",
-        "section": "footer",
-        "files": [
-          "src/components/Footer.tsx",
-          "src/components/Footer.css"
-        ]
-      }
-    ],
-    "timestamp": "2026-10-06 00:17:08"
-  },
-  {
-    "task_id": "e63cedf3-f444-4953-85ec-c6a0da9ff4e8",
-    "session_id": "1791212821_20da43",
-    "mode": "site",
-    "final_passed": false,
-    "completion_status": "BLOCKED",
-    "status": "blocked",
-    "blocked_sections": [
-      "shop"
-    ],
-    "blocked_diagnostics": [
-      {
-        "section": "shop",
-        "reason": "structural_violation",
-        "errors": [
-          "[src/components/Shop.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.shop-container'"
-        ]
-      }
-    ],
-    "initial_passed": false,
-    "generation_complete": false,
-    "section_completion": "3 / 4",
-    "project_validation": "failed",
-    "generation_quality": "blocked",
-    "self_corrected": false,
-    "turns_used": 6,
-    "sections_completed": 3,
-    "sections_planned": 4,
-    "code": "import React from 'react';\nimport './Navbar.css';\nexport function Navbar() {\n  return (\n    <nav className=\"navbar\">\n      <div className=\"navbar-brand\">\n        <h1 className=\"logo\">Aster Objects</h1>\n      </div>\n      <div className=\"navbar-links\">\n        <a href=\"#hero\" className=\"nav-link\">Home</a>\n        <a href=\"#shop\" className=\"nav-link\">Shop</a>\n        <a href=\"#footer\" className=\"nav-link\">Contact</a>\n      </div>\n      <div className=\"navbar-cart\">\n        <button className=\"cart-button\" aria-label=\"Cart\">\n          <span className=\"cart-count\">0</span>\n          <svg className=\"cart-icon\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n            <path d=\"M3 6H21V18H3V6Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n            <path d=\"M16 10H21V14H16V10Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n            <path d=\"M16 16H21V20H16V16Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n          </svg>\n        </button>\n      </div>\n    </nav>\n  );\n}\nexport default Navbar;",
-    "files": {
-      "src/components/Navbar.tsx": "import React from 'react';\nimport './Navbar.css';\nexport function Navbar() {\n  return (\n    <nav className=\"navbar\">\n      <div className=\"navbar-brand\">\n        <h1 className=\"logo\">Aster Objects</h1>\n      </div>\n      <div className=\"navbar-links\">\n        <a href=\"#hero\" className=\"nav-link\">Home</a>\n        <a href=\"#shop\" className=\"nav-link\">Shop</a>\n        <a href=\"#footer\" className=\"nav-link\">Contact</a>\n      </div>\n      <div className=\"navbar-cart\">\n        <button className=\"cart-button\" aria-label=\"Cart\">\n          <span className=\"cart-count\">0</span>\n          <svg className=\"cart-icon\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n            <path d=\"M3 6H21V18H3V6Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n            <path d=\"M16 10H21V14H16V10Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n            <path d=\"M16 16H21V20H16V16Z\" stroke=\"var(--color-inkstone)\" strokeWidth=\"2\" strokeLinecap=\"round\" strokeLinejoin=\"round\"/>\n          </svg>\n        </button>\n      </div>\n    </nav>\n  );\n}\nexport default Navbar;",
-      "src/components/Navbar.css": ".navbar {\n  position: sticky;\n  top: 0;\n  z-index: 1000;\n  background-color: var(--color-obsidian);\n  color: var(--color-paper);\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: var(--spacing-12) var(--spacing-28);\n  box-shadow: none;\n}\n\n.navbar-brand {\n  font-family: var(--font-roobert);\n  font-size: var(--text-display);\n  color: var(--color-paper);\n  font-weight: var(--font-weight-semibold);\n}\n\n.logo {\n  font-family: var(--font-roobert);\n  font-size: var(--text-display);\n  color: var(--color-paper);\n  font-weight: var(--font-weight-semibold);\n}\n\n.navbar-links {\n  display: flex;\n  gap: var(--spacing-28);\n}\n\n.nav-link {\n  font-family: var(--font-raleway);\n  font-size: var(--text-body);\n  color: var(--color-ash-mist);\n  text-decoration: none;\n  transition: color 0.3s ease;\n}\n\n.nav-link:hover {\n  color: var(--color-iridescent-fade);\n}\n\n.navbar-cart {\n  display: flex;\n  align-items: center;\n  gap: var(--spacing-12);\n}\n\n.cart-button {\n  background: none;\n  border: none;\n  cursor: pointer;\n  display: flex;\n  align-items: center;\n  gap: var(--spacing-8);\n  color: var(--color-ash-mist);\n  font-size: var(--text-body-sm);\n  font-weight: var(--font-weight-semibold);\n  transition: color 0.3s ease;\n}\n\n.cart-button:hover {\n  color: var(--color-iridescent-fade);\n}\n\n.cart-count {\n  background-color: var(--color-iridescent-fade);\n  color: var(--color-paper);\n  border-radius: var(--radius-buttons);\n  width: 16px;\n  height: 16px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  font-size: var(--text-body-sm);\n  font-weight: var(--font-weight-semibold);\n}\n\n.cart-icon {\n  width: 24px;\n  height: 24px;\n}",
-      "src/components/Hero.tsx": "import React from 'react';\nimport './Hero.css';\nexport function Hero() {\n  return (\n    <section className=\"hero\" id=\"hero\">\n      <div className=\"hero-content\">\n        <h1 className=\"hero-title\">Aster Objects</h1>\n        <p className=\"hero-subtitle\">Where ceramic art meets modern elegance</p>\n        <div className=\"hero-buttons\">\n          <a href=\"#shop\" className=\"hero-button\">Shop Now</a>\n          <a href=\"#footer\" className=\"hero-button\">Contact</a>\n        </div>\n      </div>\n      <div className=\"hero-illustration\">\n        <div className=\"parallax-layer\">\n          <img src=\"https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&q=80\" alt=\"Server racks in a modern datacenter\" className=\"parallax-image\" />\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default Hero;",
-      "src/components/Hero.css": ".hero {\n  position: relative;\n  min-height: 100vh;\n  background-color: var(--color-obsidian);\n  color: var(--color-paper);\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  padding: var(--spacing-64) var(--spacing-28);\n  text-align: center;\n  overflow: hidden;\n}\n\n.hero-content {\n  z-index: 2;\n  max-width: var(--page-max-width);\n  width: 100%;\n  margin-bottom: var(--spacing-68);\n}\n\n.hero-title {\n  font-family: var(--font-roobert);\n  font-size: var(--text-display);\n  color: var(--color-paper);\n  font-weight: var(--font-weight-semibold);\n  margin-bottom: var(--spacing-40);\n}\n\n.hero-subtitle {\n  font-family: var(--font-raleway);\n  font-size: var(--text-body);\n  color: var(--color-ash-mist);\n  margin-bottom: var(--spacing-48);\n}\n\n.hero-buttons {\n  display: flex;\n  gap: var(--spacing-28);\n  margin-bottom: var(--spacing-48);\n}\n\n.hero-button {\n  font-family: var(--font-roobert);\n  font-size: var(--text-body);\n  color: var(--color-iridescent-fade);\n  background: var(--color-iridescent-fade);\n  border: none;\n  padding: var(--spacing-12) var(--spacing-28);\n  border-radius: var(--radius-buttons);\n  cursor: pointer;\n  transition: background 0.3s ease, color 0.3s ease;\n}\n\n.hero-button:hover {\n  background: var(--gradient-iridescent-fade);\n  color: var(--color-paper);\n}\n\n.hero-illustration {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  z-index: 1;\n  overflow: hidden;\n}\n\n.parallax-layer {\n  position: relative;\n  transform: translate3d(0, 0, 0);\n  will-change: transform;\n}\n\n.parallax-image {\n  width: 100%;\n  height: auto;\n  opacity: 0.6;\n  transition: transform 0.5s ease-in-out;\n}\n\n.hero-illustration:hover .parallax-image {\n  transform: scale(1.05);\n}",
-      "src/components/Footer.tsx": "import React from 'react';\nimport './Footer.css';\nexport function Footer() {\n  return (\n    <footer id=\"footer\" className=\"footer\">\n      <div className=\"footer-container\">\n        <p className=\"footer-text\">\u00a9 {new Date().getFullYear()} Aster Objects. All rights reserved.</p>\n        <div className=\"footer-links\">\n          <a href=\"#home\" className=\"footer-link\">Home</a>\n          <a href=\"#shop\" className=\"footer-link\">Shop</a>\n          <a href=\"#footer\" className=\"footer-link\">Contact</a>\n        </div>\n      </div>\n    </footer>\n  );\n}\nexport default Footer;",
-      "src/components/Footer.css": ".footer {\n  background-color: var(--color-inkstone);\n  color: var(--color-paper);\n  padding: var(--spacing-64) var(--spacing-28);\n  font-family: var(--font-raleway);\n}\n\n.footer-container {\n  max-width: var(--page-max-width);\n  margin: 0 auto;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.footer-text {\n  font-size: var(--text-body-sm);\n  color: var(--color-ash-mist);\n  margin-bottom: var(--spacing-48);\n}\n\n.footer-links {\n  display: flex;\n  gap: var(--spacing-68);\n  flex-wrap: wrap;\n  justify-content: center;\n  margin-top: var(--spacing-28);\n}\n\n.footer-link {\n  font-family: var(--font-roobert);\n  font-size: var(--text-body-sm);\n  color: var(--color-ash-mist);\n  text-decoration: none;\n  transition: color 0.3s ease;\n}\n\n.footer-link:hover {\n  color: var(--color-iridescent-fade);\n}"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Saved accepted site files; generation blocked with 3/4 planned sections complete.\n- Generated component modules: `Navbar.tsx`, `Navbar.css`, `Hero.tsx`, `Hero.css`, `Footer.tsx`.\n\n## Status\n- \u26a0\ufe0f Blocked section: shop: structural_violation\n- Section completion: 3 / 4 planned sections generated.\n- Generation quality: blocked (native / repaired / fallback).\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "Aster_Objects",
-    "prompt": "Build a complete creative ecommerce website for Aster Objects, a fictional ceramics studio. Sections: Navbar, Hero, Shop, Footer. Use warm ivory, ink and terracotta, bold editorial typography and a distinctive asymmetrical composition. Products: Orbit Mug $28 and Arc Vase $64. Show both products with relevant imagery or clearly drawn ceramic illustrations. Both Add to cart buttons must update a visible cart count from 0, with repeated clicks working. Navigation links must scroll to real sections. Include tasteful scrolling text reveals and a parallax hero illustration. Include a visible CSS 3D ceramic composition with a working flat-view toggle, and respect reduced motion. Make every section look polished on a 390px phone with no horizontal overflow. Use supplied facts only; this is a demo shop and checkout must not imply real payment processing.",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 5361,
-    "contextTokens": 5361,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/Aster_Objects_20261005_204717/",
-    "filePath": "generated_components/Aster_Objects_20261005_204717/",
-    "folder_name": "Aster_Objects_20261005_204717",
-    "folderName": "Aster_Objects_20261005_204717",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1791212821_20da43",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1791212821_20da43",
-    "checkpoints_count": 1,
-    "visual_score": null,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": false,
-      "interactionPassed": false,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "unverified",
-      "interactionStatus": "unverified",
-      "runtime_unverified": true,
-      "runtimeUnverified": true,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "unverified",
-      "runtimeStatus": "unverified",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Generation blocked] shop: structural_violation"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "interaction_validation": {
-      "passed": false,
-      "status": "unverified",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": false,
-      "status": "failed",
-      "score": null,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": false,
-      "interactionPassed": false,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "unverified",
-      "interactionStatus": "unverified",
-      "runtime_unverified": true,
-      "runtimeUnverified": true,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "unverified",
-      "runtimeStatus": "unverified",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Generation blocked] shop: structural_violation"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "/preview/1791212821_20da43",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": true,
-      "entry": "index.html",
-      "symbol": "Aster_Objects",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [
-      {
-        "turn": 1,
-        "action": "write_site_ok",
-        "section": "navbar",
-        "files": [
-          "src/components/Navbar.tsx",
-          "src/components/Navbar.css"
-        ]
-      },
-      {
-        "turn": 2,
-        "action": "write_site_structural_violation",
-        "section": "hero",
-        "violations": [
-          "[src/components/Hero.css] Undefined CSS custom property referenced: --text-body-lg. All variables used in var(--...) MUST be defined in :root. Available tokens for this site are: --card-padding, --color-ash-mist, --color-felt-gray, --color-inkstone, --color-iridescent-fade, --color-obsidian, --color-paper, --color-pewter, --color-slate-pill, --element-gap, --font-raleway, --font-roobert..."
-        ]
-      },
-      {
-        "turn": 3,
-        "action": "write_site_ok",
-        "section": "hero",
-        "files": [
-          "src/components/Hero.tsx",
-          "src/components/Hero.css"
-        ]
-      },
-      {
-        "turn": 4,
-        "action": "write_site_style_violation",
-        "section": "shop",
-        "violations": [
-          "[src/components/Shop.css] Used 'box-shadow' contrary to the design constraint: 'Never use box-shadow or elevation blur'. Rely strictly on border and color contrast."
-        ]
-      },
-      {
-        "turn": 5,
-        "action": "section_blocked",
-        "section": "shop",
-        "reason": "structural_violation",
-        "errors": [
-          "[src/components/Shop.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.shop-container'"
-        ],
-        "files": []
-      },
-      {
-        "turn": 6,
-        "action": "write_site_ok",
-        "section": "footer",
-        "files": [
-          "src/components/Footer.tsx",
-          "src/components/Footer.css"
-        ]
-      }
-    ],
-    "timestamp": "2026-10-05 20:47:19"
-  },
-  {
-    "task_id": "test_state_model_01",
-    "session_id": "1790767728_59b181",
-    "mode": "site",
-    "final_passed": true,
-    "completion_status": "COMPLETE",
-    "status": "completed",
-    "blocked_sections": [],
-    "initial_passed": true,
-    "generation_complete": true,
-    "section_completion": "2 / 2",
-    "project_validation": "passed",
-    "generation_quality": "native",
-    "self_corrected": false,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 2,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "CompanySite",
-    "prompt": "Build a modern company website",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/CompanySite_20260930_165848/",
-    "filePath": "generated_components/CompanySite_20260930_165848/",
-    "folder_name": "CompanySite_20260930_165848",
-    "folderName": "CompanySite_20260930_165848",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790767728_59b181",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790767728_59b181",
-    "checkpoints_count": 1,
-    "visual_score": 4.2,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "passed",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.2,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1790767728_59b181",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "CompanySite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-09-30 16:58:49"
-  },
-  {
-    "task_id": "test_state_model_01",
-    "session_id": "1790767676_bf0c41",
-    "mode": "site",
-    "final_passed": true,
-    "completion_status": "COMPLETE",
-    "status": "completed",
-    "blocked_sections": [],
-    "initial_passed": true,
-    "generation_complete": true,
-    "section_completion": "2 / 2",
-    "project_validation": "passed",
-    "generation_quality": "native",
-    "self_corrected": false,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 2,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "CompanySite",
-    "prompt": "Build a modern company website",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/CompanySite_20260930_165756/",
-    "filePath": "generated_components/CompanySite_20260930_165756/",
-    "folder_name": "CompanySite_20260930_165756",
-    "folderName": "CompanySite_20260930_165756",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790767676_bf0c41",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790767676_bf0c41",
-    "checkpoints_count": 1,
-    "visual_score": 4.2,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "passed",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.2,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1790767676_bf0c41",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "CompanySite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-09-30 16:57:57"
-  },
-  {
-    "task_id": "6893d7d9-605e-4458-86be-735d3eec01a3",
-    "session_id": "1790760749_85bf87",
-    "mode": "site",
-    "final_passed": false,
-    "completion_status": "FAILED",
-    "initial_passed": false,
-    "generation_complete": true,
-    "section_completion": "4 / 4",
-    "project_validation": "failed",
-    "generation_quality": "fallback",
-    "self_corrected": false,
-    "turns_used": 13,
-    "sections_completed": 4,
-    "sections_planned": 4,
-    "code": "import React from 'react';\nimport './Hero.css';\nexport function Hero() {\n  return (\n    <section className=\"hero-section\" id=\"hero\">\n      <div className=\"hero-wrapper\">\n        <span className=\"hero-badge\">Velvet Roast</span>\n        <h1 className=\"hero-title\">Artisan Specialty Coffee Roastery & Cafe</h1>\n        <p className=\"hero-teaser\">\n          Certified organic single-origin beans sourced directly from high-altitude farms. Hand-packed, delivered within 48 hours.\n        </p>\n        <div className=\"hero-actions\">\n          <span className=\"hero-btn-primary\">\n            Explore Menu\n          </span>\n          <span className=\"hero-btn-secondary\">\n            Get in Touch\n          </span>\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default Hero;",
-    "files": {
-      "src/components/Hero.tsx": "import React from 'react';\nimport './Hero.css';\nexport function Hero() {\n  return (\n    <section className=\"hero-section\" id=\"hero\">\n      <div className=\"hero-wrapper\">\n        <span className=\"hero-badge\">Velvet Roast</span>\n        <h1 className=\"hero-title\">Artisan Specialty Coffee Roastery & Cafe</h1>\n        <p className=\"hero-teaser\">\n          Certified organic single-origin beans sourced directly from high-altitude farms. Hand-packed, delivered within 48 hours.\n        </p>\n        <div className=\"hero-actions\">\n          <span className=\"hero-btn-primary\">\n            Explore Menu\n          </span>\n          <span className=\"hero-btn-secondary\">\n            Get in Touch\n          </span>\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default Hero;",
-      "src/components/Hero.css": ".hero-section {background:#140f0c;color:#fef3c7;padding:6rem 2rem}\n.hero-wrapper {max-width:680px;margin:0 auto}\n.hero-badge {font-size:0.75rem;text-transform:uppercase;font-family:monospace;color:#d97706;letter-spacing:0.1em}\n.hero-title {font:size 2.4rem,#140f0c;line-height:1.2;margin:0.5rem 0;font-family:Syne,Georgia}\n.hero-teaser {color:#cbd5e1;font:1rem/1.6 Arial,sans-serif;margin:1rem 0}\n.hero-actions a {display:inline-flex;align-items:center;gap:0.5rem;color:inherit;text-decoration:none;padding:0.75rem 1.5rem;border-radius:6px;font-weight:600}\n.hero-btn-primary {background:#d97706;color:#140f0c;border:1px solid #d97706}\n.hero-btn-secondary {background:#1e1713;color:#fef3c7;border:1px solid #fef3c7;transition:opacity 0.2s ease}\n.hero-btn-secondary:hover {opacity:0.8}\n@media (prefers-reduced-motion: reduce) {.hero-section{-webkit-transition:transform 0.3s ease,opacity 0.3s ease;transition:transform 0.3s ease,opacity 0.3s ease;transform:translateY(0);opacity:1;}}",
-      "src/components/FeaturedMenu.tsx": "import React from 'react';\nimport './FeaturedMenu.css';\n\nexport function FeaturedMenu() {\n  return (\n    <section className=\"sa-featured-menu\" id=\"featured-menu\" aria-label=\"Featured Menu\" data-fallback=\"true\">\n      <div className=\"sa-featured-menu__inner\">\n        <div className=\"sa-header-block\" style={{ marginBottom: '2rem' }}>\n          <h2 className=\"sa-featured-menu__title\">Featured Menu</h2>\n          <p className=\"sa-featured-menu__subtitle\" style={{ opacity: 0.85 }}>Content is currently unavailable.</p>\n        </div>\n        <div className=\"sa-featured-menu__content sa-content sa-grid\">\n          <div className=\"sa-featured-menu__item sa-item\" key=\"0\">\n            <h3 className=\"sa-item__title\">Single Origin</h3>\n            <p className=\"sa-item__desc\">Content is currently unavailable.</p>\n          </div>\n          <div className=\"sa-featured-menu__item sa-item\" key=\"1\">\n            <h3 className=\"sa-item__title\">Signature Blends</h3>\n            <p className=\"sa-item__desc\">Content is currently unavailable.</p>\n          </div>\n          <div className=\"sa-featured-menu__item sa-item\" key=\"2\">\n            <h3 className=\"sa-item__title\">Cold Brew</h3>\n            <p className=\"sa-item__desc\">Content is currently unavailable.</p>\n          </div>\n          <div className=\"sa-featured-menu__item sa-item\" key=\"3\">\n            <h3 className=\"sa-item__title\">Pastries</h3>\n            <p className=\"sa-item__desc\">Content is currently unavailable.</p>\n          </div>\n        </div>\n      </div>\n    </section>\n  );\n}\n",
-      "src/components/FeaturedMenu.css": "/* Auto-synthesized CSS fallback for featured-menu */\n.sa-featured-menu, section {\n  width: 100%;\n  padding: 5rem 2rem;\n  background: var(--color-obsidian, #000000);\n  color: var(--surface-paper, #ffffff);\n  box-sizing: border-box;\n}\n.sa-featured-menu__inner, section > div {\n  max-width: var(--page-max-width, 1200px);\n  margin: 0 auto;\n}\n.sa-featured-menu__title, h1, h2 {\n  font-family: var(--font-heading, sans-serif), sans-serif;\n  color: var(--surface-paper, #ffffff);\n  margin-bottom: 1.5rem;\n}\n.sa-featured-menu__grid, [class*='grid'] {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));\n  gap: 2rem;\n  margin-top: 2rem;\n}\n.sa-featured-menu__card, [class*='card'] {\n  background: rgba(255, 255, 255, 0.03);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 0px;\n  padding: 1.75rem;\n  box-shadow: none;\n  transition: border-color 0.2s ease, transform 0.2s ease;\n}\n.sa-featured-menu__card:hover, [class*='card']:hover {\n  border-color: var(--color-iridescent-fade, #a02d25);\n  transform: translateY(-2px);\n}\n.sa-featured-menu__btn, button, a[class*='btn'], a[class*='cta'] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0.65rem 1.75rem;\n  background: var(--color-iridescent-fade, #a02d25);\n  color: var(--surface-paper, #ffffff);\n  border-radius: 75px;\n  font-family: var(--font-body, sans-serif), sans-serif;\n  font-weight: 600;\n  text-decoration: none;\n  border: none;\n  box-shadow: none;\n  cursor: pointer;\n}\n.sa-featured-menu__subtitle { font-family: var(--font-body, sans-serif), sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }\n.sa-item__desc { font-family: var(--font-body, sans-serif), sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }\n@media (prefers-reduced-motion: reduce) {\n  .sa-featured-menu, .sa-featured-menu__card, .sa-featured-menu__btn, [class*='card'], [class*='btn'], [class*='fade'], * {\n    animation: none !important;\n    transition: none !important;\n    transform: none !important;\n    scroll-behavior: auto !important;\n  }\n}\n\n\n.sa-featured-menu__content {\n  display: flex;\n  align-items: center;\n  gap: 1.5rem;\n  list-style: none;\n}\n\n/* [AUTO-REPAIR]: Injected styles for missing classes */\n.sa-content {\n  display: block;\n}\n\n.sa-featured-menu__item {\n  display: block;\n}\n\n.sa-grid {\n  display: block;\n}\n\n.sa-header-block {\n  display: block;\n}\n\n.sa-item__title {\n  display: block;\n}\n\n",
-      "src/components/BentoGrid.tsx": "import React from 'react';\nimport './BentoGrid.css';\n\nexport function BentoGrid() {\n  return (\n    <section className=\"sa-bento-grid\" id=\"bento-grid\" aria-label=\"Bento Grid\" data-fallback=\"true\">\n      <div className=\"sa-bento-grid__inner\">\n        <div className=\"sa-header-block\" style={{ marginBottom: '2rem' }}>\n          <h2 className=\"sa-bento-grid__title\">Bento Grid</h2>\n          <p className=\"sa-bento-grid__subtitle\" style={{ opacity: 0.85 }}>Content is currently unavailable.</p>\n        </div>\n        <div className=\"sa-bento-grid__content sa-content sa-grid\">\n          <div className=\"sa-bento-grid__item sa-item\">\n            <h3 className=\"sa-item__title\">Bento Grid</h3>\n            <p className=\"sa-item__desc\">Content is currently unavailable.</p>\n          </div>\n        </div>\n      </div>\n    </section>\n  );\n}\n",
-      "src/components/BentoGrid.css": "/* Auto-synthesized CSS fallback for bento-grid */\n.sa-bento-grid, section {\n  width: 100%;\n  padding: 5rem 2rem;\n  background: var(--color-obsidian, #000000);\n  color: var(--surface-paper, #ffffff);\n  box-sizing: border-box;\n}\n.sa-bento-grid__inner, section > div {\n  max-width: var(--page-max-width, 1200px);\n  margin: 0 auto;\n}\n.sa-bento-grid__title, h1, h2 {\n  font-family: var(--font-heading, sans-serif), sans-serif;\n  color: var(--surface-paper, #ffffff);\n  margin-bottom: 1.5rem;\n}\n.sa-bento-grid__grid, [class*='grid'] {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));\n  gap: 2rem;\n  margin-top: 2rem;\n}\n.sa-bento-grid__card, [class*='card'] {\n  background: rgba(255, 255, 255, 0.03);\n  border: 1px solid rgba(255, 255, 255, 0.08);\n  border-radius: 0px;\n  padding: 1.75rem;\n  box-shadow: none;\n  transition: border-color 0.2s ease, transform 0.2s ease;\n}\n.sa-bento-grid__card:hover, [class*='card']:hover {\n  border-color: var(--color-iridescent-fade, #a02d25);\n  transform: translateY(-2px);\n}\n.sa-bento-grid__btn, button, a[class*='btn'], a[class*='cta'] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0.65rem 1.75rem;\n  background: var(--color-iridescent-fade, #a02d25);\n  color: var(--surface-paper, #ffffff);\n  border-radius: 75px;\n  font-family: var(--font-body, sans-serif), sans-serif;\n  font-weight: 600;\n  text-decoration: none;\n  border: none;\n  box-shadow: none;\n  cursor: pointer;\n}\n.sa-bento-grid__subtitle { font-family: var(--font-body, sans-serif), sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }\n.sa-item__desc { font-family: var(--font-body, sans-serif), sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.7); line-height: 1.6; }\n@media (prefers-reduced-motion: reduce) {\n  .sa-bento-grid, .sa-bento-grid__card, .sa-bento-grid__btn, [class*='card'], [class*='btn'], [class*='fade'], * {\n    animation: none !important;\n    transition: none !important;\n    transform: none !important;\n    scroll-behavior: auto !important;\n  }\n}\n\n/* [AUTO-REPAIR]: Injected styles for missing classes */\n.sa-bento-grid__content {\n  display: block;\n}\n\n.sa-bento-grid__item {\n  display: block;\n}\n\n.sa-content {\n  display: block;\n}\n\n.sa-grid {\n  display: block;\n}\n\n.sa-header-block {\n  display: block;\n}\n\n.sa-item__title {\n  display: block;\n}\n\n",
-      "src/components/Footer.tsx": "import React from 'react';\nimport './Footer.css';\nexport function Footer() {\n  return (\n    <section className=\"site-footer\" id=\"site-footer\">\n      <div className=\"footer-wrap\">\n        <span className=\"footer-tag\">Website</span>\n        <h2 className=\"footer-title\">Velvet Roast</h2>\n        <p className=\"footer-desc\">\n          Verified and optimized across all screen resolutions and browser environments.\n        </p>\n        <div className=\"footer-links\">\n                                  <a href=\"tel:+14152345678\" className=\"footer-link\">\n                                    Phone: +1 (415) 234-5678\n                                  </a>\n                                  <a href=\"mailto:hello@velvetroast.com\" className=\"footer-link\">\n                                    Email: hello@velvetroast.com\n                                  </a>\n                                </div>\n                              </div>\n                            </section>\n                          );\n                        }",
-      "src/components/Footer.css": ".site-footer {background:#140f0c;color:#fef3c7;padding:6rem 2rem}\n                      .footer-wrap {max-width:1200px;margin:0 auto}\n                      .footer-tag {font-size:0.75rem;color:#d97706;text-transform:uppercase;font-family:monospace}\n                      .footer-title {font:size 2.2rem,#1e1713;line-height:1.1;font-family:Syne,Georgia;margin:0.5rem 0}\n                      .footer-desc {color:#cbd5e1;font:1rem/1.6 Arial,sans-serif;margin:1rem 0}\n                      .footer-links {-webkit-column-gap:2rem;column-gap:2rem;display:flex;flex-wrap:wrap;gap:1.5rem;flex-wrap:wrap}\n                      .footer-link {color:#fef3c7;text-decoration:none;cursor:pointer;transition:color 0.2s ease}\n                      .footer-link:hover {color:#d97706;}\n                      </style>"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 4/4 planned sections.\n- Generated component modules: `Hero.tsx`, `Hero.css`, `FeaturedMenu.tsx`, `FeaturedMenu.css`, `BentoGrid.tsx`.\n\n## Status\n- Section completion: 4 / 4 planned sections generated.\n- Generation quality: fallback (native / repaired / fallback).\n- \u26a0\ufe0f Completed with programmatic auto-recovery on: `featured-menu`, `bento-grid`.\n- \u2705 TypeScript compilation and style token fallbacks preserved.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "Velvet_Roast",
-    "prompt": "Create a modern e-commerce landing page for \"Velvet Roast\" (an artisan specialty coffee roastery and cafe).\n\nVisual Style & Genome:\n- Palette: Warm espresso aesthetic with rich dark brown surfaces (#140f0c, #1e1713), warm amber/honey accents (#d97706, #f59e0b), and soft cream typography (#fef3c7, #f3f4f6).\n- Solid, high-contrast surfaces for all cards and interactive controls (WCAG AAA compliant).\n- Elegant serif headers paired with clean sans-serif body copy.\n\nSections:\n1. Hero: Split layout featuring an artisan brand headline, \"Roaster of the Month\" badge, primary \"Order Beans\" and secondary \"Explore Menu\" CTAs, and key stats (e.g., 88+ SCA Cup Score, 100% Direct Trade, 48hr Fresh Roasted).\n2. Interactive Coffee Customizer & Subscription: An interactive order widget with roast level selector (Light, Medium, Dark), grind type (Whole Bean, Chemex, Espresso, French Press), delivery frequency toggle (Weekly, Bi-weekly, Monthly), and live price output recalculating in real time with an \"Add to Cart\" button.\n3. Featured Menu & Roasts: Tabbed category filter (Single Origin, Signature Blends, Cold Brew, Pastries) displaying item cards with flavor notes, origin badges, and prices.\n4. Craft & Sourcing Bento: A 4-panel bento grid highlighting Direct-Trade Single Origins, Zero-Emission Roasting, Carbon-Neutral Shipping, and Barista Workshops.\n5. Footer: Cafe hours, physical address, newsletter sign-up input, and social links.\n\nRequirements:\n- Clean modular TypeScript and CSS.\n- Semantic HTML and keyboard-navigable controls (ARIA attributes, semantic buttons, live output tags).\n- Smooth hover micro-interactions with prefers-reduced-motion support.",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 3244,
-    "contextTokens": 3244,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/Velvet_Roast_20260930_152224/",
-    "filePath": "generated_components/Velvet_Roast_20260930_152224/",
-    "folder_name": "Velvet_Roast_20260930_152224",
-    "folderName": "Velvet_Roast_20260930_152224",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790760749_85bf87",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790760749_85bf87",
-    "checkpoints_count": 1,
-    "visual_score": null,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": false,
-      "interactionPassed": false,
-      "interactions_tested": 3,
-      "interactionsTested": 3,
-      "interactions_required": 2,
-      "interactionsRequired": 2,
-      "interaction_evidence": [
-        {
-          "requirement_id": "cart_state",
-          "locator": "add-to-cart button / header cart indicator",
-          "initial_state": null,
-          "action": "locate product add button and shared cart indicator",
-          "expected_state": "both controls present and visible in DOM",
-          "observed_state": "add_found=False, cart_found=False",
-          "passed": false,
-          "error": "Cart requires a product action and shared cart indicator."
-        },
-        {
-          "requirement_id": "filter_state",
-          "locator": "filter controls / product results",
-          "initial_state": null,
-          "action": "locate filter controls and result cards",
-          "expected_state": "filter controls and result cards present in DOM",
-          "observed_state": "controls=0, results=0",
-          "passed": false,
-          "error": "Requested filter lacks controls or visible results."
-        },
-        {
-          "requirement_id": "generic_control_0",
-          "locator": "a[role=a]",
-          "initial_state": "visible in DOM",
-          "action": "hover and click",
-          "expected_state": "exercised cleanly without runtime exception",
-          "observed_state": "threw TimeoutError",
-          "passed": false,
-          "error": "Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-        }
-      ],
-      "interactionEvidence": [
-        {
-          "requirement_id": "cart_state",
-          "locator": "add-to-cart button / header cart indicator",
-          "initial_state": null,
-          "action": "locate product add button and shared cart indicator",
-          "expected_state": "both controls present and visible in DOM",
-          "observed_state": "add_found=False, cart_found=False",
-          "passed": false,
-          "error": "Cart requires a product action and shared cart indicator."
-        },
-        {
-          "requirement_id": "filter_state",
-          "locator": "filter controls / product results",
-          "initial_state": null,
-          "action": "locate filter controls and result cards",
-          "expected_state": "filter controls and result cards present in DOM",
-          "observed_state": "controls=0, results=0",
-          "passed": false,
-          "error": "Requested filter lacks controls or visible results."
-        },
-        {
-          "requirement_id": "generic_control_0",
-          "locator": "a[role=a]",
-          "initial_state": "visible in DOM",
-          "action": "hover and click",
-          "expected_state": "exercised cleanly without runtime exception",
-          "observed_state": "threw TimeoutError",
-          "passed": false,
-          "error": "Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-        }
-      ],
-      "interaction_errors": [
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "interactionErrors": [
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "interaction_status": "failed",
-      "interactionStatus": "failed",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [
-        {
-          "type": "micro_interaction",
-          "target_section": "general",
-          "intensity": "medium",
-          "axis": "none",
-          "trigger": "interaction",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "micro_interaction",
-          "target_section": "general",
-          "intensity": "medium",
-          "axis": "none",
-          "trigger": "interaction",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Footer.css: Unknown word </style> at 9:23",
-        "[Fallback Error] src/components/BentoGrid.tsx: Emergency scaffold must be replaced with a real section implementation.",
-        "[Fallback Error] src/components/FeaturedMenu.tsx: Emergency scaffold must be replaced with a real section implementation.",
-        "[Content Error] src/components/Footer.tsx: Contact details were not supplied in the original request.",
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "warnings": [],
-      "repair_attempts": 2,
-      "repairAttempts": 2,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "interaction_validation": {
-      "passed": false,
-      "status": "failed",
-      "errors": [
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "interactions_tested": 3,
-      "interactions_required": 2,
-      "interaction_evidence": [
-        {
-          "requirement_id": "cart_state",
-          "locator": "add-to-cart button / header cart indicator",
-          "initial_state": null,
-          "action": "locate product add button and shared cart indicator",
-          "expected_state": "both controls present and visible in DOM",
-          "observed_state": "add_found=False, cart_found=False",
-          "passed": false,
-          "error": "Cart requires a product action and shared cart indicator."
-        },
-        {
-          "requirement_id": "filter_state",
-          "locator": "filter controls / product results",
-          "initial_state": null,
-          "action": "locate filter controls and result cards",
-          "expected_state": "filter controls and result cards present in DOM",
-          "observed_state": "controls=0, results=0",
-          "passed": false,
-          "error": "Requested filter lacks controls or visible results."
-        },
-        {
-          "requirement_id": "generic_control_0",
-          "locator": "a[role=a]",
-          "initial_state": "visible in DOM",
-          "action": "hover and click",
-          "expected_state": "exercised cleanly without runtime exception",
-          "observed_state": "threw TimeoutError",
-          "passed": false,
-          "error": "Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-        }
-      ]
-    },
-    "visual_validation": {
-      "passed": false,
-      "status": "failed",
-      "score": null,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": false,
-      "interactionPassed": false,
-      "interactions_tested": 3,
-      "interactionsTested": 3,
-      "interactions_required": 2,
-      "interactionsRequired": 2,
-      "interaction_evidence": [
-        {
-          "requirement_id": "cart_state",
-          "locator": "add-to-cart button / header cart indicator",
-          "initial_state": null,
-          "action": "locate product add button and shared cart indicator",
-          "expected_state": "both controls present and visible in DOM",
-          "observed_state": "add_found=False, cart_found=False",
-          "passed": false,
-          "error": "Cart requires a product action and shared cart indicator."
-        },
-        {
-          "requirement_id": "filter_state",
-          "locator": "filter controls / product results",
-          "initial_state": null,
-          "action": "locate filter controls and result cards",
-          "expected_state": "filter controls and result cards present in DOM",
-          "observed_state": "controls=0, results=0",
-          "passed": false,
-          "error": "Requested filter lacks controls or visible results."
-        },
-        {
-          "requirement_id": "generic_control_0",
-          "locator": "a[role=a]",
-          "initial_state": "visible in DOM",
-          "action": "hover and click",
-          "expected_state": "exercised cleanly without runtime exception",
-          "observed_state": "threw TimeoutError",
-          "passed": false,
-          "error": "Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-        }
-      ],
-      "interactionEvidence": [
-        {
-          "requirement_id": "cart_state",
-          "locator": "add-to-cart button / header cart indicator",
-          "initial_state": null,
-          "action": "locate product add button and shared cart indicator",
-          "expected_state": "both controls present and visible in DOM",
-          "observed_state": "add_found=False, cart_found=False",
-          "passed": false,
-          "error": "Cart requires a product action and shared cart indicator."
-        },
-        {
-          "requirement_id": "filter_state",
-          "locator": "filter controls / product results",
-          "initial_state": null,
-          "action": "locate filter controls and result cards",
-          "expected_state": "filter controls and result cards present in DOM",
-          "observed_state": "controls=0, results=0",
-          "passed": false,
-          "error": "Requested filter lacks controls or visible results."
-        },
-        {
-          "requirement_id": "generic_control_0",
-          "locator": "a[role=a]",
-          "initial_state": "visible in DOM",
-          "action": "hover and click",
-          "expected_state": "exercised cleanly without runtime exception",
-          "observed_state": "threw TimeoutError",
-          "passed": false,
-          "error": "Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-        }
-      ],
-      "interaction_errors": [
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "interactionErrors": [
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "interaction_status": "failed",
-      "interactionStatus": "failed",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [
-        {
-          "type": "micro_interaction",
-          "target_section": "general",
-          "intensity": "medium",
-          "axis": "none",
-          "trigger": "interaction",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "micro_interaction",
-          "target_section": "general",
-          "intensity": "medium",
-          "axis": "none",
-          "trigger": "interaction",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Footer.css: Unknown word </style> at 9:23",
-        "[Fallback Error] src/components/BentoGrid.tsx: Emergency scaffold must be replaced with a real section implementation.",
-        "[Fallback Error] src/components/FeaturedMenu.tsx: Emergency scaffold must be replaced with a real section implementation.",
-        "[Content Error] src/components/Footer.tsx: Contact details were not supplied in the original request.",
-        "[Interaction Error] Cart requires a product action and shared cart indicator.",
-        "[Interaction Error] Requested filter lacks controls or visible results.",
-        "[Interaction Error] Generic interaction with <a> 'Skip to content' failed: Locator.hover: Timeout 500ms exceeded.\nCall log:\n  - waiting for locator(\"button, [role='button'], a[href^='#'], input\").first\n    - locator resolved to <a href=\"#site-main\" class=\"site-skip-link\">Skip to content</a>\n  - attempting hover action\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible and stable\n      - element is visible and stable\n      - scrolling into view if needed\n      - done scrolling\n      - element is outside of the viewport\n    - retrying hover action\n      - waiting 100ms\n    - waiting for element to be visible and stable\n    - element is visible and stable\n    - scrolling into view if needed\n    - done scrolling\n    - element is outside of the viewport\n  - retrying hover action\n    - waiting 500ms\n"
-      ],
-      "warnings": [],
-      "repair_attempts": 2,
-      "repairAttempts": 2,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "http://127.0.0.1:5173",
-      "live_url": "http://127.0.0.1:5173",
-      "port": 5173,
-      "running": true,
-      "ready": true,
-      "entry": "index.html",
-      "symbol": "Velvet_Roast",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [
-      "featured-menu",
-      "bento-grid"
-    ],
-    "turn_logs": [
-      {
-        "turn": 1,
-        "action": "write_site_structural_violation",
-        "section": "hero",
-        "violations": [
-          "[src/components/Hero.css] Missed semicolon at 3:84"
-        ]
-      },
-      {
-        "turn": 2,
-        "action": "write_site_ok",
-        "section": "hero",
-        "files": [
-          "src/components/Hero.tsx",
-          "src/components/Hero.css"
-        ]
-      },
-      {
-        "turn": 3,
-        "action": "write_site_structural_violation",
-        "section": "featured-menu",
-        "violations": [
-          "[src/components/FeaturedMenu.css] Unknown word </style> at 19:19",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.featured-btn'"
-        ]
-      },
-      {
-        "turn": 4,
-        "action": "structural_auto_fix",
-        "section": "featured-menu",
-        "violations": [
-          "[src/components/FeaturedMenu.tsx] [REPEATED ITEM SPACING LINT]: Container '.sa-featured-menu__content' holds repeated items ('.sa-featured-menu__item') without any 'gap' or margin spacing defined on their direct parent. Declare 'display: flex/grid' with 'gap' on '.sa-featured-menu__content' to ensure items do not render squished together.",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-content'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-featured-menu__content'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-featured-menu__item'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-grid'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-header-block'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item'",
-          "[src/components/FeaturedMenu.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item__title'"
-        ],
-        "auto_fix": true
-      },
-      {
-        "turn": 4,
-        "action": "write_site_ok",
-        "section": "featured-menu",
-        "files": [
-          "src/components/FeaturedMenu.tsx",
-          "src/components/FeaturedMenu.css"
-        ],
-        "auto_recovered": true,
-        "fallback_generated": true,
-        "needs_model_repair": true
-      },
-      {
-        "turn": 5,
-        "action": "write_site_tsc_error",
-        "section": "bento-grid",
-        "errors": [
-          "[src/components/BentoGrid.tsx]:\n.web_ui_workspace_6893d7d9/site_000/src/components/BentoGrid.tsx(5,6): error TS17008: JSX element 'section' has no corresponding closing tag.\n.web_ui_workspace_6893d7d9/site_000/src/components/BentoGrid.tsx(58,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?\n.web_ui_workspace_6893d7d9/site_000/src/components/BentoGrid.tsx(58,28): error TS1005: '</' expected."
-        ]
-      },
-      {
-        "turn": 6,
-        "action": "structural_auto_fix",
-        "section": "bento-grid",
-        "violations": [
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-bento-grid__content'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-bento-grid__item'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-content'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-grid'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-header-block'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item__title'"
-        ],
-        "auto_fix": true
-      },
-      {
-        "turn": 6,
-        "action": "write_site_ok",
-        "section": "bento-grid",
-        "files": [
-          "src/components/BentoGrid.tsx",
-          "src/components/BentoGrid.css"
-        ],
-        "auto_recovered": true,
-        "fallback_generated": true,
-        "needs_model_repair": true
-      },
-      {
-        "turn": 7,
-        "action": "write_site_structural_violation",
-        "section": "footer",
-        "violations": [
-          "[src/components/Footer.css] Unknown word </style> at 9:23"
-        ]
-      },
-      {
-        "turn": 8,
-        "action": "structural_cap_auto_fix",
-        "section": "footer",
-        "violations": [
-          "[src/components/Footer.css] Unknown word </style> at 9:23"
-        ]
-      },
-      {
-        "turn": 8,
-        "action": "write_site_ok",
-        "section": "footer",
-        "files": [
-          "src/components/Footer.tsx",
-          "src/components/Footer.css"
-        ]
-      },
-      {
-        "action": "fallback_rewrite_failed",
-        "section": "featured-menu",
-        "reason": "acceptance_gate"
-      },
-      {
-        "action": "fallback_rewrite_failed",
-        "section": "bento-grid",
-        "reason": "acceptance_gate"
-      }
-    ],
-    "timestamp": "2026-09-30 15:35:33"
-  },
-  {
-    "task_id": "82fc23c2-bc5b-45ac-84a5-1915db64b2e2",
-    "session_id": "1790752906_7d3329",
-    "mode": "site",
-    "final_passed": false,
-    "completion_status": "FAILED",
-    "initial_passed": false,
-    "generation_complete": true,
-    "section_completion": "5 / 5",
-    "project_validation": "failed",
-    "generation_quality": "repaired",
-    "self_corrected": false,
-    "turns_used": 16,
-    "sections_completed": 5,
-    "sections_planned": 5,
-    "code": "import React, { useEffect, useRef } from 'react';\nimport './Hero.css';\nexport function Hero() {\n  const counterRef = useRef<HTMLSpanElement>(null);\n  const tick = () => {\n    if (!counterRef.current) return;\n    const value = Math.floor(Date.now() / 1000) % 10000;\n    counterRef.current.textContent = value.toString();\n  };\n  useEffect(() => {\n    const interval = setInterval(tick, 1000);\n    return () => clearInterval(interval);\n  }, []);\n  return <section id=\"hero\" className=\"hero-section\">\n    <span className=\"hero-badge\">AuraDB &ndash; Luxury Dark Design Genome</span>\n    <h1 className=\"hero-title\">Split Hero Telemetry Display</h1>\n    <p className=\"hero-prose\">\n      Sub-millisecond deterministic execution pipeline. Real-time distributed consensus across edge clusters. Verified operational excellence standards.\n    </p>\n    <div className=\"hero-actions\">\n      <span className=\"hero-btn-primary\">Explore Modules &rarr;</span>\n      <button className=\"hero-btn-secondary\" type=\"button\" aria-label=\"Toggle Mode\">\n        <span className=\"btn-toggle-indicator\" aria-hidden=\"true\">&gt;</span>\n      </button>\n    </div>\n    <span ref={counterRef} className=\"hero-counter-track\">0000</span>\n  </section>;\n}\nexport default Hero;",
-    "files": {
-      "src/components/Hero.tsx": "import React, { useEffect, useRef } from 'react';\nimport './Hero.css';\nexport function Hero() {\n  const counterRef = useRef<HTMLSpanElement>(null);\n  const tick = () => {\n    if (!counterRef.current) return;\n    const value = Math.floor(Date.now() / 1000) % 10000;\n    counterRef.current.textContent = value.toString();\n  };\n  useEffect(() => {\n    const interval = setInterval(tick, 1000);\n    return () => clearInterval(interval);\n  }, []);\n  return <section id=\"hero\" className=\"hero-section\">\n    <span className=\"hero-badge\">AuraDB &ndash; Luxury Dark Design Genome</span>\n    <h1 className=\"hero-title\">Split Hero Telemetry Display</h1>\n    <p className=\"hero-prose\">\n      Sub-millisecond deterministic execution pipeline. Real-time distributed consensus across edge clusters. Verified operational excellence standards.\n    </p>\n    <div className=\"hero-actions\">\n      <span className=\"hero-btn-primary\">Explore Modules &rarr;</span>\n      <button className=\"hero-btn-secondary\" type=\"button\" aria-label=\"Toggle Mode\">\n        <span className=\"btn-toggle-indicator\" aria-hidden=\"true\">&gt;</span>\n      </button>\n    </div>\n    <span ref={counterRef} className=\"hero-counter-track\">0000</span>\n  </section>;\n}\nexport default Hero;",
-      "src/components/Hero.css": ".hero-section {background:var(--color-bg, #070913);color:var(--color-text, #f8fafc);padding:6rem 2rem;}\n.hero-badge {font-size:0.75rem;letter-spacing:0.12em;font-weight:700;color:var(--color-accent-cyan, #38bdf8);}}\n.hero-title {font:clamp(2.4rem,4vw,3.6rem)/1.65 'Plus Jakarta Sans',sans-serif;margin:0.5rem 0;color:var(--color-text, #f8fafc);}\n.hero-prose {max-width:600px;font-size:1.05rem;line-height:1.7;color:var(--color-text-muted, #94a3b8);margin:1rem 0;}\n.hero-actions button,.hero-actions a {display:inline-flex;align-items:center;vertical-align:middle;min-width:auto;padding:0.75rem 2rem;border:none;background:var(--color-text, #38bdf81f);color:var(--color-text, #f8fafc);font-size:0.95rem;font-weight:600;letter-spacing:0.04em;text-decoration:none;}\n.hero-btn-primary {background:var(--color-accent-cyan, #38bdf8);color:var(--color-bg, #070913);border:1px solid var(--color-text, #38bdf840);transition:opacity 0.2s ease;}\n.hero-btn-primary:hover {opacity:0.8;}\n.hero-btn-secondary {background:transparent;color:var(--color-accent-cyan, #38bdf8);cursor:pointer;transition:color 0.2s ease;}\n.hero-btn-secondary:hover {color:var(--color-bg, #070913);}\n.hero-counter-track {font-size:clamp(5rem,6vw,12rem);color:var(--color-accent-cyan, #38bdf8);text-shadow:0 4px var(--color-bg, #070913);position:absolute;bottom:-6rem;left:50%;transform:translateX(-50%);opacity:0.35;}\n.btn-toggle-indicator {font-size:0.85rem;transition:transform 0.2s ease,color 0.2s ease;color:inherit;}\n.hero-btn-secondary:hover .btn-toggle-indicator {color:var(--color-bg, #070913);transform:translateX(4px);}",
-      "src/components/Calculator.tsx": "import React, { useState } from 'react';\nimport './Calculator.css';\nexport const Calculator: React.FC = () => {\n  const [activeTab, setActiveTab] = useState<string>('specs');\n  const [status, setStatus] = useState<string>('active');\n  const [metrics, setMetrics] = useState<{ cpu: string; mem: string; }>({ cpu: '98%', mem: '82%' });\n\n  const handleStatus = () => {\n    setStatus(prev => prev === 'active' ? 'paused' : 'active');\n    setMetrics(prev => ({ ...prev, cpu: prev.cpu === '98%' ? '74%' : '98%', mem: prev.mem === '82%' ? '68%' : '82%' }));\n  };\n\n  return (\n    <section id=\"calculator\" className=\"calcspec\">\n      <div className=\"calc-wrap\">\n        <span className=\"specs-tag\">Auradb Specification Module</span>\n        <h2 className=\"specs-title\">High-Performance Edge Cluster Telemetry</h2>\n        <p className=\"specs-summary\">\n          Optimized low-latency execution pipeline with deterministic micro-batching and strict memory isolation.\n        </p>\n        <div className=\"specs-controls\" role=\"tablist\" aria-label=\"Operational Modes\">\n          {['Active', 'Drain', 'Offline'].map((mode) => (\n            <button\n              key={mode}\n              type=\"button\"\n              role=\"tab\"\n              aria-selected={activeTab === mode}\n              aria-controls={`metric-panel-${mode.toLowerCase()}`}\n              id={`tab-${mode.toLowerCase()}`}\n              className={`specs-btn ${activeTab === mode ? 'btn-active' : ''}`}\n              onClick={() => setActiveTab(mode)}\n            >\n              {mode}\n            </button>\n          ))}\n        </div>\n        <div className=\"specs-meter\" key=\"metrics\">\n          <span className=\"specs-meter-val\">{metrics.cpu}</span>\n          <span className=\"specs-meter-unit\">CPU Utilization</span>\n          <span className=\"specs-meter-val\">&nbsp;{metrics.mem}</span>\n          <span className=\"specs-meter-unit\">Memory Usage</span>\n        </div>\n        <div className=\"specs-toggle\" role=\"button\" onClick={handleStatus} onKeyDown={(e) => { if (e.key === 'Enter') handleStatus(); }} tabIndex={0}>\n          <span className=\"specs-toggle-chk\" aria-hidden=\"true\" />\n          <span className=\"specs-toggle-lbl\">{status}</span>\n        </div>\n      </div>\n    </section>\n  );\n};\nexport default Calculator;",
-      "src/components/Calculator.css": "/* Section file accepted and saved to disk. */\n.calcspec {background:var(--color-bg, #070913);color:var(--color-text, #f8fafc);padding:6rem 1.5rem;}\n.calcspec h2 {font:size-2xl; font-family:inherit; margin:0 0 1.5rem; color: var(--color-text, #f8fafc);}}\n.calcspec h3 {font:size-xl; margin:0.5rem 0 1.25rem; color: var(--color-accent-cyan, #38bdf8);}}\n.calcspec .specs-tag {font-size:0.75rem;text-transform:uppercase;color:var(--color-accent-cyan, #38bdf8);letter-spacing:0.1em;font-weight:800;}}\n.calcspec .specs-title {font:size-xl; font-family:inherit; margin:0.5rem 0; color: var(--color-text, #f8fafc);}}\n.calcspec .specs-summary {color:var(--color-text-muted, #94a3b8); max-width:600px; line-height:1.7; margin:1rem 0; font-size:0.95rem;}}\n.calcspec .specs-controls {gap:0.75rem; display:flex; border-bottom:1px solid var(--color-border, #38bdf830); padding-bottom:1.25rem; margin-bottom:1.75rem;}}\n.calcspec .specs-btn {background:transparent; border:none; color: var(--color-accent-cyan, #38bdf8); font-size:0.95rem; border:1px solid transparent; padding:0.45rem 1.2rem; border-radius:8px; transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease;}}\n.calcspec .btn-active {background:var(--color-accent-cyan, #38bdf818); color:var(--color-text, #f8fafc); border-color:var(--color-accent-cyan, #38bdf8); font-weight:600;}}\n.calcspec .specs-meter {font-size:2.2rem; font-weight:700; color:var(--color-text, #f8fafc); margin:0.5rem 0; display:inline-block;}}\n.calcspec .specs-meter-val {color:var(--color-accent-cyan, #38bdf8); font-size:1.6rem; font-weight:800;}}\n.calcspec .specs-meter-unit {font-size:0.85rem; color:var(--color-text-muted, #94a3b8); display:inline-block;}}\n.calcspec .specs-toggle {cursor:text; padding-left:0.75rem; font-size:0.85rem; color:var(--color-text-muted, #94a3b8); display:flex; align-items:center;}}\n.calcspec .specs-toggle-chk {transform:translateX(-0.75px); border:2px solid transparent; border-radius:4px; background:var(--color-border, #38bdf815); height:14px; width:14px; appearance:none; -webkit-appearance:none; margin-right:0.5rem;}}\n.calcspec .specs-toggle-lbl {display: inline-block;}}\n.calcspec .specs-toggle--active .specs-toggle-chk {border-color:var(--color-accent-cyan, #38bdf8); background:rgba(255, 255, 255, 0.08);}\n@media (max-width:640px) {\n  .specs-controls {flex-direction:column;}}\n  .specs-meter-val {display:inline-block; font-size:2.2rem;}}",
-      "src/components/Showcase.tsx": "import React, { useState } from 'react';\nimport './Showcase.css';\nexport function Showcase() {\n  const [activeTab, setActiveTab] = useState('Python');\n  const tabs = [\n    { id: 'python', label: 'Python', content: 'def fetch_data():\\n  \\\"\\\"\\\"\\n  Zero-copy indexing pipeline.\\n  \\\"\\\"\\\"\\n  print(\"Streaming 10K vectors...\")' },\n    { id: 'typescript', label: 'TypeScript', content: 'function StreamPipeline(): void {\\n  console.log(\"Zero-copy indexing pipeline\");\\n}' },\n    { id: 'go', label: 'Go', content: 'func Main() {\\n  fmt.Println(\"Zero-copy indexing pipeline\")\\n}' },\n  ];\n  return <section className=\"showcaser\" id=\"showcaser\">\n    <div className=\"showcase-wrap\">\n      <span className=\"specs-tag\">Code Showcase</span>\n      <h2 className=\"specs-title\">Zero-Copy Indexing Engine</h2>\n      <p className=\"specs-subtitle\">\n                                Seamless syntax highlighting and real-time execution telemetry.\n                              </p>\n      <div className=\"specs-controls\">\n        {tabs.map(t => (\n          <button\n            key={t.id}\n            type=\"button\"\n            role=\"tab\"\n            aria-pressed={activeTab === t.id}\n            tabIndex={0}\n            className={`specs-tab ${activeTab === t.id ? 'tab-active' : ''}`}\n            onClick={() => setActiveTab(t.id)}\n          >\n            {t.label}\n          </button>\n        ))}\n      </div>\n      <div className=\"specs-codeblock\">\n        <pre className=\"code-scroll\">\n          <code className=\"language-ts\" aria-label=\"Source Code\">\n            {tabs.find(t => t.id === activeTab)?.content.split('\\n').map((l, idx) => (\n              <span key={idx} className={`line${idx === 0 ? ' line-num' : ''}`}>{l}</span>\n            ))}\n          </code>\n        </pre>\n      </div>\n    </div>\n  </section>;\n}\nexport default Showcase;",
-      "src/components/Showcase.css": "/* Section file accepted and saved to disk. */\n.showcaser {background:var(--color-bg, #070913);color:var(--color-text, #f8fafc);padding:6rem 1.5rem;}\n.showcase-wrap {max-width:740px;margin:0 auto;}\n.specs-tag {font-size:0.75rem;text-transform:uppercase;color:var(--color-accent-cyan, #38bdf8);letter-spacing:0.1em;font-weight:800;}}\n.specs-title {font:size-xl; font-family:inherit; margin:0.75rem 0; color: var(--color-text, #f8fafc);}}\n.specs-subtitle {color:var(--color-text-muted, #94a3b8); max-width:560px; line-height:1.6; margin:0.5rem 0; font-size:0.95rem;}}\n.specs-controls {display:flex; gap:0.75rem; border-bottom:1px solid var(--color-text, #38bdf820); padding-bottom:0.75rem; margin-bottom:1.5rem;}}\n.specs-tab {background:var(--color-text, #38bdf815); border:1px solid var(--color-text, #38bdf835); border-radius:7px; padding:0.45rem 1.2rem; color:var(--color-text, #f8fafc); font-size:0.92rem; cursor:text; transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease;}}\n.tab-active {background:var(--color-text, #38bdf830); border-color:var(--color-accent-cyan, #38bdf8); color:var(--color-text, #f8fafc); font-weight:600;}}\n.specs-codeblock {white-space:pre-wrap; background:var(--color-text, #181c23); border:1px solid var(--color-text, #38bdf815); border-radius:10px; padding:1.2rem; font-family:monospace; font-size:0.95rem; color:var(--color-text, #f0fdfa); word-wrap:normal;}}\n.language-ts {display:block;}}\n.line {display:inline-block; padding:0.15rem;}}\n.line-num {color:var(--color-text-muted, #94a3b8); font-size:0.85rem;}}\n@media (max-width:640px) {\n  .specs-controls {flex-direction:column;}}",
-      "src/components/Footer.tsx": "import React from 'react';\nimport './Footer.css';\nexport function Footer() {\n  return <section className=\"footers\" id=\"footers\">\n    <div className=\"footer-wrap\">\n      <span className=\"specs-tag\">Website Navigation</span>\n      <h3 className=\"specs-title\">AuraDB Telemetry & Telemetry</h3>\n      <p className=\"specs-subtitle\">\n                                Verified standards-compliant implementation across all responsive viewport sizes.\n                              </p>\n      <div className=\"specs-links\">\n        <a href=\"#hero\" className=\"specs-link\">Explore Highlights</a>\n        <span className=\"specs-link\">Interactive Grid</span>\n        <span className=\"specs-link\">Control Panel</span>\n      </div>\n      <div className=\"specs-status\">\n        <span className=\"status-badge\">Active Deployment</span>\n        <span className=\"status-meter\">\u00b7 &nbsp; <strong>0 Errors</strong></span>\n      </div>\n    </div>\n  </section>;\n}\nexport default Footer;",
-      "src/components/Footer.css": "/* Section file accepted and saved to disk. */\n.footers {background:var(--color-bg, #070913);color:var(--color-text, #f8fafc);padding:6rem 1.5rem;}\n.footer-wrap {max-width:740px;margin:0 auto;}\n.specs-tag {font-size:0.75rem;text-transform:uppercase;color:var(--color-accent-cyan, #38bdf8);letter-spacing:0.1em;font-weight:800;}}\n.specs-title {font:size-xl; font-family:inherit; margin:0.75rem 0; color: var(--color-text, #f8fafc);}}\n.specs-subtitle {color:var(--color-text-muted, #94a3b8); max-width:560px; line-height:1.6; margin:0.5rem 0; font-size:0.95rem;}}\n.specs-links a {color:var(--color-text, #f8fafc); text-decoration:none; margin:0.35rem 0; display:inline-block; font-size:0.92rem;}}\n.specs-links a:hover {color:var(--color-accent-cyan, #38bdf8); text-decoration:underline;}}\n.specs-status {font-size:0.81rem; color:var(--color-text, #71717a); display:flex; align-items:center;}}\n.status-badge {font-weight:600;}}\n.status-meter {margin-left:0.5em; font-family:monospace;}}\n@media (max-width:640px) {\n  .specs-links a {display:block;}}",
-      "src/components/BentoGrid.tsx": "import React from 'react';\nimport './BentoGrid.css';\n\nexport function BentoGrid() {\n  return (\n    <section className=\"sa-bento-grid\" id=\"bento-grid\" aria-label=\"Bento Grid\">\n      <div className=\"sa-bento-grid__inner\">\n        <div className=\"sa-bento-grid__header\">\n          <span className=\"sa-bento-grid__badge\">bento grid module</span>\n          <h2 className=\"sa-bento-grid__title\">Features Bento Grid</h2>\n        </div>\n        <div className=\"sa-bento-grid__tiles\">\n          <div className=\"sa-tile\">\n            <span className=\"sa-tile-num\">01</span>\n            <h3 className=\"sa-tile-title\">Zero-Copy Indexing</h3>\n            <p className=\"sa-tile-body\">Distributed microservices executing without inter-process synchronization.</p>\n          </div>\n          <div className=\"sa-tile\">\n            <span className=\"sa-tile-num\">02</span>\n            <h3 className=\"sa-tile-title\">Edge Replication</h3>\n            <p className=\"sa-tile-body\">Sub-millisecond data mirroring across regional compute clusters.</p>\n          </div>\n        </div>\n      </div>\n    </section>\n  );\n}\nexport default BentoGrid;",
-      "src/components/BentoGrid.css": "/* Core layout and typography */\n.sa-bento-grid {\n  background: var(--color-bg, #070913);\n  color: var(--color-text, #f0fdfa);\n  padding: 6rem 2rem;\n  font-family: 'Plus Jakarta Sans', sans-serif;\n}\n.sa-bento-grid__inner {\n  max-width: 1100px;\n  margin: 0 auto;\n}\n.sa-bento-grid__header {\n  margin-bottom: 2.5rem;\n}\n.sa-bento-grid__badge {\n  font-size: 0.75rem;\n  text-transform: uppercase;\n  letter-spacing: 0.12em;\n  color: var(--color-accent-cyan, #38bdf8);\n  font-weight: 700;\n}\n.sa-bento-grid__title {\n  font-size: clamp(2.4rem, 4.5vw, 3.6rem);\n  line-height: 1.2;\n  margin: 0.5rem 0 0;\n}\n.sa-bento-grid__tiles {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n  gap: 1.5rem;\n}\n.sa-tile {\n  background: var(--color-text, #0f172a);\n  border: 1px solid var(--color-text, #1e293b);\n  border-radius: 14px;\n  padding: 2rem;\n  transition: border-color 0.2s ease, transform 0.2s ease;\n}\n.sa-tile:hover {\n  border-color: var(--color-accent-cyan, #38bdf8);\n  transform: translateY(-3px);\n}\n.sa-tile-num {\n  font-size: 1.5rem;\n  font-weight: 800;\n  color: var(--color-accent-cyan, #38bdf8);\n  display: block;\n  margin-bottom: 0.25rem;\n}\n.sa-tile-title {\n  font-size: 1.4rem;\n  margin: 0.5rem 0 1rem;\n}\n.sa-tile-body {\n  color: var(--color-text-muted, #94a3b8);\n  line-height: 1.6;\n  font-size: 0.95rem;\n}\n@media (prefers-reduced-motion: reduce) {\n  .sa-tile,\n  .sa-tile:hover {\n    transition: none !important;\n    transform: none !important;\n  }\n}"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 5/5 planned sections.\n- Generated component modules: `Hero.tsx`, `Hero.css`, `Calculator.tsx`, `Calculator.css`, `Showcase.tsx`.\n\n## Status\n- Section completion: 5 / 5 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- \u26a0\ufe0f Completed with programmatic auto-recovery on: `bento-grid`.\n- \u2705 TypeScript compilation and style token fallbacks preserved.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "Auradb",
-    "prompt": "Create a modern SaaS landing page for \"AuraDB\" (an edge-native real-time vector database). \n\nVisual Style:\n- Use a \"luxury dark\" design genome with deep obsidian background (#0a0a0c), emerald accent glows, and subtle glassmorphism borders.\n- Clean typography and refined spacing.\n\nSections:\n1. Split Hero: High-impact headline, live query latency counter widget (sub-millisecond p99), and primary/secondary CTAs.\n2. Features Bento: A 4-panel bento grid showcasing zero-copy indexing, edge replication, hybrid search, and ACID compliance.\n3. Interactive Pricing Calculator: Tier selector (Hobby, Growth, Enterprise) with monthly/annual billing toggle that recalculates price in real time.\n4. Code Showcase: Interactive tabbed viewer switching between Python, TypeScript, and Go SDK query snippets.\n5. Footer: Categorized links and system status badge.\n\nRequirements:\n- Clean TypeScript and modular CSS.\n- Keyboard accessible controls (ARIA roles).\n- Smooth hover transitions with prefers-reduced-motion safety.",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 2735,
-    "contextTokens": 2735,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/Auradb_20260930_131105/",
-    "filePath": "generated_components/Auradb_20260930_131105/",
-    "folder_name": "Auradb_20260930_131105",
-    "folderName": "Auradb_20260930_131105",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790752906_7d3329",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1790752906_7d3329",
-    "checkpoints_count": 1,
-    "visual_score": null,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        },
-        {
-          "type": "scroll_reveal",
-          "target_section": "bento-grid",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        },
-        {
-          "type": "scroll_reveal",
-          "target_section": "bento-grid",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Calculator.css: Unexpected } at 3:105",
-        "[Lint Error] src/components/Footer.css: Unexpected } at 4:134",
-        "[Lint Error] src/components/Hero.css: Unexpected } at 2:111",
-        "[Lint Error] src/components/Showcase.css: Unexpected } at 4:134",
-        "[TypeScript Error] main.tsx(3,17): error TS2307: Cannot find module './Component' or its corresponding type declarations.",
-        "[Build Error] Build skipped because TypeScript checks failed.",
-        "[Runtime Error] Runtime checks skipped because build was not successful."
-      ],
-      "warnings": [
-        "[Motion Rule Warning] Horizontal scroll should use a sticky viewport container on desktop.",
-        "[Motion Rule Warning] Horizontal scroll should provide native scroll-snap or vertical stack on mobile (<768px).",
-        "[Motion Rule Warning] Text reveal should ensure instant visibility in @media (prefers-reduced-motion: reduce).",
-        "[Motion Rule Warning] Interactive elements declare :hover but lack :focus-visible / :focus parity for keyboard accessibility."
-      ],
-      "repair_attempts": 3,
-      "repairAttempts": 3,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "not_requested",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": false,
-      "status": "failed",
-      "score": null,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        },
-        {
-          "type": "scroll_reveal",
-          "target_section": "bento-grid",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motionPlan": [
-        {
-          "type": "text_reveal",
-          "target_section": "hero",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        },
-        {
-          "type": "scroll_reveal",
-          "target_section": "bento-grid",
-          "intensity": "subtle",
-          "axis": "y",
-          "trigger": "viewport",
-          "reduced_motion_behavior": "static",
-          "mobile_fallback": "stack",
-          "implementation": "native"
-        }
-      ],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "[Lint Error] src/components/Calculator.css: Unexpected } at 3:105",
-        "[Lint Error] src/components/Footer.css: Unexpected } at 4:134",
-        "[Lint Error] src/components/Hero.css: Unexpected } at 2:111",
-        "[Lint Error] src/components/Showcase.css: Unexpected } at 4:134",
-        "[TypeScript Error] main.tsx(3,17): error TS2307: Cannot find module './Component' or its corresponding type declarations.",
-        "[Build Error] Build skipped because TypeScript checks failed.",
-        "[Runtime Error] Runtime checks skipped because build was not successful."
-      ],
-      "warnings": [
-        "[Motion Rule Warning] Horizontal scroll should use a sticky viewport container on desktop.",
-        "[Motion Rule Warning] Horizontal scroll should provide native scroll-snap or vertical stack on mobile (<768px).",
-        "[Motion Rule Warning] Text reveal should ensure instant visibility in @media (prefers-reduced-motion: reduce).",
-        "[Motion Rule Warning] Interactive elements declare :hover but lack :focus-visible / :focus parity for keyboard accessibility."
-      ],
-      "repair_attempts": 3,
-      "repairAttempts": 3,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "http://127.0.0.1:5173",
-      "live_url": "http://127.0.0.1:5173",
-      "port": 5173,
-      "running": true,
-      "ready": true,
-      "entry": "index.html",
-      "symbol": "Auradb",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [
-      "bento-grid"
-    ],
-    "turn_logs": [
-      {
-        "turn": 1,
-        "action": "write_site_structural_violation",
-        "section": "hero",
-        "violations": [
-          "[src/components/Hero.css] Unexpected } at 2:111",
-          "[src/components/Hero.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.btn-toggle-indicator'"
-        ]
-      },
-      {
-        "turn": 2,
-        "action": "structural_cap_auto_fix",
-        "section": "hero",
-        "violations": [
-          "[src/components/Hero.css] Unexpected } at 2:111"
-        ]
-      },
-      {
-        "turn": 2,
-        "action": "write_site_ok",
-        "section": "hero",
-        "files": [
-          "src/components/Hero.tsx",
-          "src/components/Hero.css"
-        ]
-      },
-      {
-        "turn": 3,
-        "action": "write_site_structural_violation",
-        "section": "bento-grid",
-        "violations": [
-          "[src/components/BentoGrid.css] Unexpected } at 4:225",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.bento-stats'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.metric-unit'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.metric-value'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.stat-label'"
-        ]
-      },
-      {
-        "turn": 4,
-        "action": "structural_auto_fix",
-        "section": "bento-grid",
-        "violations": [
-          "[src/components/BentoGrid.css] Undefined CSS custom property referenced: --surface-paper. All variables used in var(--...) MUST be defined in :root. Available tokens for this site are: --card-padding, --color-accent-cyan, --color-accent-purple, --color-bg, --color-border, --color-surface, --color-surface-hover, --color-text, --color-text-muted, --font-body, --font-heading, --gradient-aurora...",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-bento-grid__content'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-bento-grid__item'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-content'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-grid'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-header-block'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item'",
-          "[src/components/BentoGrid.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.sa-item__title'"
-        ],
-        "auto_fix": true
-      },
-      {
-        "turn": 4,
-        "action": "write_site_ok",
-        "section": "bento-grid",
-        "files": [
-          "src/components/BentoGrid.tsx",
-          "src/components/BentoGrid.css"
-        ],
-        "auto_recovered": true,
-        "fallback_generated": true,
-        "needs_model_repair": true
-      },
-      {
-        "turn": 5,
-        "action": "write_site_structural_violation",
-        "section": "calculator",
-        "violations": [
-          "[src/components/Calculator.css] Unexpected } at 4:134",
-          "[src/components/Calculator.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.specs-feat-desc'"
-        ]
-      },
-      {
-        "turn": 6,
-        "action": "structural_cap_auto_fix",
-        "section": "calculator",
-        "violations": [
-          "[src/components/Calculator.css] Unexpected } at 4:134"
-        ]
-      },
-      {
-        "turn": 6,
-        "action": "write_site_ok",
-        "section": "calculator",
-        "files": [
-          "src/components/Calculator.tsx",
-          "src/components/Calculator.css"
-        ]
-      },
-      {
-        "turn": 7,
-        "action": "write_site_structural_violation",
-        "section": "showcase",
-        "violations": [
-          "[src/components/Showcase.css] Unexpected } at 4:134",
-          "[src/components/Showcase.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.line'",
-          "[src/components/Showcase.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.specs-codeblock'"
-        ]
-      },
-      {
-        "turn": 8,
-        "action": "structural_cap_auto_fix",
-        "section": "showcase",
-        "violations": [
-          "[src/components/Showcase.css] Unexpected } at 4:134",
-          "[src/components/Showcase.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.code-scroll'"
-        ]
-      },
-      {
-        "turn": 8,
-        "action": "write_site_ok",
-        "section": "showcase",
-        "files": [
-          "src/components/Showcase.tsx",
-          "src/components/Showcase.css"
-        ]
-      },
-      {
-        "turn": 9,
-        "action": "write_site_structural_violation",
-        "section": "footer",
-        "violations": [
-          "[src/components/Footer.css] Unexpected } at 4:134",
-          "[src/components/Footer.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.specs-link'"
-        ]
-      },
-      {
-        "turn": 10,
-        "action": "structural_cap_auto_fix",
-        "section": "footer",
-        "violations": [
-          "[src/components/Footer.css] Unexpected } at 4:134",
-          "[src/components/Footer.tsx] [CSS COVERAGE GAP]: Missing CSS rule for class '.specs-link'"
-        ]
-      },
-      {
-        "turn": 10,
-        "action": "write_site_ok",
-        "section": "footer",
-        "files": [
-          "src/components/Footer.tsx",
-          "src/components/Footer.css"
-        ]
-      },
-      {
-        "action": "fallback_repaired",
-        "section": "bento-grid",
-        "files": [
-          "src/components/BentoGrid.tsx",
-          "src/components/BentoGrid.css"
-        ]
-      }
-    ],
-    "timestamp": "2026-09-30 13:26:58"
   }
 ]
 `````
@@ -127008,7 +126536,7 @@ the last two rounds of unimplemented changelogs before they shipped.
 #### `pytest.ini`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/pytest.ini`
-- **Lines**: 5 | **Size**: 220 bytes | **SHA-256**: `93315bf5224f6292a2a8564e3e57210dc497f80705b75ab4898c46aed11b8e38` | **Newline**: `True`
+- **Lines**: 5 | **Size**: 225 bytes | **SHA-256**: `45947b0e1a3cd235f4b6637351d7b1b7f12823dccfd1652ce6f6c05e92e759cc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Pytest configuration file.
 
@@ -132191,7 +131719,7 @@ def test_interactive_site_section_gets_larger_budget():
 #### `tests/test_site_state_model.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_site_state_model.py`
-- **Lines**: 444 | **Size**: 16,087 bytes | **SHA-256**: `3ca2d5edd32c56d975f587a1dc00e5b96a55791bc79cace56dc4ef398aa719e6` | **Newline**: `True`
+- **Lines**: 444 | **Size**: 16,531 bytes | **SHA-256**: `31210e2fc81eb6d1e26c097836ffa3c03a8f8f68c97e414cd8be018fc6cf7576` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying multi-turn site session state transitions and persistence.
 
@@ -132647,7 +132175,7 @@ def _freeform_site_strategy(monkeypatch):
 #### `tests/test_structural_gate.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_structural_gate.py`
-- **Lines**: 323 | **Size**: 12,114 bytes | **SHA-256**: `6f154f794a7a770bbde7e6509268978e91281ef960243b0f0fc82376e6ebd036` | **Newline**: `True`
+- **Lines**: 323 | **Size**: 12,120 bytes | **SHA-256**: `4aee7e26d64717e45b2eef2cb6cccb6349d278e7f996da73dcf1f8a0507c0181` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying structural section layout and DOM landmark hierarchy.
 
@@ -133522,7 +133050,7 @@ export function Hero() { return <div>Broken Version</div>; }
 #### `agent/stock_photos.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/stock_photos.py`
-- **Lines**: 188 | **Size**: 10,440 bytes | **SHA-256**: `88c967f7d204455584f611d92c9e079d10a4f509685d365cac72e828ca5a03ad` | **Newline**: `True`
+- **Lines**: 191 | **Size**: 10,645 bytes | **SHA-256**: `eaed3d5f92d15cfb3ee43ca8f40e222ec97d8d178a211b7638683341d63366f4` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Stock photo query mapping, sanity filtering, and catalog resolution.
 
@@ -133694,7 +133222,10 @@ def resolve_site_images(brief: Dict[str, Any]) -> Dict[str, Any]:
     biz_type = str(brief.get("archetype") or brief.get("business_type") or "general")
     used: Set[str] = set()
     hero = brief.get("hero") or {}
-    hero_query = str((hero.get("title") if isinstance(hero, dict) else "") or brief.get("business_name", ""))
+    business_name = str(brief.get("business_name", ""))
+    if business_name.strip().lower() == "my business":
+        business_name = ""  # the planner's placeholder is not a subject ("business" would match office stock)
+    hero_query = str((hero.get("title") if isinstance(hero, dict) else "") or business_name)
     hero_photo = fetch_single_image(hero_query, biz_type, used)
     if hero_photo:
         used.add(hero_photo["url"])

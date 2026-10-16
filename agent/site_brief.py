@@ -1048,6 +1048,15 @@ _NAME_REJECT_FIRST = {
     "build", "create", "make", "design", "generate", "website", "portfolio", "landing", "a", "an", "the",
     "sections", "section", "include", "modern", "minimal", "note", "notes", "style", "colors", "colours",
     "palette", "requirements", "my", "our", "restaurant", "bakery", "shop", "store", "new", "please", "write",
+    # Field labels that start structured prompts ("Tone: calm", "Hero: big headline").
+    "name", "brand", "business", "company", "client", "project", "title", "tagline", "goal", "goals", "audience",
+    "tone", "vibe", "mood", "fonts", "font", "typography", "pages", "page", "home", "homepage", "site", "hero",
+    "header", "footer", "nav", "navigation", "features", "products", "services", "menu", "contact", "about",
+    "faq", "pricing", "important", "update", "request", "brief", "task", "idea", "concept", "summary", "context",
+    "background", "overview", "description", "target", "theme", "layout", "look", "feel", "images", "photos",
+    "content", "copy", "requirement", "constraints", "must", "avoid", "no", "todo", "deadline", "budget",
+    # Greetings and pronouns ("Hi — I need…", "I'm Maya, a…").
+    "hi", "hello", "hey", "dear", "i", "i'm", "i’m", "im", "we", "we're", "we’re", "me", "us", "you", "this",
 }
 _DESCRIPTIVE_NAME_STOP = {"with", "in", "at", "that", "which", "called", "named", "and", "or", "for", "from", "near", "on", "by"}
 
@@ -1070,8 +1079,34 @@ def _descriptive_business_name(prompt: str) -> Optional[str]:
     return " ".join(w.capitalize() for w in words) or None
 
 
+_LABELLED_NAME_RES = (
+    re.compile(r"""(?im)^[ \t]*(?:(?:business|brand|company|studio|shop|store|project|site|website|restaurant|product)\s+)?"""
+               r"""name\s*(?:[:—–]|\s-\s)\s*["“']?([^\n"”'.;,—–]+)"""),
+    re.compile(r"""(?im)^[ \t]*(?:brand|business|company|client|studio)\s*(?:[:—–]|\s-\s)\s*["“']?([^\n"”'.;,—–]+)"""),
+)
+_SELF_INTRO_RE = re.compile(
+    r"""^\s*(?i:(?:hi|hello|hey)\b[\s,!.—–-]*)?(?i:i['’]m|i\s+am|we['’]re|we\s+are|this\s+is)\s+["“']?"""
+    r"""([A-Z][\w&'’.+-]*(?:\s+(?:&|and|of|the|[A-Z][\w&'’.+-]*)){0,3})""")
+
+
+def _labelled_or_introduced_name(prompt: str) -> Optional[str]:
+    """"Name: Lumen Studio", "Business name - Copperleaf", "I'm Maya, a…", "we are Copper Kettle"."""
+    for pattern in _LABELLED_NAME_RES:
+        for m in pattern.finditer(prompt):
+            value = re.split(r"\s+-\s+", m.group(1).strip())[0].strip()
+            if value and (value[0].isupper() or value[0].isdigit()) and len(value) <= 40:
+                return value
+    m = _SELF_INTRO_RE.match(prompt)
+    if m and _valid_lead_name(m.group(1).strip()):
+        return m.group(1).strip()
+    return None
+
+
 def extract_business_name(prompt: str) -> str:
     """Attempts to pull a business/project name from the prompt."""
+    labelled = _labelled_or_introduced_name(prompt)
+    if labelled:
+        return labelled
     # Priority 0: a leading name followed by a dash, colon, ", a …" or " is a …"
     # ("Aster & Kiln — handmade ceramics…", "Northwind: a B2B SaaS").
     m = _NAME_LEAD_RE.match(prompt)
@@ -1100,44 +1135,80 @@ def _leading_noun_phrase_name(prompt: str) -> Optional[str]:
     return " ".join(w.capitalize() for w in words) or None
 
 
+_RUN_CONNECTORS = {"&", "and", "of", "the", "de", "la", "du", "von", "van"}
+_RUN_TRAIL_STOP = {"showcase", "website", "landing", "page", "app", "platform", "tool", "site", "portfolio"}
+_QUOTES = "\"'“”‘’`"
+
+
+def _name_blocklist() -> set[str]:
+    try:
+        from agent.design_leaks import _DIRECTION_VOCAB as style_vocab
+    except ImportError:  # pragma: no cover - script context
+        from design_leaks import _DIRECTION_VOCAB as style_vocab  # type: ignore
+    return {
+        "write", "create", "build", "make", "design", "generate", "develop", "a", "an", "the", "my", "our", "new",
+        "react", "typescript", "javascript", "website", "page", "site", "landing", "full", "complete", "modern",
+        "beautiful", "restaurant", "portfolio", "saas", "blog", "event", "shop", "store", "sections", "include",
+        "email", "cta", "svg", "css", "html", "api", "ui", "ux", "seo", "faq", "nav",
+    } | style_vocab | _NON_SECTION_ITEM_WORDS | _NAME_REJECT_FIRST
+
+
+def _capitalised_run(text: str) -> str:
+    """Read a name from the start of text: capitalised words (any script) joined by
+    connectors like "&" or "of"; a closing quote, comma or full stop ends it."""
+    words: list[str] = []
+    opened = text[:1] in _QUOTES
+    body = text[1:] if opened else text
+    for raw in body.split():
+        token = raw.strip(_QUOTES + ",.;:!?()")
+        if not token:
+            break
+        is_name_word = token[0].isupper() or token[0].isdigit()
+        if not is_name_word and not (words and token.lower() in _RUN_CONNECTORS):
+            break
+        words.append(token)
+        if raw[-1:] in _QUOTES + ",.;:!?)" or (opened and raw[-1:] in _QUOTES):
+            break
+        if len(words) >= 5:
+            break
+    while words and words[-1].lower() in _RUN_CONNECTORS | _RUN_TRAIL_STOP:
+        words.pop()
+    return " ".join(words)
+
+
 def _extract_business_name_legacy(prompt: str) -> str:
-    # Priority 1: Explicit "for <Name>", "called <Name>", "named <Name>"
-    m = re.search(
-        r'''(?:for|called|named)\s+["']?([A-Z][a-zA-Z0-9&]*(?:\s+[A-Za-z0-9&][a-zA-Z0-9&]*)*)["']?(?:\s*$|\s*,|\s*\.)''',
-        prompt
-    )
-    if m:
-        name = m.group(1).strip()
+    blocked = _name_blocklist()
+
+    def acceptable(name: str) -> bool:
+        first = name.split()[0].lower() if name else ""
+        return bool(name) and first not in blocked and len(name) <= 40
+
+    # Priority 1: "for <Name>", "called <Name>", "named <Name>" (quoted or not, any script).
+    for m in re.finditer(r"\b(?:for|called|named|by|at)\s+", prompt):
+        name = _capitalised_run(prompt[m.end():])
+        if m.group(0).split()[0] in {"by", "at"} and len(name.split()) < 2:
+            continue  # "by Monday", "at Home" are not names
+        if acceptable(name):
+            return name
+
+    # Priority 2: a quoted capitalised name near the start of the prompt.
+    for m in re.finditer(r"[\"'“‘](?=[^\W\d_])", prompt[:160]):
+        name = _capitalised_run(prompt[m.start():])
+        if acceptable(name) and not name.lower().startswith(("http", "www")):
+            return name
+
+    # Priority 3: inside a sentence, a run of adjacent capitalised words that is not
+    # style vocabulary or a label — at least two words, or one CamelCase brand word
+    # ("NexaFlow"). Words from different parts of the prompt are never stitched
+    # together ("Kiln Warm Email"), and lone words ("CTA", "Guidelines") are ignored.
+    for m in re.finditer(r"(?<=[a-z,;] )(?=[^\W\d_])", prompt):
+        name = _capitalised_run(prompt[m.start():])
         words = name.split()
-        for i, w in enumerate(words):
-            if w.lower() in {"featuring", "showcasing", "with", "including", "show", "show-casing", "showcasing"}:
-                words = words[:i]
-                break
-        _TRAIL_STOP = {"showcase", "website", "landing", "page", "app", "platform", "tool", "site", "portfolio"}
-        while words and words[-1].lower() in _TRAIL_STOP:
-            words = words[:-1]
-        if words:
-            return " ".join(words)
-
-    # Priority 2: Capitalized quoted business name near start of prompt (first 120 chars)
-    m = re.search(r'''["']([A-Z][a-zA-Z0-9 \-]{2,40})["']''', prompt[:120])
-    if m:
-        cand = m.group(1).strip()
-        if not cand.lower().startswith(("http", "www")) and cand.lower() not in {"feel", "design", "website"}:
-            return cand
-
-    STOP = {
-        "Write", "Create", "Build", "Make", "Design", "Generate", "Develop",
-        "A", "An", "The", "My", "Our", "New", "React", "TypeScript", "Website",
-        "Page", "Site", "Landing", "Full", "Complete", "Modern", "Beautiful",
-        "Restaurant", "Portfolio", "SaaS", "Blog", "Event", "Shop", "Store",
-    }
-    words = re.findall(r' [A-Z][a-zA-Z0-9]+ ', prompt)
-    candidates = [w.strip() for w in words if w.strip() not in STOP]
-    if len(candidates) >= 2:
-        return " ".join(candidates[:3])
-    if candidates:
-        return candidates[0]
+        if not words or any(w.lower() in blocked for w in words if w.lower() not in _RUN_CONNECTORS):
+            continue
+        camel = len(words) == 1 and re.search(r"[a-z][A-Z]", words[0])
+        if len(words) >= 2 or camel:
+            return name
 
     return "My Business"
 

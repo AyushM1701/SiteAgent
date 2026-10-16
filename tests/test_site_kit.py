@@ -373,3 +373,11 @@ def test_hero_prompt_says_where_each_button_goes():
     user = kit.messages("hero")[-1]["content"]
     assert "primary_cta opens the Menu section" in user
     assert "secondary_cta opens the Contact section" in user
+
+
+def test_kit_keeps_design_words_that_describe_the_business():
+    integrity = Integrity("Hue & Co — a paint shop in Bristol selling colour palettes and brushes.")
+    assert integrity.clean_text("Explore our palette of 200 paint colours.") == "Explore our palette of 200 paint colours."
+    assert integrity.clean_text("Warm ivory palette with editorial typography.") == ""
+    foundry = Integrity("Northtype — an independent type foundry.")
+    assert foundry.clean_text("Fonts licensed for print, web and packaging.") == "Fonts licensed for print, web and packaging."

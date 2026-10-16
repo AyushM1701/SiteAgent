@@ -340,6 +340,16 @@ export function {name}(props: any) {{
 </finish>"""
 
 
+# Sampling for code-writing turns (component mode, runtime edits, project repair).
+# Those callers choose a low temperature per call; the nucleus/top-k bounds and the
+# repetition penalty are stated here so a change to the runner's defaults (tuned for
+# the design kit's JSON copy) never silently changes how code is written.
+# Measured 2026-10-16 on the base model, 10 STaR component tasks at temperature 0.15:
+# top_p 0.8 / top_k 20 passed 6/10 (3 first-try) vs 4/10 (2) with no truncation,
+# and never failed a task the untruncated run solved.
+CODE_SAMPLING: Dict[str, Any] = {"top_p": 0.8, "top_k": 20, "repetition_penalty": 1.05}
+
+
 class AgentModelRunner:
     def __init__(self, model_path: str, max_seq_length=None, is_mock: bool = False):
         from agent.config import ModelRuntimeConfig
@@ -698,6 +708,8 @@ def run_agent_on_example(
     max_new_tokens: Optional[int] = None,
     best_of_2: bool = True,
     stop_check: Optional[Callable[[], bool]] = None,
+    top_p: Optional[float] = CODE_SAMPLING["top_p"],
+    top_k: Optional[int] = CODE_SAMPLING["top_k"],
 ) -> Dict[str, Any]:
     """
     Runs the multi-turn agent loop for a single React+TS+CSS component task.
@@ -767,7 +779,7 @@ def run_agent_on_example(
 
     # Dynamic Anti-Stuck & Regression Guard State
     base_temp = temperature
-    base_rep_penalty = 1.05
+    base_rep_penalty = CODE_SAMPLING["repetition_penalty"]
     current_temp = base_temp
     current_rep_penalty = base_rep_penalty
     last_tsx_hash: Optional[str] = None
@@ -818,6 +830,8 @@ def run_agent_on_example(
                     max_new_tokens=current_turn_tokens,
                     temperature=current_temp,
                     repetition_penalty=current_rep_penalty,
+                    top_p=top_p,
+                    top_k=top_k,
                     stop_check=stop_check,
                 )
 
@@ -862,6 +876,8 @@ def run_agent_on_example(
                             max_new_tokens=current_turn_tokens,
                             temperature=0.45,
                             repetition_penalty=1.10,
+                            top_p=top_p,
+                            top_k=top_k,
                             stop_check=stop_check,
                         )
                     except InterruptedError:
@@ -937,6 +953,8 @@ def run_agent_on_example(
                     max_new_tokens=current_turn_tokens,
                     temperature=current_temp,
                     repetition_penalty=current_rep_penalty,
+                    top_p=top_p,
+                    top_k=top_k,
                     stop_check=stop_check,
                 )
             except InterruptedError:
@@ -1247,6 +1265,8 @@ def execute_runtime_edit_policy(
     max_turns: int = 5,
     temperature: float = 0.2,
     max_new_tokens: Optional[int] = None,
+    top_p: Optional[float] = CODE_SAMPLING["top_p"],
+    top_k: Optional[int] = CODE_SAMPLING["top_k"],
 ) -> Dict[str, Any]:
     """
     Executes a code modification / edit adhering strictly to the 4-step runtime policy:
@@ -1331,6 +1351,9 @@ def execute_runtime_edit_policy(
         primary_symbol=primary_symbol,
         max_new_tokens=allocated_tokens,
         temperature=temperature,
+        repetition_penalty=CODE_SAMPLING["repetition_penalty"],
+        top_p=top_p,
+        top_k=top_k,
     )
     turn = parse_agent_output(assistant_out)
 
