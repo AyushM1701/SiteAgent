@@ -44,7 +44,8 @@ project gates (typecheck, build, contract, accessibility, motion, runtime).
 
 ## Running the workbench with the adapter
 
-The recommended adapter is `models/qwen3-siteagent-native-sections-r16-v2`
+The recommended adapter is published as [`AyushM1701/siteagent-native-qwen3-4b`](https://huggingface.co/AyushM1701/siteagent-native-qwen3-4b)
+(`python slm.py download --adapter AyushM1701/siteagent-native-qwen3-4b`; locally `models/qwen3-siteagent-native-sections-r16-v2`)
 (92% of held-out sections accepted vs 6% for the base model; see `runs/native_sections/RESULTS.md`).
 
 Use the `workbench-native` launch configuration (or set `MODEL_PATH` to the adapter

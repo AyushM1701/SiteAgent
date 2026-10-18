@@ -58,6 +58,14 @@ def main() -> None:
     config["base_model_name_or_path"] = "Qwen/Qwen3-4B"
     from huggingface_hub import HfApi
     api = HfApi()
+    try:
+        user = api.whoami()["name"]
+    except Exception as error:
+        raise SystemExit(f"Not signed in to Hugging Face ({str(error).splitlines()[-1]}).\n"
+                         "Run:  hf auth login --force   (paste a token with 'write' access from "
+                         "https://huggingface.co/settings/tokens), then run this again.")
+    if args.repo.split("/")[0] != user:
+        print(f"Note: signed in as '{user}'; publishing to '{args.repo}' needs write access to that namespace.")
     api.create_repo(args.repo, private=args.private, exist_ok=True)
     patterns = ["adapter_config.json", "adapter_model.safetensors", "README.md", "training_manifest.json",
                 "tokenizer*", "special_tokens_map.json", "chat_template.jinja", "added_tokens.json", "vocab.json", "merges.txt"]

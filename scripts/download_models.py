@@ -2,7 +2,7 @@
 """Download the model weights the workbench needs.
 
   python scripts/download_models.py                       # Qwen/Qwen3-4B -> ./base-model
-  python scripts/download_models.py --adapter USER/REPO   # also a fine-tuned adapter -> ./models/<name>
+  python scripts/download_models.py --adapter AyushM1701/siteagent-native-qwen3-4b   # also a fine-tuned adapter -> ./models/<name>
   python scripts/download_models.py --base Qwen/Qwen3-1.7B   # smaller base for low-memory machines
 
 The fine-tuned "native" adapter only works on top of Qwen3-4B. Smaller bases run
@@ -41,8 +41,14 @@ def download_adapter(repo: str, models_dir: Path, force: bool) -> Path:
         return target
     print(f"Downloading adapter {repo} to {target} ...")
     snapshot_download(repo, local_dir=str(target))
-    if not (target / "adapter_config.json").is_file():
+    config_path = target / "adapter_config.json"
+    if not config_path.is_file():
         raise SystemExit(f"{repo} does not look like a LoRA adapter (no adapter_config.json).")
+    # Published adapters name the hub base ("Qwen/Qwen3-4B"); point them at the local
+    # copy so loaders use ./base-model instead of downloading the base a second time.
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["base_model_name_or_path"] = str((BASE_DIR / "base-model").resolve())
+    config_path.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
     print(f"Adapter ready. Start the workbench with MODEL_PATH={target} SITE_STRATEGY=native")
     return target
 

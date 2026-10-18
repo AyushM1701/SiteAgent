@@ -5,7 +5,7 @@ which create the .venv first, or directly inside your own environment:
   python scripts/install.py                    # everything
   python scripts/install.py --skip-model       # no 8 GB download
   python scripts/install.py --cpu              # force the CPU build of PyTorch
-  python scripts/install.py --adapter USER/REPO  # also fetch a fine-tuned adapter
+  python scripts/install.py --adapter AyushM1701/siteagent-native-qwen3-4b  # also fetch a fine-tuned adapter
 
 Steps: PyTorch for this hardware -> Python packages -> optional NVIDIA extras ->
 Node packages and the workbench UI -> Chromium for site checks -> model weights -> doctor.

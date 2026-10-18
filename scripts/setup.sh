@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # SiteAgent - one-command setup (macOS, Linux, Git Bash on Windows)
-#   bash scripts/setup.sh [--cpu] [--skip-model] [--adapter USER/REPO]
+#   bash scripts/setup.sh [--cpu] [--skip-model] [--adapter AyushM1701/siteagent-native-qwen3-4b]
 # Creates .venv, installs PyTorch for your hardware and everything else, builds the
 # workbench UI, downloads Qwen3-4B and runs the doctor.
 # ==============================================================================

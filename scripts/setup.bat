@@ -1,7 +1,7 @@
 @echo off
 REM ==============================================================================
 REM SiteAgent - one-command setup (Windows)
-REM   scripts\setup.bat [--cpu] [--skip-model] [--adapter USER/REPO]
+REM   scripts\setup.bat [--cpu] [--skip-model] [--adapter AyushM1701/siteagent-native-qwen3-4b]
 REM Creates .venv, installs PyTorch for your hardware and everything else, builds the
 REM workbench UI, downloads Qwen3-4B and runs the doctor.
 REM ==============================================================================

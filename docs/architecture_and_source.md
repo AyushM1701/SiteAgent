@@ -84319,7 +84319,7 @@ if __name__ == "__main__":
 #### `scripts/run_web_ui.bat`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/run_web_ui.bat`
-- **Lines**: 27 | **Size**: 1,120 bytes | **SHA-256**: `0f7c32be7c342445fe3447213b6610983273ee6a1a27ac5d809de15afd44483f` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,147 bytes | **SHA-256**: `06979ef5f4f7f3e693c180c979e7aa0afa638f72fe126ce43a3b7050f9e9d916` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Windows launcher batch script for the ReactAgent SLM Workbench UI.
 
@@ -84341,7 +84341,7 @@ if /i "%~1"=="--native" (
     set "ADAPTER="
     for /f "delims=" %%d in ('dir /b /ad /o:n models\*native* 2^>nul') do set "ADAPTER=models\%%d"
     if "!ADAPTER!"=="" (
-        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter USER/REPO
+        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter AyushM1701/siteagent-native-qwen3-4b
         exit /b 1
     )
     set "MODEL_PATH=!ADAPTER!"
@@ -84358,7 +84358,7 @@ echo Starting SiteAgent workbench at http://127.0.0.1:5000 ...
 #### `scripts/setup.bat`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.bat`
-- **Lines**: 27 | **Size**: 942 bytes | **SHA-256**: `8e8d4420ac2ce313992ded64d02dfbc40ab7cf548b894842a9fb2c7db40f57a5` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 969 bytes | **SHA-256**: `a152f0d8091a2e17861955f19721a77998815e0b57cf2d77835e3e41e0e3d78b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Windows.
 
@@ -84366,7 +84366,7 @@ echo Starting SiteAgent workbench at http://127.0.0.1:5000 ...
 @echo off
 REM ==============================================================================
 REM SiteAgent - one-command setup (Windows)
-REM   scripts\setup.bat [--cpu] [--skip-model] [--adapter USER/REPO]
+REM   scripts\setup.bat [--cpu] [--skip-model] [--adapter AyushM1701/siteagent-native-qwen3-4b]
 REM Creates .venv, installs PyTorch for your hardware and everything else, builds the
 REM workbench UI, downloads Qwen3-4B and runs the doctor.
 REM ==============================================================================
@@ -86026,7 +86026,7 @@ console.log('\nAll workspace resizer assertions PASSED successfully!');
 #### `scripts/run_web_ui.sh`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/run_web_ui.sh`
-- **Lines**: 27 | **Size**: 1,147 bytes | **SHA-256**: `2f1344e229088652d515b92b408cfc5cbb6600354c9c96110db8c86d867e7ea2` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,174 bytes | **SHA-256**: `344ca7c74af189d07006655ac9bb29137dfb2a62a6391bbe010f95b1f011fd7b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Linux launcher bash script for the ReactAgent SLM Workbench UI.
 
@@ -86049,7 +86049,7 @@ if [ "${1:-}" = "--native" ]; then
   shift
   ADAPTER="$(ls -d models/*native* 2>/dev/null | sort | tail -n 1 || true)"
   if [ -z "$ADAPTER" ]; then
-    echo "No native adapter in models/. Download one with: python scripts/download_models.py --adapter USER/REPO"
+    echo "No native adapter in models/. Download one with: python scripts/download_models.py --adapter AyushM1701/siteagent-native-qwen3-4b"
     exit 1
   fi
   export MODEL_PATH="$ADAPTER" SITE_STRATEGY=native
@@ -86065,7 +86065,7 @@ echo "Starting SiteAgent workbench at http://127.0.0.1:5000 ..."
 #### `scripts/setup.sh`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.sh`
-- **Lines**: 27 | **Size**: 1,085 bytes | **SHA-256**: `84c1e2a6672e36a8357cd2b7b6efda50de30c43156136e0a5f0e4143b7a8b250` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,112 bytes | **SHA-256**: `9d3a16cdf6b186cae1b7cf2862406979214ca7a6ce10db6da9aca650f1d5aa9b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Linux.
 
@@ -86073,7 +86073,7 @@ echo "Starting SiteAgent workbench at http://127.0.0.1:5000 ..."
 #!/usr/bin/env bash
 # ==============================================================================
 # SiteAgent - one-command setup (macOS, Linux, Git Bash on Windows)
-#   bash scripts/setup.sh [--cpu] [--skip-model] [--adapter USER/REPO]
+#   bash scripts/setup.sh [--cpu] [--skip-model] [--adapter AyushM1701/siteagent-native-qwen3-4b]
 # Creates .venv, installs PyTorch for your hardware and everything else, builds the
 # workbench UI, downloads Qwen3-4B and runs the doctor.
 # ==============================================================================
@@ -135713,7 +135713,7 @@ The most important behavioral change is:
 #### `README.md`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/README.md`
-- **Lines**: 262 | **Size**: 14,507 bytes | **SHA-256**: `7dde0d274ccf126d74867e36ecc9e64571f8aabde77491ee2bfa4a76fb9317a0` | **Newline**: `True`
+- **Lines**: 263 | **Size**: 14,677 bytes | **SHA-256**: `e5d0f1152d862a795bfeca7f55dca971ca8f817989ec6a211a0d463e3383abf6` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Project README and system overview.
 
@@ -135753,7 +135753,7 @@ scripts\setup.bat
 
 Options: `--cpu` (force CPU), `--skip-model` (download later with `python slm.py download`),
 `--base Qwen/Qwen3-1.7B` (smaller model for low-memory machines),
-`--adapter USER/REPO` (also download a fine-tuned native adapter).
+`--adapter AyushM1701/siteagent-native-qwen3-4b` (also download the fine-tuned native adapter, ~130 MB).
 
 **2. Run the workbench** at <http://127.0.0.1:5000>:
 
@@ -135805,7 +135805,8 @@ Override anything with environment variables: `SLM_DEVICE=cuda|mps|cpu`,
   [docs/NATIVE_SECTION_TRAINING.md](docs/NATIVE_SECTION_TRAINING.md).
   Choose it per request in the composer (*Advanced → Site code written by → The model*), or start
   with `scripts/run_web_ui.sh --native`. It needs an adapter in `models/`: download one with
-  `python slm.py download --adapter USER/REPO`, or train your own (below).
+  `python slm.py download --adapter AyushM1701/siteagent-native-qwen3-4b`
+  ([model card](https://huggingface.co/AyushM1701/siteagent-native-qwen3-4b)), or train your own (below).
 
 ### Website requests
 
@@ -135958,7 +135959,7 @@ The root CLI provides a unified interface across all workflows:
 | `python slm.py pipeline` | Full end-to-end training pipeline (merge → validate → train SFT) |
 | `python slm.py setup` | Install everything for this machine (`--cpu`, `--skip-model`, `--adapter`) |
 | `python slm.py doctor` | Check hardware, dependencies and models; print fixes |
-| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter USER/REPO`) |
+| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter AyushM1701/siteagent-native-qwen3-4b`) |
 | `python slm.py serve` | Launch web UI workbench on `http://127.0.0.1:5000` |
 | `python slm.py train` | Run QLoRA SFT training (`training/train_sft.py`) |
 | `python slm.py train-dpo` | Run Direct Preference Optimization (`training/train_dpo.py`) |

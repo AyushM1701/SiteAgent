@@ -15,7 +15,7 @@ if /i "%~1"=="--native" (
     set "ADAPTER="
     for /f "delims=" %%d in ('dir /b /ad /o:n models\*native* 2^>nul') do set "ADAPTER=models\%%d"
     if "!ADAPTER!"=="" (
-        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter USER/REPO
+        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter AyushM1701/siteagent-native-qwen3-4b
         exit /b 1
     )
     set "MODEL_PATH=!ADAPTER!"

@@ -33,7 +33,7 @@ scripts\setup.bat
 
 Options: `--cpu` (force CPU), `--skip-model` (download later with `python slm.py download`),
 `--base Qwen/Qwen3-1.7B` (smaller model for low-memory machines),
-`--adapter USER/REPO` (also download a fine-tuned native adapter).
+`--adapter AyushM1701/siteagent-native-qwen3-4b` (also download the fine-tuned native adapter, ~130 MB).
 
 **2. Run the workbench** at <http://127.0.0.1:5000>:
 
@@ -85,7 +85,8 @@ Override anything with environment variables: `SLM_DEVICE=cuda|mps|cpu`,
   [docs/NATIVE_SECTION_TRAINING.md](docs/NATIVE_SECTION_TRAINING.md).
   Choose it per request in the composer (*Advanced → Site code written by → The model*), or start
   with `scripts/run_web_ui.sh --native`. It needs an adapter in `models/`: download one with
-  `python slm.py download --adapter USER/REPO`, or train your own (below).
+  `python slm.py download --adapter AyushM1701/siteagent-native-qwen3-4b`
+  ([model card](https://huggingface.co/AyushM1701/siteagent-native-qwen3-4b)), or train your own (below).
 
 ### Website requests
 
@@ -238,7 +239,7 @@ The root CLI provides a unified interface across all workflows:
 | `python slm.py pipeline` | Full end-to-end training pipeline (merge → validate → train SFT) |
 | `python slm.py setup` | Install everything for this machine (`--cpu`, `--skip-model`, `--adapter`) |
 | `python slm.py doctor` | Check hardware, dependencies and models; print fixes |
-| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter USER/REPO`) |
+| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter AyushM1701/siteagent-native-qwen3-4b`) |
 | `python slm.py serve` | Launch web UI workbench on `http://127.0.0.1:5000` |
 | `python slm.py train` | Run QLoRA SFT training (`training/train_sft.py`) |
 | `python slm.py train-dpo` | Run Direct Preference Optimization (`training/train_dpo.py`) |

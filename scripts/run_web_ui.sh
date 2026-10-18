@@ -16,7 +16,7 @@ if [ "${1:-}" = "--native" ]; then
   shift
   ADAPTER="$(ls -d models/*native* 2>/dev/null | sort | tail -n 1 || true)"
   if [ -z "$ADAPTER" ]; then
-    echo "No native adapter in models/. Download one with: python scripts/download_models.py --adapter USER/REPO"
+    echo "No native adapter in models/. Download one with: python scripts/download_models.py --adapter AyushM1701/siteagent-native-qwen3-4b"
     exit 1
   fi
   export MODEL_PATH="$ADAPTER" SITE_STRATEGY=native
