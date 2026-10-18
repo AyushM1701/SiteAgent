@@ -341,6 +341,32 @@ def check_scroll_reveal_behavior(
                 errors=[f"Target element {resolved_selector} disappeared from DOM."],
             )
 
+        # Reveals are usually one-shot: if earlier checks already scrolled past the
+        # target, it is revealed while still off-screen and nothing can change.
+        # Reload so the reveal is measured from its real initial state.
+        if (not before_state["inViewport"] and before_state["opacity"] >= 0.9
+                and before_state["transform"] in ("none", "", None)):
+            page.reload(wait_until="load")
+            page.wait_for_timeout(600)
+            page.evaluate("window.scrollTo(0, 0)")
+            page.wait_for_timeout(100)
+            reloaded = page.evaluate("""(sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return null;
+                const rect = el.getBoundingClientRect();
+                const style = window.getComputedStyle(el);
+                return {
+                    opacity: parseFloat(style.opacity || '1'),
+                    transform: style.transform,
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    inViewport: (rect.top < window.innerHeight && rect.bottom > 0)
+                };
+            }""", resolved_selector)
+            if reloaded:
+                before_state = reloaded
+                metrics["reloaded_before_measuring"] = True
+
         metrics["before_scroll"] = before_state
 
         # Scroll into view

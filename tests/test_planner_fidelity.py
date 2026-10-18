@@ -252,3 +252,10 @@ def test_areas_we_cover_is_not_mistaken_for_the_hero():
     from agent.site_kit.content import section_kind
     assert section_kind("areas-we-cover") != "hero"
     assert section_kind("cover") == "hero" and section_kind("hero-banner") == "hero"
+
+
+def test_named_work_section_replaces_the_portfolio_default():
+    from agent.site_brief import extract_sections_from_prompt
+    sections = extract_sections_from_prompt(
+        "Build a dark modern portfolio site with work showcase, about me, and contact form", "portfolio")
+    assert "work-showcase" in sections and "projects" not in sections

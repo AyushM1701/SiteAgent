@@ -66,3 +66,8 @@ def test_selected_kebab_section_targets_its_pascal_component():
     result = ContextBuilder().resolve_context_files(files, "make the heading bigger",
                                                     preview_selection={"component": "visit-us"})
     assert "src/components/VisitUs.tsx" in [path for path, _ in result["selected"]]
+
+
+def test_scroll_reveal_check_reloads_when_target_was_already_revealed():
+    source = (Path(__file__).resolve().parents[1] / "evaluation" / "motion_benchmark.py").read_text(encoding="utf-8")
+    assert 'page.reload(wait_until="load")' in source and "reloaded_before_measuring" in source

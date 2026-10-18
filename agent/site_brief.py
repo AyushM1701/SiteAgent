@@ -1764,6 +1764,20 @@ def _merge_synonym_sections(middle: list[str], lower: str) -> list[str]:
     return result
 
 
+def _drop_defaults_duplicating_named(middle: list[str], named: list[str], lower: str) -> list[str]:
+    """A domain default that renders as the same kind of section as one the user named
+    ("projects" next to "work showcase") is a duplicate; keep the user's section."""
+    from agent.site_kit.content import section_kind
+    named_kinds = {section_kind(s) for s in named} - {"split"}
+    kept = []
+    for sec in middle:
+        mentioned = sec in named or re.search(rf"\b{re.escape(sec.replace('-', ' ').rstrip('s'))}", lower)
+        if not mentioned and section_kind(sec) in named_kinds:
+            continue
+        kept.append(sec)
+    return kept
+
+
 def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     """
     Dynamically infers the required sections from the user prompt and business domain.
@@ -1922,6 +1936,7 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     middle = [sec for sec in middle
               if not (sec in _SECTION_KEYWORD_PATTERNS and _explicitly_excluded(lower, _SECTION_KEYWORD_PATTERNS[sec]))]
     middle = _merge_synonym_sections(middle, lower)
+    middle = _drop_defaults_duplicating_named(middle, extract_implicit_feature_sections(prompt), lower)
     # Contact closes the page; sections the prompt lists after a domain default stay ahead of it.
     if "contact" in middle:
         middle = [sec for sec in middle if sec != "contact"] + ["contact"]
