@@ -9,7 +9,7 @@ This is the static approximation of browser testing. It cannot verify:
   - Visual correctness
   - Scroll / hover / keyboard event handlers
   - WebGL context creation in a real browser
-Those require a browser + human review (see QWEN3_BLUEPRINT_COMPARISON.md P0).
+Those require a browser + human review.
 
 Usage:
   python data_pipeline/compile_test_survivors.py --source data/quality_v3/train.jsonl

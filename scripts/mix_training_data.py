@@ -259,7 +259,6 @@ def main() -> int:
         alt_paths = [
             ROOT_DIR / "data" / "step2_gated_survivors.jsonl",
             ROOT_DIR / "data" / "site_trajectories_batch4.jsonl",
-            ROOT_DIR / "site_trajectories_batch4.jsonl",
         ]
         for alt in alt_paths:
             if alt.is_file():

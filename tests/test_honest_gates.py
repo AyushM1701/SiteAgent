@@ -1,4 +1,4 @@
-"""Honest gates (IMPLEMENTATION_PLAN_2026-10-16 §10.1): validators must not pass
+"""Honest gates: validators must not pass
 fabricated results, and must not flag correct code."""
 from pathlib import Path
 

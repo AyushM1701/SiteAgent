@@ -67,7 +67,7 @@ def main() -> None:
     if args.repo.split("/")[0] != user:
         print(f"Note: signed in as '{user}'; publishing to '{args.repo}' needs write access to that namespace.")
     api.create_repo(args.repo, private=args.private, exist_ok=True)
-    patterns = ["adapter_config.json", "adapter_model.safetensors", "README.md", "training_manifest.json",
+    patterns = ["adapter_config.json", "adapter_model.safetensors", "README.md",
                 "tokenizer*", "special_tokens_map.json", "chat_template.jinja", "added_tokens.json", "vocab.json", "merges.txt"]
     api.upload_folder(folder_path=str(args.adapter_dir), repo_id=args.repo, allow_patterns=patterns,
                       ignore_patterns=["adapter_config.json"])

@@ -24,15 +24,11 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
 
 SFT_PATH_DATA = DATA_DIR / "siteagent_motion_sft_v1.jsonl"
-SFT_PATH_ROOT = ROOT_DIR / "siteagent_motion_sft_v1.jsonl"
 
 EVAL_PATH_DATA = DATA_DIR / "siteagent_motion_eval_v1.jsonl"
-EVAL_PATH_ROOT = ROOT_DIR / "siteagent_motion_eval_v1.jsonl"
 
 MANIFEST_PATH_DATA = DATA_DIR / "siteagent_motion_dataset_manifest.json"
-MANIFEST_PATH_ROOT = ROOT_DIR / "siteagent_motion_dataset_manifest.json"
 
-GUIDE_PATH_ROOT = ROOT_DIR / "SITEAGENT_MOTION_TRAINING_GUIDE.md"
 GUIDE_PATH_DOCS = ROOT_DIR / "docs" / "SITEAGENT_MOTION_TRAINING_GUIDE.md"
 
 MOTION_FAMILIES = [
@@ -74,19 +70,9 @@ def tokenize(text: str) -> set[str]:
 
 def test_motion_dataset_files_exist():
     assert SFT_PATH_DATA.exists(), f"Missing {SFT_PATH_DATA}"
-    assert SFT_PATH_ROOT.exists(), f"Missing {SFT_PATH_ROOT}"
     assert EVAL_PATH_DATA.exists(), f"Missing {EVAL_PATH_DATA}"
-    assert EVAL_PATH_ROOT.exists(), f"Missing {EVAL_PATH_ROOT}"
     assert MANIFEST_PATH_DATA.exists(), f"Missing {MANIFEST_PATH_DATA}"
-    assert MANIFEST_PATH_ROOT.exists(), f"Missing {MANIFEST_PATH_ROOT}"
-    assert GUIDE_PATH_ROOT.exists(), f"Missing {GUIDE_PATH_ROOT}"
     assert GUIDE_PATH_DOCS.exists(), f"Missing {GUIDE_PATH_DOCS}"
-
-
-def test_motion_dataset_files_are_synchronized():
-    assert SFT_PATH_DATA.read_bytes() == SFT_PATH_ROOT.read_bytes(), "SFT root and data copies differ"
-    assert EVAL_PATH_DATA.read_bytes() == EVAL_PATH_ROOT.read_bytes(), "Eval root and data copies differ"
-    assert MANIFEST_PATH_DATA.read_bytes() == MANIFEST_PATH_ROOT.read_bytes(), "Manifest root and data copies differ"
 
 
 # --------------------------------------------------------------------------
@@ -377,7 +363,7 @@ def test_eval_disjointness_and_similarity_threshold():
 # --------------------------------------------------------------------------
 
 def test_training_guide_completeness():
-    guide_text = GUIDE_PATH_ROOT.read_text(encoding="utf-8")
+    guide_text = GUIDE_PATH_DOCS.read_text(encoding="utf-8")
 
     required_keywords = [
         "Qwen3-4B",

@@ -1,4 +1,4 @@
-"""Browser self-check for a generated kit site (IMPLEMENTATION_PLAN_2026-10-16 §11.4).
+"""Browser self-check for a generated kit site.
 
 Builds nothing itself: point it at a session workspace that the workbench produced
 (it must contain dist/ after `vite build`, or it runs the build), serves dist/

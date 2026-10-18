@@ -1,4 +1,4 @@
-"""Kit strategy integration (IMPLEMENTATION_PLAN_2026-10-16 §7): agent loop, runner sampling,
+"""Kit strategy integration: agent loop, runner sampling,
 module identity and server scaffolding."""
 import json
 import re

@@ -1,8 +1,7 @@
 """
 agent/motion_patterns.py - First-Class Motion Architecture & Pattern Engine
 
-Implements Section 4 (New Motion Feature Architecture) and Section 5 (Motion Implementation Rules)
-from SiteAgent_Updated_Audit_and_Motion_Plan.md:
+Motion feature architecture and implementation rules:
 
 Features:
 1. Scrolling animations (IntersectionObserver scroll reveal)

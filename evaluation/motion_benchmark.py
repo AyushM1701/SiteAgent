@@ -1,7 +1,7 @@
 """
 evaluation/motion_benchmark.py - Playwright Behavioral & Performance Motion Benchmark.
 
-Implements Section 7 of SiteAgent_Updated_Audit_and_Motion_Plan.md:
+Why a browser is needed:
 "A regex/code-level judge is not sufficient because models can satisfy it by including
 strings without correct behavior."
 

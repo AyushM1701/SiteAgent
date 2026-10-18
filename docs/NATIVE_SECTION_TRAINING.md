@@ -42,13 +42,28 @@ project gates (typecheck, build, contract, accessibility, motion, runtime).
 * About a quarter of rows are content rows (the kit content prompt → the model's
   own usable JSON) so the adapter keeps its copy-writing behaviour.
 
+## Results
+
+Same 36 held-out sections (every section kind, business families never seen in training),
+identical acceptance rules, temperature 0.2:
+
+| Model | Accepted | Copy kept | Behaviour kept | Typechecks | Fidelity to kit |
+| --- | --- | --- | --- | --- | --- |
+| v2 adapter (published) | 33/36 (92%) | 35 | 34 | 34 | 0.93 |
+| v1 adapter | 29/36 (81%) | 32 | 31 | 30 | 0.84 |
+| Base Qwen3-4B | 2/36 (6%) | 23 | 2 | 24 | 0.28 |
+
+v2 was trained on 277 briefs (4,469 rows, 559 steps, final validation loss 0.028, peak 3.8 GB
+VRAM). Its misses were two preview sections (the rarest kind) and one products section; in
+native mode the kit renders those. In a live workbench run, v2 wrote all 9 sections of a
+restaurant site itself in 21 minutes and the site passed every project gate.
+
 ## Running the workbench with the adapter
 
-The recommended adapter is published as [`AyushM1701/siteagent-native-qwen3-4b`](https://huggingface.co/AyushM1701/siteagent-native-qwen3-4b)
-(`python slm.py download --adapter AyushM1701/siteagent-native-qwen3-4b`; locally `models/qwen3-siteagent-native-sections-r16-v2`)
-(92% of held-out sections accepted vs 6% for the base model; see `runs/native_sections/RESULTS.md`).
+The recommended adapter is published as [`AyushM1701/siteagent-native-qwen3-4b`](https://huggingface.co/AyushM1701/siteagent-native-qwen3-4b):
+`python slm.py download --adapter AyushM1701/siteagent-native-qwen3-4b`.
 
-Use the `workbench-native` launch configuration (or set `MODEL_PATH` to the adapter
+Start with `scripts/run_web_ui.sh --native` / `scripts\run_web_ui.bat --native` (or set `MODEL_PATH` to the adapter
 directory and `SITE_STRATEGY=native`). In the composer, *Advanced → Site code written by*
 switches between **Design kit (fast)** and **The model (native)** per request.
 

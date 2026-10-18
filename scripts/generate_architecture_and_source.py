@@ -113,10 +113,12 @@ def extract_sections_from_existing_doc(existing_doc_path: Path) -> Dict[str, Dic
 def generate_architecture_and_source():
     print("[SourceExport] Starting corruption-proof documentation export...")
 
-    if not ARCH_MD.exists():
-        raise FileNotFoundError(f"Missing {ARCH_MD}")
-
-    arch_text = ARCH_MD.read_text(encoding="utf-8")
+    # Optional hand-written preamble; the README is the project overview.
+    arch_text = ARCH_MD.read_text(encoding="utf-8") if ARCH_MD.exists() else (
+        "# SiteAgent - complete source export\n\n"
+        "Every source file of the repository, verbatim, with size and SHA-256 metadata. "
+        "See README.md for an overview; `scripts/reconstruct_export.py` rebuilds the tree from this file."
+    )
     # Take architecture content up to directory tree end / separator
     if "## 3. Complete Source Code of Every File" in arch_text:
         arch_section = arch_text.split("## 3. Complete Source Code of Every File")[0].strip()

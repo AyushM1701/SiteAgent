@@ -1,6 +1,6 @@
 """Hand-authored R3F / Three.js training trajectory builder.
 
-Follows P2 recommendations in QWEN3_BLUEPRINT_COMPARISON.md:
+Design rules:
 - Measured scene budgets (bounded DPR, minimal lights, lazy loading, offscreen pause)
 - Reduced-motion and WebGL-unavailable fallbacks
 - On-demand rendering (frameloop=demand + invalidate)

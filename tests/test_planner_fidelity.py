@@ -87,7 +87,7 @@ def test_incidental_style_words_do_not_force_a_preset():
     assert "style_spec" in styled
 
 
-# --- Phase 1 planner fixes (IMPLEMENTATION_PLAN_2026-10-16 §5) ---
+# --- Phase 1 planner fixes ---
 import pytest
 
 from agent.site_brief import detect_business_type, extract_business_name, parse_section_spec

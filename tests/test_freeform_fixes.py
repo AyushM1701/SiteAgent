@@ -1,4 +1,4 @@
-"""Freeform-path fixes (IMPLEMENTATION_PLAN_2026-10-16 §10.2): the legacy loop is still used
+"""Freeform-path fixes: the legacy loop is still used
 for strategy="freeform" and for edits."""
 import re
 from copy import deepcopy

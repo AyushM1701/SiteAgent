@@ -23,7 +23,7 @@ The adapter references `./base-model` (Qwen2.5-Coder-3B-Instruct). Loading requi
 
 ## Historical training and evaluation
 
-[PROJECT_JOURNEY.md](../docs/PROJECT_JOURNEY.md) documents an older run: 146 trajectories, response-only loss masking, three epochs, learning rate 1e-4, 96 steps, NVIDIA RTX 4050, and best validation loss 0.3503. Its dropout=0.05 statement is historical; it does not describe the current export configuration.
+An older run used 146 trajectories, response-only loss masking, three epochs, learning rate 1e-4, 96 steps, NVIDIA RTX 4050, and best validation loss 0.3503. Its dropout=0.05 statement is historical; it does not describe the current export configuration.
 
 The log reports 153 held-out tasks, up to five agent turns, and 16.17 hours elapsed:
 

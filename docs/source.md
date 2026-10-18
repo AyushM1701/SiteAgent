@@ -3,7 +3,6 @@
 This document provides a comprehensive, structured catalog of all modules, source files, stylesheets, configuration files, and verification engines across the ReactAgent SLM codebase.
 
 For the exhaustive unified documentation including architectural deep dives and verbatim source code, see [architecture_and_source.md](file:///c:/Users/AYUSH/Documents/slm/docs/architecture_and_source.md).
-For pure system architecture, algorithms, and diagrams, see [architecture.md](file:///c:/Users/AYUSH/Documents/slm/docs/architecture.md).
 
 ---
 
@@ -279,9 +278,7 @@ For pure system architecture, algorithms, and diagrams, see [architecture.md](fi
 | `scripts/train_all.sh` | 25 | 1,394 | Bash script executing complete continuous fine-tuning pipeline on Linux. | [train_all.sh](file:///C:/Users/AYUSH/Documents/slm/scripts/train_all.sh) |
 | `web_ui_history.json` | 9,092 | 320,217 | Persistent JSON array of past generation sessions with timestamps, prompts, pass/fail status, and complete source code. | [web_ui_history.json](file:///C:/Users/AYUSH/Documents/slm/web_ui_history.json) |
 | `docs/SITEAGENT_MOTION_TRAINING_GUIDE.md` | 139 | 4,994 | SiteAgent motion curriculum training runbook with capability coverage, mixing ratios, and promotion criteria. | [SITEAGENT_MOTION_TRAINING_GUIDE.md](file:///C:/Users/AYUSH/Documents/slm/docs/SITEAGENT_MOTION_TRAINING_GUIDE.md) |
-| `docs/SiteAgent_Updated_Audit_and_Motion_Plan.md` | 558 | 19,447 | Comprehensive 32-step SiteAgent technical blueprint, audit findings, and execution order. | [SiteAgent_Updated_Audit_and_Motion_Plan.md](file:///C:/Users/AYUSH/Documents/slm/docs/SiteAgent_Updated_Audit_and_Motion_Plan.md) |
 | `data/siteagent_motion_dataset_manifest.json` | 149 | 4,981 | Cryptographic dataset manifest tracking SHA-256 digests, distributions, and motion training policies. | [siteagent_motion_dataset_manifest.json](file:///C:/Users/AYUSH/Documents/slm/data/siteagent_motion_dataset_manifest.json) |
-| `docs/PROJECT_JOURNEY.md` | 538 | 29,875 | Chronological engineering log documenting benchmarks, milestone passes, ablation studies, and architectural decisions. | [PROJECT_JOURNEY.md](file:///C:/Users/AYUSH/Documents/slm/docs/PROJECT_JOURNEY.md) |
 | `data/site_trajectories.jsonl` | 3 | 77,100 | Full-page multi-section website trajectory dataset (13 multi-turn site build traces). | [site_trajectories.jsonl](file:///C:/Users/AYUSH/Documents/slm/data/site_trajectories.jsonl) |
 | `data/star_task_bank.jsonl` | 150 | 179,958 | 150 categorized component tasks for STaR generation. | [star_task_bank.jsonl](file:///C:/Users/AYUSH/Documents/slm/data/star_task_bank.jsonl) |
 | `data/website_task_bank.jsonl` | 160 | 219,155 | 160 reverse-engineered website UI component tasks with natural language prompts and Vitest test code, synthesized from The Stack v2 via TeacherClient. | [website_task_bank.jsonl](file:///C:/Users/AYUSH/Documents/slm/data/website_task_bank.jsonl) |
@@ -289,22 +286,11 @@ For pure system architecture, algorithms, and diagrams, see [architecture.md](fi
 | `data/site_trajectories_stack.jsonl` | 6 | 143,440 | Multi-section website trajectories mined autonomously from The Stack v2 via GitHub Git Tree Probe Discovery. | [site_trajectories_stack.jsonl](file:///C:/Users/AYUSH/Documents/slm/data/site_trajectories_stack.jsonl) |
 | `data/training_data.jsonl` | 251 | 6,466,079 | Master SFT training dataset unifying 176 verified multi-turn full-website composition episodes across gold-standard domains, interactive stateful apps, mined Stack repositories, and STaR traces. | [training_data.jsonl](file:///C:/Users/AYUSH/Documents/slm/data/training_data.jsonl) |
 | `package-lock.json` | 3,767 | 125,661 | Exact npm dependency lockfile. | [package-lock.json](file:///C:/Users/AYUSH/Documents/slm/package-lock.json) |
-| `generate_site_trajectories_batch5.py` | 4,967 | 196,682 | Batch 5 generator producing 50 modern real-world full-site trajectories with layout archetyping and domain-specific copy. | [generate_site_trajectories_batch5.py](file:///C:/Users/AYUSH/Documents/slm/generate_site_trajectories_batch5.py) |
-| `generate_site_trajectories_batch4.py` | 4,112 | 164,982 | Batch 4 generator producing 50 modern real-world full-site trajectories with layout archetyping and domain-specific copy. | [generate_site_trajectories_batch4.py](file:///C:/Users/AYUSH/Documents/slm/generate_site_trajectories_batch4.py) |
-| `docs/BENCHMARK_SEPARATION_POLICY.md` | 96 | 6,029 | Benchmark separation policy and n-gram overlap standards preventing eval leakage. | [BENCHMARK_SEPARATION_POLICY.md](file:///C:/Users/AYUSH/Documents/slm/docs/BENCHMARK_SEPARATION_POLICY.md) |
-| `docs/OPEN_TASKS.md` | 226 | 13,891 | Consolidated technical debt, audit findings, and remaining milestone tasks. | [OPEN_TASKS.md](file:///C:/Users/AYUSH/Documents/slm/docs/OPEN_TASKS.md) |
-| `docs/P1_QUALITY_WORKFLOW.md` | 13 | 3,833 | P1 quality workflow and engineering standards. | [P1_QUALITY_WORKFLOW.md](file:///C:/Users/AYUSH/Documents/slm/docs/P1_QUALITY_WORKFLOW.md) |
-| `docs/PROJECT_QUALITY_AUDIT_2026-09-25.md` | 103 | 13,164 | Formal quality audit findings and remediation plans. | [PROJECT_QUALITY_AUDIT_2026-09-25.md](file:///C:/Users/AYUSH/Documents/slm/docs/PROJECT_QUALITY_AUDIT_2026-09-25.md) |
-| `docs/QWEN3_BLUEPRINT_COMPARISON.md` | 72 | 9,435 | Alignment analysis against Qwen3 coding agent blueprint. | [QWEN3_BLUEPRINT_COMPARISON.md](file:///C:/Users/AYUSH/Documents/slm/docs/QWEN3_BLUEPRINT_COMPARISON.md) |
-| `docs/RUNBOOK.md` | 335 | 13,009 | Operational runbook and troubleshooting procedures. | [RUNBOOK.md](file:///C:/Users/AYUSH/Documents/slm/docs/RUNBOOK.md) |
-| `docs/SiteAgent_Workbench_Conversational_Generation_Blueprint.md` | 2,266 | 37,196 | Workbench conversational generation architecture blueprint. | [SiteAgent_Workbench_Conversational_Generation_Blueprint.md](file:///C:/Users/AYUSH/Documents/slm/docs/SiteAgent_Workbench_Conversational_Generation_Blueprint.md) |
 | `docs/agent_results.json` | 89 | 12,060 | Benchmark execution results artifact for agent runs. | [agent_results.json](file:///C:/Users/AYUSH/Documents/slm/docs/agent_results.json) |
 | `docs/eval_results.json` | 42 | 11,946 | Benchmark evaluation scorecards and metrics summary artifact. | [eval_results.json](file:///C:/Users/AYUSH/Documents/slm/docs/eval_results.json) |
 | `README.md` | 187 | 10,424 | Project README and system overview. | [README.md](file:///C:/Users/AYUSH/Documents/slm/README.md) |
 | `LICENSE` | 21 | 1,079 | MIT open-source project license. | [LICENSE](file:///C:/Users/AYUSH/Documents/slm/LICENSE) |
-| `full-implementation-plan-v2.md` | 396 | 22,471 | Master 32-step full implementation plan. | [full-implementation-plan-v2.md](file:///C:/Users/AYUSH/Documents/slm/full-implementation-plan-v2.md) |
 | `pytest.ini` | 3 | 142 | Pytest configuration file. | [pytest.ini](file:///C:/Users/AYUSH/Documents/slm/pytest.ini) |
-| `siteagent_motion_dataset_manifest.json` | 149 | 4,981 | Cryptographic motion dataset manifest. | [siteagent_motion_dataset_manifest.json](file:///C:/Users/AYUSH/Documents/slm/siteagent_motion_dataset_manifest.json) |
 | `training/native_generation_gate.py` | 56 | 3,868 | Fail-closed gate verifying live model native completion without repairs or fallbacks. | [native_generation_gate.py](file:///C:/Users/AYUSH/Documents/slm/training/native_generation_gate.py) |
 | `training/provenance.py` | 178 | 5,954 | Cryptographic benchmark provenance attestation and non-mock verification. | [provenance.py](file:///C:/Users/AYUSH/Documents/slm/training/provenance.py) |
 | `models/promoted_model.json` | 14 | 515 | Promoted model pointer artifact for active production serving. | [promoted_model.json](file:///C:/Users/AYUSH/Documents/slm/models/promoted_model.json) |

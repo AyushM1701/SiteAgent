@@ -1,4 +1,4 @@
-"""Design-kit tests (IMPLEMENTATION_PLAN_2026-10-16 §6.7).
+"""Design-kit tests.
 
 The kit owns layout, typography, imagery and interaction; the model only writes
 JSON copy. These tests prove the kit's output is valid and validator-clean for
