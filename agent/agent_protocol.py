@@ -943,9 +943,11 @@ def parse_agent_output(raw_text: str) -> AgentTurn:
                 css_code = tsx_code[split_idx:].strip()
                 tsx_code = tsx_code[:split_idx].strip()
 
+        # Built outside the f-string: Python < 3.12 forbids backslashes in f-string expressions.
+        css_part = f"\n<css>\n{css_code}\n</css>" if css_code else ""
         clean_raw = (
             f"<tool_call name=\"write_component\">\n<tsx>\n{tsx_code}\n</tsx>"
-            f"{f'\n<css>\n{css_code}\n</css>' if css_code else ''}\n</tool_call>"
+            f"{css_part}\n</tool_call>"
         )
 
         return AgentTurn(

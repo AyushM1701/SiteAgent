@@ -10038,7 +10038,7 @@ if __name__ == "__main__":
 #### `agent/agent_protocol.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/agent_protocol.py`
-- **Lines**: 1,410 | **Size**: 66,701 bytes | **SHA-256**: `663fc5cf21a97c0f3cb56bb81886a83b05b2e723b94f9443ad61d3a42da1ba28` | **Newline**: `True`
+- **Lines**: 1,412 | **Size**: 66,828 bytes | **SHA-256**: `1a608303e8fa98cf513f3e8a90d9d898a232eb06f0185892c9a5a3132afd3fb3` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Action-first protocol, tool schemas, system prompts, regex formats, and JSON action parser with statusMessage.
 
@@ -10988,9 +10988,11 @@ def parse_agent_output(raw_text: str) -> AgentTurn:
                 css_code = tsx_code[split_idx:].strip()
                 tsx_code = tsx_code[:split_idx].strip()
 
+        # Built outside the f-string: Python < 3.12 forbids backslashes in f-string expressions.
+        css_part = f"\n<css>\n{css_code}\n</css>" if css_code else ""
         clean_raw = (
             f"<tool_call name=\"write_component\">\n<tsx>\n{tsx_code}\n</tsx>"
-            f"{f'\n<css>\n{css_code}\n</css>' if css_code else ''}\n</tool_call>"
+            f"{css_part}\n</tool_call>"
         )
 
         return AgentTurn(

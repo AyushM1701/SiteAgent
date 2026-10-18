@@ -25,46 +25,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
           pip install pytest
 
       - name: Reconstruct Export Tree into Empty Clean-Room Directory
-        run: |
-          python -c "
-          import re, os
-          from pathlib import Path
-
-          doc_path = Path('docs/architecture_and_source.md')
-          doc_text = doc_path.read_text(encoding='utf-8')
-          dest = Path('clean_reconstructed_tree')
-          dest.mkdir(parents=True, exist_ok=True)
-
-          section_pattern = re.compile(
-              r'####\s+`([^`]+)`\n\n'
-              r'- \*\*Path\*\*:\s*`file:///C:/Users/AYUSH/Documents/slm/([^`]+)`\n'
-              r'- \*\*Lines\*\*:\s*([0-9,]+)\s*\|\s*\*\*Size\*\*:\s*([0-9,]+)\s*bytes\s*\|\s*\*\*SHA-256\*\*:\s*`([0-9a-f]{64})`\s*\|\s*\*\*Newline\*\*:\s*`(True|False)`\n'
-              r'- \*\*Fence\*\*:\s*(\d+)\s*backticks\n'
-              r'- \*\*Description\*\*:\s*([^\n]+)\n\n'
-              r'(`{5,})([a-zA-Z0-9_-]*)\n'
-              r'(.*?)\n\9\n\n---',
-              re.DOTALL
-          )
-
-          matches = list(section_pattern.finditer(doc_text))
-          print(f'Extracting {len(matches)} files from docs/architecture_and_source.md...')
-          assert len(matches) >= 350, f'Expected >= 350 files, got {len(matches)}'
-
-          for m in matches:
-              rel_path = m.group(2)
-              has_nl = m.group(6) == 'True'
-              body = m.group(11)
-              out_file = dest / rel_path
-              out_file.parent.mkdir(parents=True, exist_ok=True)
-              content = (body + '\n') if has_nl else body
-              out_file.write_bytes(content.encode('utf-8'))
-
-          print(f'Successfully reconstructed {len(matches)} files into {dest}.')
-          "
+        run: python scripts/reconstruct_export.py clean_reconstructed_tree
 
       - name: Compile Reconstructed Tree
         run: |
