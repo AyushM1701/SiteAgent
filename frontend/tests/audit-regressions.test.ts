@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import fixture from '../../runs/workbench_ui_audit_20261005/session_result.json';
+import fixture from './fixtures/workbench_audit_session_result.json';
 import { loadProject } from '../src/services/session';
 import { api } from '../src/services/api';
 import { useAgentStore } from '../src/state/agent-store';

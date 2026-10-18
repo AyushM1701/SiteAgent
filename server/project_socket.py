@@ -29,6 +29,16 @@ class _ConnectionAdapter:
         self.connection.close()
 
 
+class _UntimedConnection(ServerConnection):
+    """HTTP/asset libraries may set a process-wide default socket timeout; long-lived
+    streams use WebSocket ping/close deadlines instead. A subclass (not a factory
+    function) is required: websockets 17 drops handshakes made by a plain function."""
+
+    def __init__(self, socket, protocol, *args, **kwargs):
+        socket.settimeout(None)
+        super().__init__(socket, protocol, *args, **kwargs)
+
+
 class ProjectSocketServer:
     def __init__(self, app, handler, host='127.0.0.1', port=5002, origins=None):
         self.app, self.handler = app, handler
@@ -67,12 +77,7 @@ class ProjectSocketServer:
     def start(self):
         if self.ready:
             return
-        def create_connection(sock, protocol, **kwargs):
-            # HTTP/asset libraries may set a process-wide default socket timeout.
-            # Long-lived streams must use WebSocket ping/close deadlines instead.
-            sock.settimeout(None)
-            return ServerConnection(sock, protocol, **kwargs)
-        self.server = serve(self._handle, self.host, self.port, process_request=self._check_request, create_connection=create_connection,
+        self.server = serve(self._handle, self.host, self.port, process_request=self._check_request, create_connection=_UntimedConnection,
                             compression=None, ping_interval=20, ping_timeout=20, max_size=1024*1024)
         self.port = self.server.socket.getsockname()[1]
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True, name='project-websocket-server')

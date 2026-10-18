@@ -1,24 +1,29 @@
 # ==============================================================================
-# ReactAgent SLM - Python Dependencies
-# Tuned for Python 3.10 - 3.13, PyTorch CUDA 12.1+, NVIDIA RTX 4050 / Ampere+
+# SiteAgent (ReactAgent SLM) - core Python dependencies
+# Works on Windows, macOS and Linux, with or without a GPU (Python 3.10 - 3.13).
+#
+# Install with the setup script, which first installs the right PyTorch build for
+# your machine (NVIDIA CUDA, AMD ROCm, Apple Metal or CPU):
+#   bash scripts/setup.sh        (macOS / Linux / Git Bash)
+#   scripts\setup.bat            (Windows)
+# Optional NVIDIA speed-ups and training extras: requirements-gpu.txt
 # ==============================================================================
 
-# Core Deep Learning & Parameter-Efficient Fine-Tuning
+# Model runtime
 torch>=2.1.0
 transformers>=4.45.0
-unsloth>=2024.8
 peft>=0.12.0
-trl>=0.12.0
-datasets>=2.20.0
 accelerate>=0.30.0
-bitsandbytes>=0.43.0
-
-# Inference & Hugging Face Hub Integration
 huggingface_hub>=0.23.0
 safetensors>=0.4.0
 sentencepiece>=0.2.0
+tokenizers>=0.19.0
 
-# Web UI Workbench & PTY Shell Runner
+# Training and data tools
+trl>=0.12.0
+datasets>=2.20.0
+
+# Web UI workbench and PTY shell
 Flask>=3.0.0
 flask-sock>=0.7.0
 simple-websocket>=1.0.0
@@ -26,12 +31,15 @@ websockets>=14.0
 pywinpty>=2.0.10; sys_platform == 'win32'
 ptyprocess>=0.7.0; sys_platform != 'win32'
 
-# Visual Judge & Headless Browser Testing
+# Browser checks for generated sites (run `python -m playwright install chromium`)
 playwright>=1.42.0
 
-# Scientific & Pipeline Utilities
+# Utilities
 numpy>=1.24.0
 scikit-learn>=1.4.0
 regex>=2024.5.15
 tqdm>=4.66.0
 requests>=2.31.0
+psutil>=5.9.0
+Pillow>=10.0.0
+pytest>=8.0.0

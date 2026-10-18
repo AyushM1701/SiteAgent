@@ -1,0 +1,8 @@
+# Consistent line endings on every OS (the source export test compares file content).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.safetensors binary

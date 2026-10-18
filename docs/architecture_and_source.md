@@ -3463,7 +3463,7 @@ if __name__ == "__main__":
 #### `slm.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/slm.py`
-- **Lines**: 156 | **Size**: 5,760 bytes | **SHA-256**: `dd32294d0effc34960cd0080815c22b32781f11d28892a68683085efaf5d6715` | **Newline**: `True`
+- **Lines**: 167 | **Size**: 6,600 bytes | **SHA-256**: `1fb53c4965fd90ac625e78a608dec150f6dd1be2e80c5379f54e7088c238558c` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Unified CLI entry point orchestrating training, evaluation, STaR generation, and web server execution.
 
@@ -3492,6 +3492,9 @@ SCRIPT_PATHS = {
     "curate_dataset": BASE_DIR / "data_pipeline" / "curate_dataset.py",
     "generate_trajectories": BASE_DIR / "data_pipeline" / "generate_trajectories.py",
     "star": BASE_DIR / "generate_star.py",
+    "setup": BASE_DIR / "scripts" / "install.py",
+    "doctor": BASE_DIR / "scripts" / "doctor.py",
+    "download": BASE_DIR / "scripts" / "download_models.py",
 }
 
 
@@ -3559,6 +3562,11 @@ def main():
     # 8. Agent
     subparsers.add_parser("agent", help="Run the autonomous agent loop manually")
 
+    # 9. Setup, health check and model download (work on any hardware)
+    subparsers.add_parser("setup", help="Install everything for this machine (see scripts/install.py --help)")
+    subparsers.add_parser("doctor", help="Check this machine can run the workbench and how to fix what can't")
+    subparsers.add_parser("download", help="Download Qwen3-4B (and optionally a native adapter)")
+
     # If no args, print help
     if len(sys.argv) == 1:
         parser.print_help()
@@ -3620,6 +3628,9 @@ def main():
 
     elif args.command == "agent":
         run_script(SCRIPT_PATHS["agent"], unknown_args)
+
+    elif args.command in ("setup", "doctor", "download"):
+        run_script(SCRIPT_PATHS[args.command], unknown_args)
 
 
 if __name__ == "__main__":
@@ -3685,7 +3696,7 @@ def __getattr__(name: str):
 #### `agent/config.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/config.py`
-- **Lines**: 245 | **Size**: 9,163 bytes | **SHA-256**: `b1d84533be5230d7c319ddb329909139c0968646cd337b5fd929f1e0083b98cf` | **Newline**: `True`
+- **Lines**: 251 | **Size**: 9,453 bytes | **SHA-256**: `df1d854f7f5e58f882d552658df9614f0c94873adcdff7a6c836cd00bc156dac` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Centralized configuration constants, model paths, execution timeouts, and device mappings.
 
@@ -3811,7 +3822,13 @@ class ModelRuntimeConfig(metaclass=_ModelRuntimeConfigMeta):
             except Exception:
                 pass
 
-        # 4. Fallback default
+        # 4. What fits this machine (agent/hardware.py); 8192 if detection fails.
+        if os.environ.get("SLM_HARDWARE_CONTEXT", "1") != "0":
+            try:
+                from agent.hardware import get_profile
+                return get_profile().context_length
+            except Exception:
+                pass
         return 8192
 
     @classmethod
@@ -3942,7 +3959,7 @@ class ModelRuntimeConfig(metaclass=_ModelRuntimeConfigMeta):
 #### `agent/base_model_fingerprint.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/base_model_fingerprint.py`
-- **Lines**: 736 | **Size**: 33,326 bytes | **SHA-256**: `c0c5768f3c8550c595d5995231cecc28c959b93d80a1c130198d227d95ee4f28` | **Newline**: `True`
+- **Lines**: 742 | **Size**: 33,825 bytes | **SHA-256**: `61561f326fb080692e7c5425ffb3c69e2f8ce279c708d08e128827fbfecf7f26` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Authoritative base model architecture and cryptographic fingerprint verifier guaranteeing authentic Qwen3 identity.
 
@@ -3989,8 +4006,14 @@ def verify_lora_adapter_compatibility(adapter_dir: Path, base_dir: Path) -> None
     adapter_dir = Path(adapter_dir).resolve()
     base_dir = Path(base_dir).resolve()
     adapter_cfg = json.loads((adapter_dir / "adapter_config.json").read_text(encoding="utf-8"))
-    claimed_base = Path(adapter_cfg.get("base_model_name_or_path", "")).resolve()
-    if claimed_base != base_dir:
+    raw_base = str(adapter_cfg.get("base_model_name_or_path", ""))
+    claimed_base = Path(raw_base).resolve()
+    # Portable references to the same base are accepted (the tensor shapes below are
+    # the real check): this repo's base-model folder on any machine, or the hub id the
+    # base was downloaded from. Any other model name or path is refused.
+    portable = (Path(raw_base.replace("\\", "/")).name == base_dir.name == "base-model"
+                or re.fullmatch(r"(?:qwen|unsloth)/qwen3-4b(?:-instruct-2507)?", raw_base.strip().lower()) is not None)
+    if claimed_base != base_dir and not portable:
         raise IncompatibleBaseModelError(f"Adapter base {claimed_base} differs from {base_dir}")
     cfg = json.loads((base_dir / "config.json").read_text(encoding="utf-8"))
     if cfg.get("model_type") != "qwen3" or "Qwen3ForCausalLM" not in cfg.get("architectures", []):
@@ -6687,7 +6710,7 @@ def compact_brief_context(brief):
 #### `agent/agent.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/agent.py`
-- **Lines**: 3,303 | **Size**: 169,230 bytes | **SHA-256**: `653c48318b7065d8279c81d532b41dc047bc8bd247392bd8328e4705525191f0` | **Newline**: `True`
+- **Lines**: 3,316 | **Size**: 166,887 bytes | **SHA-256**: `7cff8af43375879f5d697539fedaca5d37a81be2a1ade162b2c82df7dc8bf92d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Autonomous ReAct agent & multi-section site runner with resolve_project_path security sandbox, auto-recovery, and context clamping.
 
@@ -7073,44 +7096,57 @@ class AgentModelRunner:
             base_fingerprint = verify_base_model_architecture(Path(self.model_path), strict=True)
             if not base_fingerprint["is_authentic_qwen3"]:
                 raise RuntimeError("Model weights do not match the Qwen3 architecture")
-        import torch
-        if not torch.cuda.is_available():
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                device_map="cpu",
-                torch_dtype=torch.float32,
-            )
-            self.model.eval()
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded CPU model with transformers float32.")
-            return
+        from agent.hardware import get_profile
+        from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
+        profile = get_profile()
+        for warning in profile.warnings:
+            print(f"  [Hardware] {warning}")
+        print(f"  [Hardware] {profile.device} | {profile.backend} | "
+              f"{'4-bit' if profile.load_in_4bit else profile.dtype}"
+              + (f" | {profile.gpu_name} ({profile.vram_gb} GB)" if profile.gpu_name else ""))
 
-        try:
-            from unsloth import FastLanguageModel
-            self.model, self.tokenizer = FastLanguageModel.from_pretrained(
-                model_name=self.model_path,
-                max_seq_length=self.max_seq_length,
-                load_in_4bit=True,
-            )
-            FastLanguageModel.for_inference(self.model)
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded successfully with Unsloth inference optimizations.")
-        except ImportError:
-            print("Unsloth unavailable, loading with standard transformers...")
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                torch_dtype=torch.float16,
-                device_map="auto"
-            )
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded with transformers.")
+        if profile.backend == "unsloth":
+            try:
+                from unsloth import FastLanguageModel
+                self.model, self.tokenizer = FastLanguageModel.from_pretrained(
+                    model_name=self.model_path,
+                    max_seq_length=self.max_seq_length,
+                    load_in_4bit=profile.load_in_4bit,
+                )
+                FastLanguageModel.for_inference(self.model)
+                _set_tokenizer(self.tokenizer)
+                print("Loaded successfully with Unsloth inference optimizations.")
+                return
+            except ImportError:
+                print("  [Hardware] Unsloth is not importable; falling back to Transformers.")
+        self._load_with_transformers(profile)
+        _set_tokenizer(self.tokenizer)
+        print(f"Loaded with Transformers on {profile.device}.")
+
+    def _load_with_transformers(self, profile) -> None:
+        """Portable loader: NVIDIA/AMD (optionally 4-bit), Apple Metal, or CPU. LoRA adapter
+        directories are applied on top of the local base model with PEFT."""
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        dtype = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}[profile.dtype]
+        adapter = (Path(self.model_path) / "adapter_config.json").exists()
+        base_path = Path(__file__).resolve().parent.parent / "base-model" if adapter else Path(self.model_path)
+        kwargs: Dict[str, Any] = {"torch_dtype": dtype}
+        if profile.device == "cuda":
+            kwargs["device_map"] = "auto"
+            if profile.load_in_4bit:
+                from transformers import BitsAndBytesConfig
+                kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=dtype)
+        self.tokenizer = AutoTokenizer.from_pretrained(str(self.model_path if adapter else base_path))
+        model = AutoModelForCausalLM.from_pretrained(str(base_path), **kwargs)
+        if profile.device in {"mps", "cpu"}:
+            model = model.to(profile.device)
+        if adapter:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, str(self.model_path))
+        model.eval()
+        self.model = model
 
     def generate_turn(
         self,
@@ -11508,7 +11544,7 @@ export default function PremiumScene({ label = 'Interactive dimensional product 
 #### `agent/site_brief.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_brief.py`
-- **Lines**: 2,779 | **Size**: 143,958 bytes | **SHA-256**: `bb211072f7f46e22391edf61639b0fa1a4cbfab36009064bc4f5ce89b44a7cf2` | **Newline**: `True`
+- **Lines**: 2,794 | **Size**: 144,735 bytes | **SHA-256**: `b106ddd99503a677420f09fa2aa93b36a627066cc9086fe30730141b82f8e4fd` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Content brief generator with 15+ domains, 3 curated palette variants per domain, explicit section extractor, deterministic theme hashing, and stock-photo catalog resolution.
 
@@ -13279,6 +13315,20 @@ def _merge_synonym_sections(middle: list[str], lower: str) -> list[str]:
     return result
 
 
+def _drop_defaults_duplicating_named(middle: list[str], named: list[str], lower: str) -> list[str]:
+    """A domain default that renders as the same kind of section as one the user named
+    ("projects" next to "work showcase") is a duplicate; keep the user's section."""
+    from agent.site_kit.content import section_kind
+    named_kinds = {section_kind(s) for s in named} - {"split"}
+    kept = []
+    for sec in middle:
+        mentioned = sec in named or re.search(rf"\b{re.escape(sec.replace('-', ' ').rstrip('s'))}", lower)
+        if not mentioned and section_kind(sec) in named_kinds:
+            continue
+        kept.append(sec)
+    return kept
+
+
 def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     """
     Dynamically infers the required sections from the user prompt and business domain.
@@ -13437,6 +13487,7 @@ def extract_sections_from_prompt(prompt: str, business_type: str) -> list[str]:
     middle = [sec for sec in middle
               if not (sec in _SECTION_KEYWORD_PATTERNS and _explicitly_excluded(lower, _SECTION_KEYWORD_PATTERNS[sec]))]
     middle = _merge_synonym_sections(middle, lower)
+    middle = _drop_defaults_duplicating_named(middle, extract_implicit_feature_sections(prompt), lower)
     # Contact closes the page; sections the prompt lists after a domain default stay ahead of it.
     if "contact" in middle:
         middle = [sec for sec in middle if sec != "contact"] + ["contact"]
@@ -28881,7 +28932,7 @@ export type WorkbenchSelection = SelectedDOMElement | Selected3DObject | null;
 #### `frontend/src/state/agent-store.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/state/agent-store.ts`
-- **Lines**: 330 | **Size**: 13,833 bytes | **SHA-256**: `04c4e1076a984743e75c18dfab0c654d10359ee32b05d469d87873b988d3f48f` | **Newline**: `True`
+- **Lines**: 335 | **Size**: 14,430 bytes | **SHA-256**: `e470b6ae03ba5634ee47f28f64dcbcd28ad830c12956cc7eae78f60b33edcc52` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Zustand store managing agent connection status and execution telemetry.
 
@@ -28915,6 +28966,8 @@ interface AgentStoreState {
   modelLoaded: boolean;
   gpuReady: boolean;
   serverConnected: boolean;
+  /** Server-reported model state: loading | ready | busy | error (unknown until the first poll). */
+  modelStatus: string;
 
   setActiveTaskId: (id: string | null) => void;
   setStatus: (status: AgentStatus, message?: string) => void;
@@ -28922,6 +28975,7 @@ interface AgentStoreState {
     modelLoaded?: boolean;
     gpuReady?: boolean;
     serverConnected?: boolean;
+    modelStatus?: string;
     maxContextTokens?: number;
     max_context_tokens?: number;
     contextTokens?: number;
@@ -28969,6 +29023,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   modelLoaded: false,
   gpuReady: false,
   serverConnected: false,
+  modelStatus: 'unknown',
 
   setActiveTaskId: (id) => set({ activeTaskId: id }),
   setSystemStatus: (status) => set((state) => ({
@@ -28976,6 +29031,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
     ...(status.modelLoaded !== undefined ? { modelLoaded: status.modelLoaded } : {}),
     ...(status.gpuReady !== undefined ? { gpuReady: status.gpuReady } : {}),
     ...(status.serverConnected !== undefined ? { serverConnected: status.serverConnected } : {}),
+    ...(status.modelStatus !== undefined ? { modelStatus: status.modelStatus } : {}),
     metrics: {
       ...state.metrics,
       ...(status.maxContextTokens ? { maxContextTokens: status.maxContextTokens } : {}),
@@ -40538,7 +40594,7 @@ event_bus = EventBus()
 #### `web_ui_static/index.html`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/web_ui_static/index.html`
-- **Lines**: 16 | **Size**: 808 bytes | **SHA-256**: `cd13eb0f5d87777387edcb7df82cc4e32ac106479ead9ab0ca4a6186d586b053` | **Newline**: `True`
+- **Lines**: 16 | **Size**: 808 bytes | **SHA-256**: `84846c1f1a2e771ddf849ca0de552877763d3214c9def60e0d13dfb6cbcd3acb` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Studio Workbench UI with animated meshDrift, orbitSpin empty states, per-card accents, verified badges, WCAG AA contrast, and resilient SSE.
 
@@ -40552,8 +40608,8 @@ event_bus = EventBus()
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-Cr4QbymS.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Ej1_jQTl.css">
+    <script type="module" crossorigin src="/assets/index-g7wncxOp.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BYtX2FWE.css">
   </head>
   <body class="bg-[#0f1012] text-slate-100 antialiased overflow-hidden select-none">
     <div id="root"></div>
@@ -40566,7 +40622,7 @@ event_bus = EventBus()
 #### `frontend/package.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/package.json`
-- **Lines**: 33 | **Size**: 830 bytes | **SHA-256**: `90cd67668e3ab94ea2f5aa3b2893ae2387939f296f784d31b6ede24c4c74fb04` | **Newline**: `True`
+- **Lines**: 33 | **Size**: 954 bytes | **SHA-256**: `569427cfcb997ce2250c0d52a109cec236dd76bf79283a8c01df1f87ec0d12f2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/package.json.
 
@@ -40578,7 +40634,7 @@ event_bus = EventBus()
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && node -e \"require('fs').rmSync('../web_ui_static/assets',{recursive:true,force:true})\" && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts"
@@ -40968,7 +41024,7 @@ html[data-theme="light"] .text-sky-200 {
 #### `frontend/src/app/App.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/app/App.tsx`
-- **Lines**: 149 | **Size**: 5,784 bytes | **SHA-256**: `a6492e704dfc46f2d96177436543a187355b7c8df1b7576b15c45056211c0612` | **Newline**: `True`
+- **Lines**: 151 | **Size**: 6,054 bytes | **SHA-256**: `2950b3fc3731027871bf865f1f2b99c052aa2cbc19833798627907853e8fee87` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/app/App.tsx.
 
@@ -41040,6 +41096,7 @@ export const App: React.FC = () => {
         setQueueDepth(res.queue_depth || 0);
         setSystemStatus({
           serverConnected: true,
+          modelStatus: res.model_status || (res.model_loaded ? 'ready' : 'loading'),
           modelLoaded: res.model_loaded === true && res.adapter_compatible === true,
           gpuReady: res.gpu_ready === true,
           modelName: res.model_name || res.loaded_model_path || 'Unavailable',
@@ -41050,6 +41107,7 @@ export const App: React.FC = () => {
       } catch (_) {
         setSystemStatus({
           serverConnected: false,
+          modelStatus: 'unknown',
         });
       }
     };
@@ -42038,7 +42096,7 @@ export async function closeProjectTabAndSwitch(id: string) {
 #### `frontend/src/components/topbar/TopBar.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/topbar/TopBar.tsx`
-- **Lines**: 199 | **Size**: 7,729 bytes | **SHA-256**: `afb5196c492d87fa8a8e52d3f119e9cbbc606e2c2fef763bfab84a085c3ba7ee` | **Newline**: `True`
+- **Lines**: 216 | **Size**: 9,007 bytes | **SHA-256**: `84fc1c2106b7e4c361629292c309b35a2311b5e9566fd002d9a3f625253aa4c3` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/topbar/TopBar.tsx.
 
@@ -42063,7 +42121,8 @@ import { useConfirm } from '../../state/confirm-store';
 import { toast } from '../../state/toast-store';
 
 export const TopBar: React.FC = () => {
-  const { status, statusMessage, activeTaskId, elapsedSeconds, queueDepth, resetAgent, validationResult, metrics } = useAgentStore();
+  const { status, statusMessage, activeTaskId, elapsedSeconds, queueDepth, resetAgent, validationResult, metrics,
+          serverConnected, modelLoaded, modelStatus } = useAgentStore();
   const { 
     toggleSidebar, 
     sidebarOpen,
@@ -42079,6 +42138,16 @@ export const TopBar: React.FC = () => {
   const confirm = useConfirm();
 
   const isWorking = status === 'generating' || status === 'planning' || status === 'typechecking' || status === 'repairing';
+  // The dot reflects the real model state, not just that the page loaded.
+  const modelState = !serverConnected
+    ? { dot: 'bg-rose-500', label: 'Offline', title: 'The workbench server is not responding.' }
+    : modelStatus === 'error'
+    ? { dot: 'bg-rose-500', label: 'Model error', title: 'The model failed to load; check the server log.' }
+    : modelStatus === 'loading' || modelStatus === 'unknown' || !modelLoaded
+    ? { dot: 'bg-amber-400 animate-pulse', label: 'Loading model', title: 'The model is still loading onto the GPU.' }
+    : modelStatus === 'busy' || isWorking
+    ? { dot: 'bg-emerald-400 animate-pulse', label: 'Working', title: `${metrics.modelName} is generating.` }
+    : { dot: 'bg-emerald-400', label: 'Ready', title: `${metrics.modelName} is loaded and ready.` };
   const fileCount = Object.keys(files).length;
 
   const handleStop = async () => {
@@ -42130,10 +42199,16 @@ export const TopBar: React.FC = () => {
             </span>
           </span>
 
-          {/* Subtle Local dot */}
-          <span className="flex items-center gap-1.5 ml-2 text-[11px] text-slate-500 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
-            <span className="hidden sm:inline">Local</span>
+          {/* Model readiness */}
+          <span
+            id="topbar-model-status"
+            data-state={modelState.label.toLowerCase().replace(' ', '-')}
+            role="status"
+            title={modelState.title}
+            className="flex items-center gap-1.5 ml-2 text-[11px] text-slate-500 font-mono"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${modelState.dot}`} />
+            <span className="hidden sm:inline">{modelState.label}</span>
           </span>
 
           {/* Motion Capability Badge (Item 22) */}
@@ -61572,32 +61647,37 @@ if __name__ == "__main__":
 #### `requirements.txt`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/requirements.txt`
-- **Lines**: 37 | **Size**: 949 bytes | **SHA-256**: `bc596cf07bb3ed9fb7255feb333be58119c4abc7ccddb6b901897113f6fd19de` | **Newline**: `True`
+- **Lines**: 45 | **Size**: 1,269 bytes | **SHA-256**: `172a88a6d438cc96be843cbb6d869a8e26f5c66d738cf89b5ccfd1c73c25a242` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Python pip dependencies specification (torch, unsloth, vllm, transformers, fastapi, playwright).
 
 `````text
 # ==============================================================================
-# ReactAgent SLM - Python Dependencies
-# Tuned for Python 3.10 - 3.13, PyTorch CUDA 12.1+, NVIDIA RTX 4050 / Ampere+
+# SiteAgent (ReactAgent SLM) - core Python dependencies
+# Works on Windows, macOS and Linux, with or without a GPU (Python 3.10 - 3.13).
+#
+# Install with the setup script, which first installs the right PyTorch build for
+# your machine (NVIDIA CUDA, AMD ROCm, Apple Metal or CPU):
+#   bash scripts/setup.sh        (macOS / Linux / Git Bash)
+#   scripts\setup.bat            (Windows)
+# Optional NVIDIA speed-ups and training extras: requirements-gpu.txt
 # ==============================================================================
 
-# Core Deep Learning & Parameter-Efficient Fine-Tuning
+# Model runtime
 torch>=2.1.0
 transformers>=4.45.0
-unsloth>=2024.8
 peft>=0.12.0
-trl>=0.12.0
-datasets>=2.20.0
 accelerate>=0.30.0
-bitsandbytes>=0.43.0
-
-# Inference & Hugging Face Hub Integration
 huggingface_hub>=0.23.0
 safetensors>=0.4.0
 sentencepiece>=0.2.0
+tokenizers>=0.19.0
 
-# Web UI Workbench & PTY Shell Runner
+# Training and data tools
+trl>=0.12.0
+datasets>=2.20.0
+
+# Web UI workbench and PTY shell
 Flask>=3.0.0
 flask-sock>=0.7.0
 simple-websocket>=1.0.0
@@ -61605,15 +61685,18 @@ websockets>=14.0
 pywinpty>=2.0.10; sys_platform == 'win32'
 ptyprocess>=0.7.0; sys_platform != 'win32'
 
-# Visual Judge & Headless Browser Testing
+# Browser checks for generated sites (run `python -m playwright install chromium`)
 playwright>=1.42.0
 
-# Scientific & Pipeline Utilities
+# Utilities
 numpy>=1.24.0
 scikit-learn>=1.4.0
 regex>=2024.5.15
 tqdm>=4.66.0
 requests>=2.31.0
+psutil>=5.9.0
+Pillow>=10.0.0
+pytest>=8.0.0
 `````
 
 ---
@@ -61621,7 +61704,7 @@ requests>=2.31.0
 #### `tests/conftest.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/conftest.py`
-- **Lines**: 41 | **Size**: 1,613 bytes | **SHA-256**: `995da91960af14e3503f29cfa5bfa5be328f4f564890b7b732afe3f17809b784` | **Newline**: `True`
+- **Lines**: 88 | **Size**: 4,405 bytes | **SHA-256**: `c1dc97cf2b39d1277f3e56e3009a73a885e548cc09b0908c727731a8112f34aa` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Pytest shared fixtures, temporary directories, and test configuration.
 
@@ -61633,9 +61716,56 @@ import tempfile
 os.environ.setdefault("SLM_SESSIONS_DIR", tempfile.mkdtemp(prefix="slm_test_sessions_"))
 # Importing server.app must not load the 4B model onto the GPU during tests.
 os.environ.setdefault("NO_AUTO_LOAD_MODEL", "1")
+# Context-length expectations must not depend on the GPU of the machine running tests.
+os.environ.setdefault("SLM_HARDWARE_CONTEXT", "0")
+
+from pathlib import Path
 
 import pytest
 from agent.agent_protocol import get_default_tokenizer, set_default_tokenizer
+
+_ROOT = Path(__file__).resolve().parent.parent
+_HAS_BASE_MODEL = (_ROOT / "base-model" / "config.json").is_file() and (_ROOT / "base-model" / "tokenizer.json").is_file()
+_HAS_LOCAL_RUNS = ((_ROOT / "models").is_dir() and (_ROOT / "runs").is_dir()
+                   and (_ROOT / "data" / "full_site_training" / "train.jsonl").is_file())
+
+# Tests that read the downloaded Qwen3-4B files (config, tokenizer, weights).
+_NEEDS_BASE_MODEL = (
+    "tests/test_base_model_fingerprint.py",
+    "tests/test_benchmark_provenance.py::test_real_provenance_record_generation",
+    "tests/test_context_decision.py::test_train_sft_preflight",
+    "tests/test_execute_qwen3_migration.py",
+    "tests/test_single_source_context_length.py::test_training_preflight_respects_slm_context_length_env",
+    "tests/test_training_methodology.py::test_train_sft_preflight_enforces_methodology_guard",
+    "tests/test_training_preflight.py",
+    "tests/test_clean_qwen3_training_data.py::test_preflight_strictly_rejects_think_and_thought_tags",
+    "tests/test_clean_qwen3_training_data.py::test_cleaned_row_passes_training_preflight",
+)
+# Tests that inspect training outputs and evidence produced on the original machine.
+_NEEDS_LOCAL_RUNS = (
+    "tests/test_retrain_qwen3_scratch.py",
+    "tests/test_p1_quality_contracts.py::test_visual_holdout_is_distinct_from_training",
+    "tests/test_qwen3_benchmark.py::test_run_benchmark_mock_generates_valid_report",
+    "tests/test_qwen3_benchmark.py::test_cli_execution_with_mock",
+    "tests/test_reference_curriculum.py::ReferenceCurriculumTests::test_stale_visual_evidence_blocks_publication",
+)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip, with a reason, tests that need the 8 GB model or local training runs
+    when they are absent (a fresh clone or CI)."""
+    no_model = pytest.mark.skip(reason="needs ./base-model (python scripts/download_models.py)")
+    no_runs = pytest.mark.skip(reason="needs local training runs in ./models and ./runs")
+    legacy_ui = pytest.mark.skip(reason="needs the legacy web_ui_static/index.monolith.html.bak")
+    for item in items:
+        nodeid = item.nodeid.replace("\\", "/")
+        if not _HAS_BASE_MODEL and nodeid.startswith(_NEEDS_BASE_MODEL):
+            item.add_marker(no_model)
+        elif not _HAS_LOCAL_RUNS and nodeid.startswith(_NEEDS_LOCAL_RUNS):
+            item.add_marker(no_runs)
+        elif nodeid.endswith("test_markdown_link_scheme_allowlist") and \
+                not (_ROOT / "web_ui_static" / "index.monolith.html.bak").exists():
+            item.add_marker(legacy_ui)
 
 
 @pytest.fixture(autouse=True)
@@ -74331,7 +74461,7 @@ def test_training_guide_completeness():
 #### `tests/test_doc_export_integrity.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_doc_export_integrity.py`
-- **Lines**: 214 | **Size**: 9,236 bytes | **SHA-256**: `c67fec287d853b8982e4adc95873eb0436c40b96d4e82f9c3a014e3837e8c65f` | **Newline**: `True`
+- **Lines**: 217 | **Size**: 9,695 bytes | **SHA-256**: `9ed82dc100549610bf5c8bc19765b5c3916b227e4091f06516619e4016615244` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying byte-exact round-trip reconstruction and doc export integrity.
 
@@ -74371,7 +74501,8 @@ def test_doc_export_file_exists():
 def test_server_app_py_uncontaminated():
     """Verifies server/app.py section is completely uncontaminated and byte-exact."""
     assert APP_PY.exists(), "Missing server/app.py on disk"
-    disk_bytes = APP_PY.read_bytes()
+    # Git may check files out with CRLF (Windows) or LF; compare content, not line endings.
+    disk_bytes = APP_PY.read_bytes().replace(b"\r\n", b"\n")
     disk_sha = hashlib.sha256(disk_bytes).hexdigest()
 
     doc_text = OUT_MD.open("r", encoding="utf-8", newline="").read()
@@ -74407,6 +74538,7 @@ def test_server_app_py_uncontaminated():
 
     reconstructed = (body + "\n").encode("utf-8") if has_nl else body.encode("utf-8")
     assert hashlib.sha256(reconstructed).hexdigest() == recorded_sha, "SHA-256 mismatch with metadata"
+    reconstructed = reconstructed.replace(b"\r\n", b"\n")
     assert hashlib.sha256(reconstructed).hexdigest() == disk_sha, "SHA-256 mismatch with disk"
     assert len(reconstructed) == len(disk_bytes), f"Size mismatch: {len(reconstructed)} vs {len(disk_bytes)}"
     assert reconstructed == disk_bytes, "Byte-for-byte mismatch with server/app.py on disk!"
@@ -74451,7 +74583,8 @@ def test_round_trip_reconstruction_integrity():
             # web_ui_history.json is a runtime session ledger updated whenever sessions or tests run
             if rel_path == "web_ui_history.json":
                 continue
-            assert reconstructed == disk_file.read_bytes(), f"Byte mismatch with disk for {rel_path}"
+            assert reconstructed.replace(b"\r\n", b"\n") == disk_file.read_bytes().replace(b"\r\n", b"\n"), \
+                f"Content mismatch with disk for {rel_path}"
             verified_disk_count += 1
 
     assert verified_disk_count >= 250, f"Expected at least 250 disk-verified files, got {verified_disk_count}"
@@ -75745,7 +75878,7 @@ Component verified.
 #### `tests/test_runtime_hardening.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_runtime_hardening.py`
-- **Lines**: 291 | **Size**: 12,638 bytes | **SHA-256**: `58cd52aa092068cc4614d330af8377f2df57eb1dcfc9bd56ed069a10c99e266f` | **Newline**: `True`
+- **Lines**: 301 | **Size**: 13,233 bytes | **SHA-256**: `c73d81184e6f7dbe5ebaa293395f7a7656c7ca71cad17c1e4ad4e71cdb58b12b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated regression test suite verifying model runtime hardening, CPU fallback execution, dynamic input embedding device targeting, context budget clamping, and StopCheckCriteria interrupt behavior (17 tests).
 
@@ -75902,20 +76035,30 @@ def test_windows_process_tree_cleanup():
 def test_cpu_loader_skips_unsloth_and_uses_float32(monkeypatch, tmp_path):
     import sys
     from agent import base_model_fingerprint
-    torch = SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False), float32="float32", float16="float16")
+    from agent import hardware
+    torch = SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False),
+                            float32="float32", float16="float16", bfloat16="bfloat16")
     model_loader, tokenizer_loader = Mock(), Mock()
+    base = model_loader.from_pretrained.return_value
+    base.to.return_value = base
+    peft = SimpleNamespace(PeftModel=Mock())
     monkeypatch.setitem(sys.modules, "torch", torch)
     monkeypatch.setitem(sys.modules, "transformers", SimpleNamespace(AutoModelForCausalLM=model_loader, AutoTokenizer=tokenizer_loader))
+    monkeypatch.setitem(sys.modules, "peft", peft)
+    monkeypatch.setitem(sys.modules, "unsloth", None)  # importing it would raise
+    monkeypatch.setattr(hardware, "_PROFILE", hardware.HardwareProfile("cpu", "transformers", False, "float32", 8192))
     adapter_dir = tmp_path / "adapter"
     adapter_dir.mkdir()
     (adapter_dir / "adapter_config.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(base_model_fingerprint, "verify_lora_adapter_compatibility", lambda *args: None)
     ns = dict(DEFAULT_INFERENCE_MAX_SEQ_LENGTH=8192, DEFAULT_MAX_NEW_TOKENS=4096,
-              List=list, Dict=dict, Path=Path, __file__=str(ROOT / "agent" / "agent.py"))
+              List=list, Dict=dict, Any=object, Path=Path, __file__=str(ROOT / "agent" / "agent.py"))
     load_definitions("agent/agent.py", {"AgentModelRunner"}, ns)
     runner = ns["AgentModelRunner"](str(adapter_dir))
-    assert model_loader.from_pretrained.call_args.kwargs["device_map"] == "cpu"
-    assert model_loader.from_pretrained.call_args.kwargs["torch_dtype"] == "float32"
+    kwargs = model_loader.from_pretrained.call_args.kwargs
+    assert kwargs["torch_dtype"] == "float32" and "quantization_config" not in kwargs
+    base.to.assert_called_once_with("cpu")
+    peft.PeftModel.from_pretrained.assert_called_once()  # the adapter is applied on the CPU base
     runner.model.eval.assert_called_once()
 
 
@@ -84164,28 +84307,38 @@ if __name__ == "__main__":
 #### `scripts/run_web_ui.bat`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/run_web_ui.bat`
-- **Lines**: 17 | **Size**: 777 bytes | **SHA-256**: `8ac9afeba16d8bf5a8996d7ccdfd89764978405864904c9083401eb3d6fb65f9` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,120 bytes | **SHA-256**: `0f7c32be7c342445fe3447213b6610983273ee6a1a27ac5d809de15afd44483f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Windows launcher batch script for the ReactAgent SLM Workbench UI.
 
 `````bat
 @echo off
 REM ==============================================================================
-REM ReactAgent SLM - One-Command Web UI Workbench Launcher (Windows)
-REM Launches Flask SSE server + Isolated PTY shell runner and opens browser
+REM SiteAgent - start the workbench at http://127.0.0.1:5000
+REM   scripts\run_web_ui.bat            design kit (fast; the model writes the copy)
+REM   scripts\run_web_ui.bat --native   the model writes each section's code too
+REM                                     (needs a native adapter in models\)
 REM ==============================================================================
 setlocal enabledelayedexpansion
-
 cd /d "%~dp0.."
 
-REM The base Qwen3-4B model writes the site copy for the design kit by default.
-REM Set MODEL_PATH yourself to try a specific (unpromoted) adapter, e.g.
-REM   set "MODEL_PATH=%CD%\models\qwen3-siteagent-audit-v6-candidate"
-REM Set SITE_STRATEGY=freeform to use the legacy code-writing loop.
+set "PY=python"
+if exist .venv\Scripts\python.exe set "PY=.venv\Scripts\python.exe"
 
-echo Starting ReactAgent SLM Workbench at http://127.0.0.1:5000...
-python server\app.py %*
-pause
+if /i "%~1"=="--native" (
+    set "ADAPTER="
+    for /f "delims=" %%d in ('dir /b /ad /o:n models\*native* 2^>nul') do set "ADAPTER=models\%%d"
+    if "!ADAPTER!"=="" (
+        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter USER/REPO
+        exit /b 1
+    )
+    set "MODEL_PATH=!ADAPTER!"
+    set "SITE_STRATEGY=native"
+    echo Using adapter !ADAPTER! ^(native mode^)
+)
+
+echo Starting SiteAgent workbench at http://127.0.0.1:5000 ...
+"%PY%" server\app.py
 `````
 
 ---
@@ -84193,47 +84346,38 @@ pause
 #### `scripts/setup.bat`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.bat`
-- **Lines**: 36 | **Size**: 1,834 bytes | **SHA-256**: `f981f51db19e64086135e212ea9896bdd0b1326921e13fb1e0ac1c3d3cd2b411` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 942 bytes | **SHA-256**: `8e8d4420ac2ce313992ded64d02dfbc40ab7cf548b894842a9fb2c7db40f57a5` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Windows.
 
 `````bat
 @echo off
 REM ==============================================================================
-REM ReactAgent SLM - One-Command Environment Setup (Windows)
+REM SiteAgent - one-command setup (Windows)
+REM   scripts\setup.bat [--cpu] [--skip-model] [--adapter USER/REPO]
+REM Creates .venv, installs PyTorch for your hardware and everything else, builds the
+REM workbench UI, downloads Qwen3-4B and runs the doctor.
 REM ==============================================================================
-setlocal enabledelayedexpansion
-
+setlocal
 cd /d "%~dp0.."
 
-echo ==============================================================================
-echo [1/3] Installing Python Dependencies...
-echo ==============================================================================
-pip install -r requirements.txt
-if %errorlevel% neq 0 (
-    echo [Error] Failed to install Python dependencies.
-    exit /b %errorlevel%
+where py >nul 2>nul
+if %errorlevel%==0 (set "PY=py -3") else (set "PY=python")
+
+if not exist .venv\Scripts\python.exe (
+    echo Creating virtual environment in .venv
+    %PY% -m venv .venv
+    if errorlevel 1 (
+        echo [Error] Could not create a virtual environment. Install Python 3.10-3.13 from python.org.
+        exit /b 1
+    )
 )
 
-echo ==============================================================================
-echo [2/3] Installing Node.js and Testing Harness Dependencies...
-echo ==============================================================================
-call npm install
-if %errorlevel% neq 0 (
-    echo [Error] Failed to install npm dependencies.
-    exit /b %errorlevel%
-)
+.venv\Scripts\python.exe scripts\install.py %*
+if errorlevel 1 exit /b %errorlevel%
 
-echo ==============================================================================
-echo [3/3] Downloading Qwen3-4B Base Model...
-echo ==============================================================================
-python -c "from huggingface_hub import snapshot_download; import os; target='base-model'; (print('Downloading...') or snapshot_download('Qwen/Qwen3-4B', local_dir=target, ignore_patterns=['*.msgpack', '*.h5'])) if not os.path.exists(target) or len(os.listdir(target))==0 else print('Base model already present in ./base-model')"
-
-echo ==============================================================================
-echo Setup Complete!
-echo Run 'scripts\run_web_ui.bat' to launch the web workbench.
-echo ==============================================================================
-pause
+echo.
+echo Start the workbench:  scripts\run_web_ui.bat
 `````
 
 ---
@@ -85870,22 +86014,38 @@ console.log('\nAll workspace resizer assertions PASSED successfully!');
 #### `scripts/run_web_ui.sh`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/run_web_ui.sh`
-- **Lines**: 11 | **Size**: 452 bytes | **SHA-256**: `798cf97c6786b0499d53046e81c2ec543347ef856b09a6991fbd121e261212ae` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,147 bytes | **SHA-256**: `2f1344e229088652d515b92b408cfc5cbb6600354c9c96110db8c86d867e7ea2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Linux launcher bash script for the ReactAgent SLM Workbench UI.
 
 `````bash
 #!/usr/bin/env bash
 # ==============================================================================
-# ReactAgent SLM - One-Command Web UI Workbench Launcher
-# Launches Flask SSE server + Isolated PTY shell runner and opens browser
+# SiteAgent - start the workbench at http://127.0.0.1:5000
+#   bash scripts/run_web_ui.sh            design kit (fast; the model writes the copy)
+#   bash scripts/run_web_ui.sh --native   the model writes each section's code too
+#                                          (needs a native adapter in models/)
 # ==============================================================================
 set -euo pipefail
-
 cd "$(dirname "$0")/.."
 
-echo "Starting ReactAgent SLM Workbench at http://127.0.0.1:5000..."
-python server/app.py "$@"
+if [ -f .venv/bin/python ]; then PY=.venv/bin/python
+elif [ -f .venv/Scripts/python.exe ]; then PY=.venv/Scripts/python.exe
+else PY=python; fi
+
+if [ "${1:-}" = "--native" ]; then
+  shift
+  ADAPTER="$(ls -d models/*native* 2>/dev/null | sort | tail -n 1 || true)"
+  if [ -z "$ADAPTER" ]; then
+    echo "No native adapter in models/. Download one with: python scripts/download_models.py --adapter USER/REPO"
+    exit 1
+  fi
+  export MODEL_PATH="$ADAPTER" SITE_STRATEGY=native
+  echo "Using adapter $ADAPTER (native mode)"
+fi
+
+echo "Starting SiteAgent workbench at http://127.0.0.1:5000 ..."
+"$PY" server/app.py "$@"
 `````
 
 ---
@@ -85893,44 +86053,38 @@ python server/app.py "$@"
 #### `scripts/setup.sh`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/setup.sh`
-- **Lines**: 33 | **Size**: 1,069 bytes | **SHA-256**: `9276bc47810affc30e11bdb0bfbab2352ae1a14857e6a395be1b390d5e4dcf35` | **Newline**: `True`
+- **Lines**: 27 | **Size**: 1,085 bytes | **SHA-256**: `84c1e2a6672e36a8357cd2b7b6efda50de30c43156136e0a5f0e4143b7a8b250` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated environment initialization script for Linux.
 
 `````bash
 #!/usr/bin/env bash
 # ==============================================================================
-# ReactAgent SLM - One-Command Environment Setup
+# SiteAgent - one-command setup (macOS, Linux, Git Bash on Windows)
+#   bash scripts/setup.sh [--cpu] [--skip-model] [--adapter USER/REPO]
+# Creates .venv, installs PyTorch for your hardware and everything else, builds the
+# workbench UI, downloads Qwen3-4B and runs the doctor.
 # ==============================================================================
 set -euo pipefail
-
 cd "$(dirname "$0")/.."
 
-echo "=== 1/3: Installing Python Dependencies ==="
-pip install -r requirements.txt
+PY="${PYTHON:-}"
+if [ -z "$PY" ]; then
+  for candidate in python3.12 python3.11 python3.13 python3.10 python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+  done
+fi
+[ -n "$PY" ] || { echo "Python 3.10-3.13 is required."; exit 1; }
 
-echo "=== 2/3: Installing Node.js & Testing Harness Dependencies ==="
-npm install
+if [ ! -d .venv ]; then
+  echo "Creating virtual environment in .venv with $PY"
+  "$PY" -m venv .venv
+fi
+if [ -f .venv/bin/python ]; then VENV_PY=.venv/bin/python; else VENV_PY=.venv/Scripts/python.exe; fi
 
-echo "=== 3/3: Downloading Qwen3-4B Base Model ==="
-python -c "
-from huggingface_hub import snapshot_download
-import os
-
-target_dir = 'base-model'
-if not os.path.exists(target_dir) or len(os.listdir(target_dir)) == 0:
-    print('Downloading Qwen/Qwen3-4B to ./base-model...')
-    snapshot_download(
-        'Qwen/Qwen3-4B',
-        local_dir=target_dir,
-        ignore_patterns=['*.msgpack', '*.h5']
-    )
-    print('Download complete!')
-else:
-    print(f'{target_dir} already exists. Skipping download.')
-"
-
-echo "Setup complete! Run 'bash scripts/run_web_ui.sh' to launch the web workbench."
+"$VENV_PY" scripts/install.py "$@"
+echo
+echo "Start the workbench:  bash scripts/run_web_ui.sh"
 `````
 
 ---
@@ -86067,12 +86221,4225 @@ echo "Training complete! Model saved to ./my-react-agent-lora"
 #### `web_ui_history.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/web_ui_history.json`
-- **Lines**: 28,749 | **Size**: 2,320,517 bytes | **SHA-256**: `9c1ab153e62d665eedfd3e5babbe76ee68fe0f1a82250b5ab9e23662e0dacc0b` | **Newline**: `False`
+- **Lines**: 31,266 | **Size**: 2,634,122 bytes | **SHA-256**: `5db2c9e56386894e9a08e929fd76d2dc2456bf54345847f19cdef6a59a74059d` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Persistent JSON array of past generation sessions with timestamps, prompts, pass/fail status, and complete source code.
 
 `````json
 [
+  {
+    "task_id": "edit_test_task_456",
+    "session_id": "1792308868_03a34b",
+    "mode": "site",
+    "final_passed": false,
+    "initial_passed": false,
+    "self_corrected": false,
+    "repair_attempts": 0,
+    "turns_used": 3,
+    "sections_completed": 1,
+    "sections_planned": 1,
+    "code": "",
+    "files": {
+      ".gitignore": "# Node & Bundler artifacts\nnode_modules/\n.vite/\ndist/\ndist-ssr/\n*.local\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Snapshots & Media\n.snapshots/\nscreenshot.webp\n*.log\n",
+      "src/components/Hero.tsx": "export function Hero() { return <div>Good Version</div>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Applied targeted edits to `Hero.tsx` based on your instruction.\n- Updated layout structure and functional JSX components.\n\n## Status\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).\n- Use `@Component` mentions to target another specific section.",
+    "symbol": "EditSite",
+    "prompt": "Change hero to broken",
+    "style_preset": null,
+    "style_tokens": null,
+    "file_path": "generated_components/session_1792308868_03a34b/",
+    "filePath": "generated_components/session_1792308868_03a34b/",
+    "folder_name": "session_1792308868_03a34b",
+    "folderName": "session_1792308868_03a34b",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308868_03a34b",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308868_03a34b",
+    "checkpoints_count": 2,
+    "visual_score": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "validation_status": "failed",
+    "validationStatus": "failed",
+    "build_state": {
+      "typecheck_passed": false,
+      "typecheckPassed": false,
+      "build_passed": false,
+      "buildPassed": false,
+      "lint_passed": false,
+      "lintPassed": false,
+      "contract_passed": false,
+      "contractPassed": false,
+      "accessibility_passed": false,
+      "accessibilityPassed": false,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "failed",
+      "typecheckStatus": "failed",
+      "build_status": "failed",
+      "buildStatus": "failed",
+      "lint_status": "failed",
+      "lintStatus": "failed",
+      "contract_status": "failed",
+      "contractStatus": "failed",
+      "accessibility_status": "failed",
+      "accessibilityStatus": "failed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "failed",
+      "previewStatus": "failed",
+      "preview_running": false,
+      "previewRunning": false,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "Persistent compile failure"
+      ],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "preview": {
+      "url": "/preview/1792308868_03a34b",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "EditSite",
+      "mode": "site"
+    },
+    "is_edit": true,
+    "timestamp": "2026-10-18 13:04:29"
+  },
+  {
+    "task_id": "site_test_task_123",
+    "session_id": "1792308868_a9f44a",
+    "mode": "site",
+    "final_passed": false,
+    "completion_status": "FAILED",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": false,
+    "section_completion": "2 / 5",
+    "project_validation": "passed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "site_test_task_123",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308868_a9f44a\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 0,
+          "required_sections": 0,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "failed",
+          "section_retries": 0,
+          "project_attempts": 1
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "failed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "strategy": "kit",
+    "native_code_sections": [],
+    "native_code_fallbacks": {},
+    "self_corrected": true,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 5,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Footer.tsx": "export function Footer() { return <footer>Footer</footer>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/5 planned sections.\n- Generated component modules: `Header.tsx`, `Footer.tsx`.\n\n## Status\n- Section completion: 2 / 5 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 4.5/5\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "TestSite",
+    "prompt": "Build TestSite",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/TestSite_20261018_130428/",
+    "filePath": "generated_components/TestSite_20261018_130428/",
+    "folder_name": "TestSite_20261018_130428",
+    "folderName": "TestSite_20261018_130428",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308868_a9f44a",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308868_a9f44a",
+    "checkpoints_count": 1,
+    "visual_score": 4.5,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "not_requested",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.5,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792308868_a9f44a",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "TestSite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-18 13:04:28"
+  },
+  {
+    "task_id": "test_state_model_01",
+    "session_id": "1792308783_178fe6",
+    "mode": "site",
+    "final_passed": true,
+    "completion_status": "COMPLETE",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "2 / 2",
+    "project_validation": "passed",
+    "generation_quality": "native",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "test_state_model_01",
+        "model": {},
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308783_178fe6\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "failed",
+          "first_attempt_sections": 0,
+          "required_sections": 2,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "not_applied",
+          "files": [],
+          "validation": null
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "not_applied",
+          "section_retries": 0,
+          "project_attempts": 0
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "passed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 0,
+            "interactionsTested": 0,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [],
+            "interactionEvidence": [],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "not_requested",
+            "motionRuntimeStatus": "not_requested",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [],
+            "motionPlan": [],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "strategy": "freeform",
+    "native_code_sections": [],
+    "native_code_fallbacks": {},
+    "self_corrected": false,
+    "turns_used": 0,
+    "sections_completed": 2,
+    "sections_planned": 2,
+    "code": "export function Header() { return <header>Header</header>; }",
+    "files": {
+      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
+      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "CompanySite",
+    "prompt": "Build a modern company website",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 0,
+    "contextTokens": 0,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/CompanySite_20261018_130303/",
+    "filePath": "generated_components/CompanySite_20261018_130303/",
+    "folder_name": "CompanySite_20261018_130303",
+    "folderName": "CompanySite_20261018_130303",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308783_178fe6",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792308783_178fe6",
+    "checkpoints_count": 1,
+    "visual_score": 4.2,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "passed",
+      "errors": [],
+      "interactions_tested": 0,
+      "interactions_required": 0,
+      "interaction_evidence": []
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 4.2,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 0,
+      "interactionsTested": 0,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [],
+      "interactionEvidence": [],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "not_requested",
+      "motionRuntimeStatus": "not_requested",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [],
+      "motionPlan": [],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792308783_178fe6",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": false,
+      "entry": "",
+      "symbol": "CompanySite",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [],
+    "timestamp": "2026-10-18 13:03:03"
+  },
+  {
+    "task_id": "a6f23d4e-e854-48dc-8bee-e9f0a9e810f2",
+    "session_id": "1792305901_079619",
+    "mode": "site",
+    "final_passed": true,
+    "completion_status": "COMPLETE",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "6 / 6",
+    "project_validation": "passed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "a6f23d4e-e854-48dc-8bee-e9f0a9e810f2",
+        "model": {
+          "model_name": "qwen3-siteagent-native-sections-r16-v2",
+          "model_path": "C:\\Users\\AYUSH\\Documents\\slm\\models\\qwen3-siteagent-native-sections-r16-v2",
+          "base_model": "C:\\Users\\AYUSH\\Documents\\slm\\base-model",
+          "base_fingerprint": "07620e498673351e3f2167f4ccebb1d6e319d442d89c29a6add76825f0d19da2",
+          "adapter_fingerprint": "52f668a44af70e7928f925c23fd500b3b5096cacc5ac89675befbd54cbab2f7d",
+          "is_qwen3_architecture": true,
+          "is_mock": false,
+          "adapter_compatible": true,
+          "gpu_ready": true
+        },
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305901_079619\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 6,
+          "required_sections": 6,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "passed",
+          "files": [
+            "src/components/Header.tsx"
+          ],
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 5,
+            "interactionsTested": 5,
+            "interactions_required": 1,
+            "interactionsRequired": 1,
+            "interaction_evidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "passed",
+            "interactionStatus": "passed",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "passed",
+            "motionRuntimeStatus": "passed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "not_applied",
+          "section_retries": 0,
+          "project_attempts": 0
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "passed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 5,
+            "interactionsTested": 5,
+            "interactions_required": 1,
+            "interactionsRequired": 1,
+            "interaction_evidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "passed",
+            "interactionStatus": "passed",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "passed",
+            "motionRuntimeStatus": "passed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "strategy": "kit",
+    "native_code_sections": [],
+    "native_code_fallbacks": {},
+    "self_corrected": false,
+    "turns_used": 6,
+    "sections_completed": 6,
+    "sections_planned": 6,
+    "code": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"links\": [\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: send us your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+    "files": {
+      "src/components/Header.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"links\": [\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: send us your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+      "src/components/Header.css": ".k-header { position: sticky; top: 0; z-index: 50; height: var(--k-header-h); background-color: var(--k-glass); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--k-line); transition: transform 320ms var(--k-ease); }\n.k-header.is-tucked { transform: translateY(-100%); }\n.k-header .k-header__bar { height: 100%; display: flex; align-items: center; gap: var(--k-space-3); }\n.k-header__brand { display: inline-flex; align-items: center; min-height: var(--k-tap); max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: 1.375rem; letter-spacing: -0.01em; text-transform: var(--k-display-case); text-decoration: none; }\n.k-header .k-header__nav { margin-left: auto; }\n.k-header .k-header__links { display: flex; gap: 2px; }\n.k-header .k-header__link { position: relative; display: inline-flex; align-items: center; min-height: var(--k-tap); padding: 0 0.75rem; font-size: 0.9375rem; font-weight: 500; color: var(--k-muted); text-decoration: none; transition: color 160ms ease; }\n.k-header .k-header__link::after { content: \"\"; position: absolute; left: 0.75rem; right: 0.75rem; bottom: 8px; height: 2px; background-color: var(--k-accent); transform: scaleX(0); transform-origin: left; transition: transform 220ms var(--k-ease); }\n.k-header .k-header__link:hover, .k-header .k-header__link:focus-visible, .k-header .k-header__link[aria-current=\"location\"] { color: var(--k-ink); }\n.k-header .k-header__link:hover::after, .k-header .k-header__link:focus-visible::after, .k-header .k-header__link[aria-current=\"location\"]::after { transform: scaleX(1); }\n.k-header .k-header__tools { display: flex; align-items: center; gap: var(--k-space-1); margin-left: auto; }\n.k-header .k-header__nav ~ .k-header__tools { margin-left: var(--k-space-2); }\n.k-header .k-header__cart { display: inline-flex; align-items: center; gap: 0.5rem; min-height: var(--k-tap); padding: 0 0.875rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__cart:hover, .k-header .k-header__cart:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__cart:active, .k-header .k-header__toggle:active { transform: scale(0.98); }\n.k-header .k-header__count { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.375rem; border-radius: 999px; background-color: var(--k-accent); color: var(--k-accent-ink); font-size: 0.75rem; }\n.k-header .k-header__cta { min-height: var(--k-tap); padding: 0 1.125rem; font-size: 0.9375rem; }\n.k-header .k-header__toggle { display: none; align-items: center; justify-content: center; width: var(--k-tap); height: var(--k-tap); border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__toggle:hover, .k-header .k-header__toggle:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__burger, .k-header .k-header__burger::before, .k-header .k-header__burger::after { display: block; width: 18px; height: 2px; border-radius: 2px; background-color: currentColor; }\n.k-header .k-header__burger { position: relative; }\n.k-header .k-header__burger::before, .k-header .k-header__burger::after { content: \"\"; position: absolute; left: 0; }\n.k-header .k-header__burger::before { top: -6px; }\n.k-header .k-header__burger::after { top: 6px; }\n@media (max-width: 899px) {\n  .k-header .k-header__nav { display: none; }\n  .k-header .k-header__toggle { display: inline-flex; }\n  .k-header .k-header__nav ~ .k-header__tools { margin-left: auto; }\n}\n@media (max-width: 599px) { .k-header .k-header__cta { display: none; } }\n\n.k-header__drawer, .k-header__cartpanel { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: var(--k-space-4); overflow-y: auto; visibility: hidden; opacity: 0; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s linear 240ms; }\n.k-header__drawer { inset: 0; padding: 14px var(--k-gutter) 32px; background-color: var(--k-bg); color: var(--k-ink); transform: translateY(-12px); }\n.k-header__cartpanel { top: 0; right: 0; bottom: 0; width: min(420px, 100%); padding: 14px 24px 32px; background-color: var(--k-surface); color: var(--k-ink); border-left: 1px solid var(--k-line); box-shadow: -24px 0 60px -30px rgba(0, 0, 0, 0.35); transform: translateX(24px); }\n.k-header__drawer.is-open, .k-header__cartpanel.is-open { visibility: visible; opacity: 1; transform: none; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s; }\n.k-header__drawer-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }\n.k-header__close { min-height: var(--k-tap); padding: 0 1rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease; }\n.k-header__close:hover, .k-header__close:focus-visible { border-color: var(--k-ink); }\n.k-header__drawer-links { display: grid; margin-top: var(--k-space-2); }\n.k-header__drawer-link { display: flex; align-items: center; min-height: 60px; border-bottom: 1px solid var(--k-line); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 7vw, 2.5rem); text-transform: var(--k-display-case); text-decoration: none; transition: color 160ms ease, transform 200ms var(--k-ease); }\n.k-header__drawer-link:hover, .k-header__drawer-link:focus-visible { transform: translateX(6px); }\n.k-header__drawer-link[aria-current=\"location\"] { color: var(--k-accent-text); }\n.k-header__drawer-cta { align-self: flex-start; }\n.k-header__drawer-mail { min-height: var(--k-tap); display: inline-flex; align-items: center; }\n.k-header__cart-title { font-weight: 700; font-size: 1.125rem; }\n.k-header__lines { display: grid; gap: var(--k-space-2); }\n.k-header__line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--k-line); }\n.k-header__remove { justify-self: start; min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: var(--k-muted); text-decoration: underline; text-underline-offset: 0.2em; }\n.k-header__remove:hover, .k-header__remove:focus-visible { color: var(--k-ink); }\n.k-header__empty, .k-header__note { color: var(--k-muted); }\n.k-header__total { font-weight: 700; }\n@media (prefers-reduced-motion: reduce) {\n  .k-header, .k-header__drawer, .k-header__cartpanel { transition: none; }\n  .k-header.is-tucked { transform: none; }\n}\n",
+      "src/components/Hero.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Hero.css';\n\nconst DATA: any = {\n  \"headline\": \"Explore our work\",\n  \"lede\": \"View our portfolio, learn about us, and get in touch\",\n  \"tagline\": \"Studio portfolio\",\n  \"eyebrow\": \"Hero\",\n  \"mark\": \"S\",\n  \"primary\": {\n    \"href\": \"#work-showcase\",\n    \"label\": \"View work\"\n  },\n  \"secondary\": {\n    \"href\": \"#contact\",\n    \"label\": \"Contact us\"\n  },\n  \"fact\": \"\",\n  \"style\": \"product\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&w=1200&q=80\",\n    \"alt\": \"A designer working at a desk\",\n    \"w\": 1200,\n    \"h\": 1500\n  },\n  \"shader\": true,\n  \"shader_colors\": [\n    [\n      0.0471,\n      0.0627,\n      0.0863\n    ],\n    [\n      0.4863,\n      0.5843,\n      1.0\n    ],\n    [\n      0.2549,\n      0.8275,\n      0.7529\n    ]\n  ],\n  \"shader_mix\": [\n    \"0.50\",\n    \"0.42\"\n  ],\n  \"window\": {\n    \"title\": \"Studio overview\",\n    \"labels\": [\n      \"Overview\",\n      \"Activity\",\n      \"Reports\"\n    ],\n    \"bars\": [\n      38,\n      52,\n      46,\n      64,\n      58,\n      72,\n      66,\n      84,\n      78,\n      90\n    ]\n  }\n};\nconst SHADER_COLORS: number[][] = [[0.0471, 0.0627, 0.0863], [0.4863, 0.5843, 1.0], [0.2549, 0.8275, 0.7529]];\nconst SHADER_MIX: string[] = [\"0.50\", \"0.42\"];\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useMagnet<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const el = ref.current;\n    if (!el) return;\n    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (!fine || reduce) return;\n    const move = (event: PointerEvent) => {\n      if (event.pointerType !== 'mouse') return;\n      const box = el.getBoundingClientRect();\n      const x = ((event.clientX - box.left) / box.width - 0.5) * 16;\n      const y = ((event.clientY - box.top) / box.height - 0.5) * 12;\n      el.style.transform = 'translate3d(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px, 0)';\n    };\n    const leave = () => {\n      el.style.transform = '';\n    };\n    el.addEventListener('pointermove', move);\n    el.addEventListener('pointerleave', leave);\n    return () => {\n      el.removeEventListener('pointermove', move);\n      el.removeEventListener('pointerleave', leave);\n    };\n  }, []);\n  return ref;\n}\n\nconst SHADER_VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';\nconst SHADER_FS = 'precision mediump float;uniform vec2 r;uniform float t;uniform vec2 m;uniform vec3 c0;uniform vec3 c1;uniform vec3 c2;'\n  + 'void main(){vec2 uv=gl_FragCoord.xy/r;'\n  + 'float a=sin(uv.x*3.1+t*0.35)+sin(uv.y*4.3-t*0.27)+sin((uv.x+uv.y)*2.2+t*0.21);'\n  + 'float b=sin(uv.x*5.7-t*0.18+sin(uv.y*2.0+t*0.3))*0.5+0.5;'\n  + 'vec3 col=mix(c0,c1,smoothstep(-1.2,1.8,a)*MIX_A);'\n  + 'col=mix(col,c2,b*smoothstep(0.2,1.0,uv.y)*MIX_B);'\n  + 'float g=0.12/(0.12+distance(uv,m)*2.4);col+=c1*g*0.16;'\n  + 'col=mix(c0,col,smoothstep(0.0,0.38,uv.y));gl_FragColor=vec4(col,1.0);}';\n\nfunction ShaderBackdrop() {\n  const ref = useRef<HTMLCanvasElement | null>(null);\n  const [failed, setFailed] = useState(false);\n  useEffect(() => {\n    const canvas = ref.current;\n    if (!canvas) return;\n    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false });\n    if (!gl) {\n      setFailed(true);\n      return;\n    }\n    const compile = (type: number, source: string) => {\n      const shader = gl.createShader(type);\n      if (!shader) return null;\n      gl.shaderSource(shader, source);\n      gl.compileShader(shader);\n      return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;\n    };\n    const vs = compile(gl.VERTEX_SHADER, SHADER_VS);\n    const fs = compile(gl.FRAGMENT_SHADER, SHADER_FS.replace('MIX_A', SHADER_MIX[0]).replace('MIX_B', SHADER_MIX[1]));\n    const program = gl.createProgram();\n    if (!vs || !fs || !program) {\n      setFailed(true);\n      return;\n    }\n    gl.attachShader(program, vs);\n    gl.attachShader(program, fs);\n    gl.linkProgram(program);\n    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {\n      setFailed(true);\n      return;\n    }\n    gl.useProgram(program);\n    const buffer = gl.createBuffer();\n    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);\n    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);\n    const loc = gl.getAttribLocation(program, 'p');\n    gl.enableVertexAttribArray(loc);\n    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);\n    const uR = gl.getUniformLocation(program, 'r');\n    const uT = gl.getUniformLocation(program, 't');\n    const uM = gl.getUniformLocation(program, 'm');\n    SHADER_COLORS.forEach((rgb: number[], i: number) => gl.uniform3f(gl.getUniformLocation(program, 'c' + i), rgb[0], rgb[1], rgb[2]));\n    const pointer = { x: 0.7, y: 0.6 };\n    const start = performance.now();\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    let visible = true;\n    let lost = false;\n    let timer = 0;\n    const resize = () => {\n      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);\n      const width = Math.max(1, Math.round(canvas.clientWidth * dpr));\n      const height = Math.max(1, Math.round(canvas.clientHeight * dpr));\n      if (canvas.width !== width || canvas.height !== height) {\n        canvas.width = width;\n        canvas.height = height;\n        gl.viewport(0, 0, width, height);\n      }\n    };\n    const draw = () => {\n      resize();\n      gl.uniform2f(uR, canvas.width, canvas.height);\n      gl.uniform1f(uT, reduce ? 0 : (performance.now() - start) / 1000);\n      gl.uniform2f(uM, pointer.x, pointer.y);\n      gl.drawArrays(gl.TRIANGLES, 0, 3);\n    };\n    const loop = () => {\n      timer = 0;\n      if (lost || !visible || document.hidden || reduce) return;\n      draw();\n      timer = window.setTimeout(loop, 33);\n    };\n    const wake = () => {\n      if (!timer && visible && !document.hidden && !reduce) loop();\n    };\n    const host = canvas.parentElement;\n    const onPointer = (event: PointerEvent) => {\n      const box = canvas.getBoundingClientRect();\n      pointer.x = (event.clientX - box.left) / box.width;\n      pointer.y = 1 - (event.clientY - box.top) / box.height;\n    };\n    const onLost = (event: Event) => {\n      event.preventDefault();\n      lost = true;\n      if (timer) window.clearTimeout(timer);\n      timer = 0;\n      setFailed(true);\n    };\n    canvas.addEventListener('webglcontextlost', onLost);\n    const resizeObserver = new ResizeObserver(() => {\n      if (!lost) draw();\n    });\n    resizeObserver.observe(canvas);\n    const io = new IntersectionObserver((entries) => {\n      visible = entries.some((entry) => entry.isIntersecting);\n      wake();\n    });\n    io.observe(canvas);\n    document.addEventListener('visibilitychange', wake);\n    if (host) host.addEventListener('pointermove', onPointer);\n    draw();\n    wake();\n    return () => {\n      if (timer) window.clearTimeout(timer);\n      resizeObserver.disconnect();\n      io.disconnect();\n      document.removeEventListener('visibilitychange', wake);\n      if (host) host.removeEventListener('pointermove', onPointer);\n      canvas.removeEventListener('webglcontextlost', onLost);\n      const lose = gl.getExtension('WEBGL_lose_context');\n      if (lose && !lost) lose.loseContext();\n    };\n  }, []);\n  return (\n    <>\n      <canvas ref={ref} className={'k-shader' + (failed ? ' is-hidden' : '')} aria-hidden=\"true\" />\n      {failed ? <div className=\"k-shader-fallback\" data-webgl-fallback=\"true\" aria-hidden=\"true\" /> : null}\n    </>\n  );\n}\n\nfunction AppWindow({ labels, bars, title }: any) {\n  return (\n    <figure className=\"k-window\">\n      <div className=\"k-window__chrome\" aria-hidden=\"true\"><span /><span /><span /></div>\n      <div className=\"k-window__body\">\n        <div className=\"k-window__side\" aria-hidden=\"true\">\n          {labels.map((label: string, i: number) => (\n            <span key={i} className={'k-window__nav' + (i === 0 ? ' is-active' : '')}>{label}</span>\n          ))}\n        </div>\n        <div className=\"k-window__main\">\n          <p className=\"k-window__title\">{title}</p>\n          <div className=\"k-window__tiles\">\n            {labels.map((label: string, i: number) => (\n              <div className=\"k-window__tile\" key={i}>\n                <span className=\"k-window__label\">{label}</span>\n                <span className=\"k-window__meter\" aria-hidden=\"true\"><span style={{ width: (48 + i * 17) + '%' }} /></span>\n              </div>\n            ))}\n          </div>\n          <div className=\"k-window__chart\" aria-hidden=\"true\">\n            {bars.map((h: number, i: number) => <span key={i} style={{ height: h + '%' }} />)}\n          </div>\n        </div>\n      </div>\n      <figcaption className=\"k-window__caption\">Illustrative interface; not live data</figcaption>\n    </figure>\n  );\n}\n\nexport function Hero() {\n  const magnetRef = useMagnet<HTMLAnchorElement>();\n  return (\n    <section id=\"hero\" className=\"k-section k-hero k-hero--product\" aria-labelledby=\"hero-title\" data-section=\"hero\">\n      <ShaderBackdrop />\n      <div className=\"k-container k-hero__inner\">\n        <div className=\"k-hero__copy k-hero__copy--center\">\n          {DATA.tagline ? <p className=\"k-eyebrow k-hero__eyebrow k-rise-2\">{DATA.tagline}</p> : null}\n          <h1 id=\"hero-title\" className=\"k-display k-hero__title\" data-motion=\"text-in\">{DATA.headline}</h1>\n          <p className=\"k-lede k-hero__lede k-rise-2\">{DATA.lede}</p>\n          <div className=\"k-actions k-rise-3\">\n            <a ref={magnetRef} className=\"k-btn k-btn--primary\" href={DATA.primary.href}>{DATA.primary.label}</a>\n            <a className=\"k-btn k-btn--ghost k-hero__ghost\" href={DATA.secondary.href}>{DATA.secondary.label}</a>\n          </div>\n          {DATA.fact ? <p className=\"k-hero__fact k-rise-3\">{DATA.fact}</p> : null}\n        </div>\n        <div className=\"k-hero__product k-depth-fast\">\n          <AppWindow labels={DATA.window.labels} bars={DATA.window.bars} title={DATA.window.title} />\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default Hero;\n",
+      "src/components/Hero.css": ".k-hero { position: relative; overflow: hidden; isolation: isolate; padding-block: clamp(48px, 7vw, 104px) clamp(64px, 9vw, 128px); }\n.k-hero .k-hero__inner { position: relative; z-index: 1; }\n.k-hero .k-hero__copy { display: grid; gap: var(--k-space-3); justify-items: start; align-content: center; }\n.k-hero .k-hero__title { max-width: 14ch; }\n.k-hero .k-hero__lede { max-width: 40ch; }\n.k-hero .k-actions { margin-top: var(--k-space-1); }\n.k-hero .k-hero__fact { font-size: 0.9375rem; color: var(--k-muted); }\n.k-hero .k-hero__fact::before { content: \"\"; display: inline-block; width: 24px; height: 1px; margin-right: 10px; vertical-align: middle; background-color: currentColor; }\n.k-hero .k-shader { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }\n.k-hero .k-shader.is-hidden { visibility: hidden; }\n.k-hero .k-shader-fallback { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(70% 60% at 70% 30%, var(--k-accent-soft), transparent 70%), radial-gradient(50% 50% at 20% 80%, var(--k-surface-2), transparent 70%); }\n\n.k-hero--split .k-hero__inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(32px, 6vw, 88px); align-items: center; min-height: min(78vh, 760px); }\n.k-hero--split .k-hero__media { aspect-ratio: 4 / 5; width: 100%; }\n@media (max-width: 860px) {\n  .k-hero--split .k-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }\n  .k-hero--split .k-hero__media { aspect-ratio: 4 / 3; }\n}\n\n.k-section.k-hero--fullbleed { display: flex; align-items: flex-end; min-height: min(calc(100svh - var(--k-header-h)), 900px); padding-block: clamp(120px, 18vh, 200px) clamp(48px, 8vh, 96px); background-color: #121212; color: #FFFFFF; isolation: isolate; }\n.k-hero--fullbleed .k-hero__inner { width: 100%; }\n.k-hero--fullbleed .k-hero__bg { position: absolute; inset: 0; z-index: -2; }\n.k-hero--fullbleed .k-hero__bgmedia { position: absolute; inset: 0; border-radius: 0; }\n.k-hero--fullbleed .k-hero__shade { position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(90deg, rgba(10, 10, 12, 0.62) 0%, rgba(10, 10, 12, 0.28) 58%, rgba(10, 10, 12, 0) 100%), linear-gradient(180deg, rgba(10, 10, 12, 0.2) 0%, rgba(10, 10, 12, 0.3) 45%, var(--k-shade) 100%); }\n.k-hero--fullbleed .k-hero__title { max-width: 16ch; }\n.k-hero--fullbleed .k-hero__lede, .k-hero--fullbleed .k-hero__fact, .k-hero--fullbleed .k-hero__eyebrow { color: rgba(255, 255, 255, 0.88); }\n.k-hero--fullbleed .k-hero__ghost { color: #FFFFFF; border-color: rgba(255, 255, 255, 0.55); }\n.k-hero--fullbleed .k-hero__ghost:hover, .k-hero--fullbleed .k-hero__ghost:focus-visible { border-color: #FFFFFF; }\n\n.k-hero--typographic .k-hero__title { max-width: 18ch; font-size: clamp(3rem, 9vw, 8.25rem); }\n.k-hero--typographic .k-hero__rule { width: 100%; height: 1px; margin-block: var(--k-space-3); background-color: var(--k-line-strong); }\n.k-hero--typographic .k-hero__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-4); width: 100%; }\n.k-hero--typographic .k-hero__strip { margin-top: clamp(40px, 6vw, 80px); }\n.k-hero--typographic .k-hero__stripmedia { aspect-ratio: 21 / 9; width: 100%; }\n@media (max-width: 640px) { .k-hero--typographic .k-hero__stripmedia { aspect-ratio: 4 / 3; } }\n\n.k-hero--product .k-hero__copy--center { justify-items: center; text-align: center; margin-inline: auto; max-width: 900px; }\n.k-hero--product .k-hero__title { max-width: 18ch; }\n.k-hero--product .k-hero__lede { margin-inline: auto; }\n.k-hero--product .k-actions { justify-content: center; }\n.k-hero--product .k-hero__product { max-width: 1040px; margin: clamp(40px, 6vw, 72px) auto 0; }\n\n.k-hero .k-window { position: relative; margin: 0; border: 1px solid var(--k-line); border-radius: calc(var(--k-radius) + 4px); background-color: var(--k-surface); overflow: hidden; box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.45); }\n.k-hero .k-window__chrome { display: flex; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--k-line); }\n.k-hero .k-window__chrome span { width: 10px; height: 10px; border-radius: 50%; background-color: var(--k-line-strong); }\n.k-hero .k-window__body { display: grid; grid-template-columns: 160px minmax(0, 1fr); min-height: 300px; }\n.k-hero .k-window__side { display: grid; align-content: start; gap: 4px; padding: 16px 12px; border-right: 1px solid var(--k-line); }\n.k-hero .k-window__nav { padding: 8px 10px; border-radius: 8px; font-size: 0.875rem; color: var(--k-muted); }\n.k-hero .k-window__nav.is-active { background-color: var(--k-accent-soft); color: var(--k-ink); }\n.k-hero .k-window__main { display: grid; gap: 18px; padding: 20px; align-content: start; }\n.k-hero .k-window__title { font-weight: 600; font-size: 0.9375rem; }\n.k-hero .k-window__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }\n.k-hero .k-window__tile { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--k-line); border-radius: 10px; background-color: var(--k-bg); }\n.k-hero .k-window__label { font-size: 0.8125rem; color: var(--k-muted); }\n.k-hero .k-window__meter { display: block; height: 6px; border-radius: 6px; background-color: var(--k-surface-2); overflow: hidden; }\n.k-hero .k-window__meter span { display: block; height: 100%; border-radius: inherit; background-color: var(--k-accent); }\n.k-hero .k-window__chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 12px; border: 1px solid var(--k-line); border-radius: 10px; }\n.k-hero .k-window__chart span { flex: 1; border-radius: 4px 4px 0 0; background-image: linear-gradient(to top, var(--k-accent), var(--k-accent-2)); opacity: 0.85; }\n.k-hero .k-window__caption { padding: 10px 16px; border-top: 1px solid var(--k-line); font-size: 0.75rem; color: var(--k-muted); }\n@media (max-width: 640px) {\n  .k-hero .k-window__body { grid-template-columns: minmax(0, 1fr); }\n  .k-hero .k-window__side { display: none; }\n  .k-hero .k-window__tiles { grid-template-columns: minmax(0, 1fr); }\n}\n",
+      "src/components/WorkShowcase.tsx": "import { useEffect, useRef, useState } from 'react';\nimport type { PointerEvent as ReactPointerEvent } from 'react';\nimport './WorkShowcase.css';\n\nconst DATA: any = {\n  \"title\": \"Recent Projects\",\n  \"intro\": \"View the latest completed works\",\n  \"items\": [\n    {\n      \"title\": \"Urban renewal project\",\n      \"caption\": \"Restoration of a historic building in the city center\",\n      \"img\": {\n        \"src\": \"https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1000&q=80\",\n        \"alt\": \"Design sketches and colour swatches\",\n        \"w\": 1000,\n        \"h\": 800\n      }\n    },\n    {\n      \"title\": \"Commercial space design\",\n      \"caption\": \"Modernized office space with sustainable features\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Residential development\",\n      \"caption\": \"New housing complex with community spaces\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Public art installation\",\n      \"caption\": \"Interactive sculpture in a public park\",\n      \"img\": null\n    }\n  ],\n  \"eyebrow\": \"Work showcase\",\n  \"mark\": \"S\"\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useReveal<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const root = ref.current;\n    if (!root) return;\n    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-motion=\"scroll-reveal\"]'));\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (reduce || typeof IntersectionObserver === 'undefined') {\n      items.forEach((el) => el.classList.add('is-visible'));\n      return;\n    }\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) {\n          entry.target.classList.add('is-visible');\n          observer.unobserve(entry.target);\n        }\n      });\n    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });\n    items.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n  return ref;\n}\n\nfunction canTilt() {\n  return typeof window !== 'undefined'\n    && window.matchMedia('(hover: hover) and (pointer: fine)').matches\n    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n}\n\nfunction tiltMove(event: ReactPointerEvent<HTMLElement>) {\n  if (event.pointerType !== 'mouse' || !canTilt()) return;\n  const el = event.currentTarget;\n  const box = el.getBoundingClientRect();\n  const px = (event.clientX - box.left) / box.width;\n  const py = (event.clientY - box.top) / box.height;\n  el.style.setProperty('--k-ry', ((px - 0.5) * 8).toFixed(2) + 'deg');\n  el.style.setProperty('--k-rx', ((0.5 - py) * 6).toFixed(2) + 'deg');\n  el.style.setProperty('--k-mx', (px * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-my', (py * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-glow', '0.14');\n}\n\nfunction tiltLeave(event: ReactPointerEvent<HTMLElement>) {\n  const el = event.currentTarget;\n  ['--k-rx', '--k-ry', '--k-glow'].forEach((name: string) => el.style.removeProperty(name));\n}\n\nexport function WorkShowcase() {\n  const revealRef = useReveal<HTMLElement>();\n  return (\n    <section id=\"work-showcase\" className=\"k-section k-work-showcase\" aria-labelledby=\"work-showcase-title\" data-section=\"work-showcase\" ref={revealRef}>\n      <div className=\"k-container\">\n        <div className=\"k-head k-head--split\">\n          <div>\n            <h2 id=\"work-showcase-title\" className=\"k-h2\">{DATA.title}</h2>\n          </div>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n        </div>\n        <ul className=\"k-work-showcase-grid k-stagger\">\n          {DATA.items.map((item: any, i: number) => (\n            <li className={'k-work-showcase-cell' + (i === 0 ? ' k-work-showcase-cell--lead' : '')} key={i} data-motion=\"scroll-reveal\">\n              <figure className=\"k-work-showcase-figure k-tilt\" onPointerMove={tiltMove} onPointerLeave={tiltLeave}>\n                <Media img={item.img} variant={(i % 3) + 1} mark={item.title.charAt(0)} className=\"k-work-showcase-media\" />\n                <figcaption className=\"k-work-showcase-caption\">\n                  <h3 className=\"k-h3\">{item.title}</h3>\n                  {item.caption ? <p className=\"k-muted\">{item.caption}</p> : null}\n                </figcaption>\n              </figure>\n            </li>\n          ))}\n        </ul>\n      </div>\n    </section>\n  );\n}\n\nexport default WorkShowcase;\n",
+      "src/components/WorkShowcase.css": ".k-work-showcase .k-work-showcase-figure { display: grid; gap: var(--k-space-2); height: 100%; margin: 0; border-radius: var(--k-radius); }\n.k-work-showcase .k-work-showcase-caption { display: grid; gap: 4px; }\n.k-work-showcase .k-work-showcase-media { width: 100%; aspect-ratio: 4 / 3; }\n.k-work-showcase .k-work-showcase-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(20px, 3vw, 36px); }\n.k-work-showcase .k-work-showcase-cell { grid-column: span 2; }\n.k-work-showcase .k-work-showcase-cell--lead { grid-column: span 4; grid-row: span 2; }\n.k-work-showcase .k-work-showcase-cell--lead .k-work-showcase-media { aspect-ratio: auto; min-height: 320px; height: calc(100% - 96px); }\n.k-work-showcase .k-work-showcase-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-3); }\n.k-work-showcase .k-work-showcase-top .k-head { flex: 1 1 520px; margin-bottom: 0; }\n.k-work-showcase .k-work-showcase-controls { display: flex; gap: var(--k-space-1); }\n.k-work-showcase .k-work-showcase-arrow { width: 48px; height: 48px; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-size: 1.125rem; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-work-showcase .k-work-showcase-arrow:hover, .k-work-showcase .k-work-showcase-arrow:focus-visible { border-color: var(--k-ink); transform: translateY(-2px); }\n.k-work-showcase .k-work-showcase-arrow:active { transform: scale(0.96); }\n.k-work-showcase .k-work-showcase-track { margin-top: clamp(32px, 5vw, 56px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--k-gutter); overscroll-behavior-x: contain; scrollbar-width: thin; }\n.k-work-showcase .k-work-showcase-reel { display: flex; gap: clamp(16px, 2.4vw, 28px); width: max-content; padding-inline: max(var(--k-gutter), calc((100vw - var(--k-max)) / 2)); padding-bottom: var(--k-space-2); }\n.k-work-showcase .k-work-showcase-card { flex: 0 0 auto; width: min(78vw, 440px); scroll-snap-align: start; }\n.k-work-showcase .k-work-showcase-card .k-work-showcase-media { aspect-ratio: 4 / 5; }\n@media (max-width: 860px) {\n  .k-work-showcase .k-work-showcase-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-work-showcase .k-work-showcase-cell, .k-work-showcase .k-work-showcase-cell--lead { grid-column: auto; grid-row: auto; }\n  .k-work-showcase .k-work-showcase-cell--lead .k-work-showcase-media { aspect-ratio: 4 / 3; min-height: 0; height: auto; }\n}\n",
+      "src/components/About.tsx": "import { useState } from 'react';\nimport './About.css';\n\nconst DATA: any = {\n  \"title\": \"About Studio\",\n  \"intro\": \"About Studio.\",\n  \"paragraphs\": [\n    \"We create visual stories through design and content.\",\n    \"Our approach is grounded in clarity and purpose.\"\n  ],\n  \"bullets\": [\n    \"Visual stories\",\n    \"Clarity and purpose\",\n    \"Design and content\"\n  ],\n  \"eyebrow\": \"About\",\n  \"mark\": \"S\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1000&q=80\",\n    \"alt\": \"Brand design work laid out on a table\",\n    \"w\": 1000,\n    \"h\": 1250\n  }\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nexport function About() {\n  return (\n    <section id=\"about\" className=\"k-section k-about\" aria-labelledby=\"about-title\" data-section=\"about\">\n      <div className=\"k-container k-about-grid k-about-grid--right k-stagger\">\n        <div className=\"k-about-visual\">\n          <Media img={DATA.img} variant={2} mark={DATA.mark} className=\"k-about-media k-settle\" />\n        </div>\n        <div className=\"k-about-copy\">\n          {DATA.eyebrow ? <p className=\"k-eyebrow\">{DATA.eyebrow}</p> : null}\n          <h2 id=\"about-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n          {DATA.paragraphs.map((p: string, i: number) => (\n            <p key={i} className={i === 0 ? 'k-text k-about-first' : 'k-text k-muted'}>{p}</p>\n          ))}\n          {DATA.bullets.length ? (\n            <ul className=\"k-about-list\">\n              {DATA.bullets.map((b: string, i: number) => <li key={i}>{b}</li>)}\n            </ul>\n          ) : null}\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default About;\n",
+      "src/components/About.css": ".k-about .k-about-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 7vw, 112px); align-items: center; }\n.k-about .k-about-grid--right .k-about-visual { order: 2; }\n.k-about .k-about-media { aspect-ratio: 4 / 5; width: 100%; }\n.k-about .k-about-copy { display: grid; gap: var(--k-space-3); justify-items: start; }\n.k-about .k-about-first { font-size: clamp(1.125rem, 1.5vw, 1.25rem); line-height: 1.55; }\n.k-about .k-about-list { display: grid; gap: var(--k-space-1); margin-top: var(--k-space-1); }\n.k-about .k-about-list li { display: flex; gap: 12px; align-items: baseline; font-weight: 500; }\n.k-about .k-about-list li::before { content: \"\"; flex: 0 0 18px; height: 2px; transform: translateY(-4px); background-color: var(--k-accent); }\n@media (max-width: 860px) {\n  .k-about .k-about-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-about .k-about-grid--right .k-about-visual { order: 0; }\n  .k-about .k-about-media { aspect-ratio: 4 / 3; }\n}\n",
+      "src/components/Contact.tsx": "import { useState } from 'react';\nimport type { FormEvent as ReactFormEvent } from 'react';\nimport './Contact.css';\n\nconst DATA: any = {\n  \"title\": \"Get in touch\",\n  \"text\": \"Send us a message with your query or proposal\",\n  \"button\": \"Send message\",\n  \"eyebrow\": \"Contact\",\n  \"mark\": \"S\",\n  \"email\": \"\",\n  \"location\": \"\",\n  \"note\": \"This form isn't connected to a mailbox yet, so nothing is sent from here.\",\n  \"doneNote\": \"Thanks. This form isn't connected yet, so please reach us another way for now.\"\n};\n\nexport function Contact() {\n  const [values, setValues] = useState({ name: '', email: '', message: '' });\n  const [errors, setErrors] = useState<Record<string, string>>({});\n  const [state, setState] = useState('idle');\n  const update = (field: string, value: string) => setValues((current: any) => ({ ...current, [field]: value }));\n  const submit = (event: ReactFormEvent<HTMLFormElement>) => {\n    event.preventDefault();\n    const next: Record<string, string> = {};\n    if (!values.name.trim()) next.name = 'Please add your name.';\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(values.email)) next.email = 'Please add a valid email address.';\n    if (values.message.trim().length < 10) next.message = 'Please write a short message of at least ten characters.';\n    setErrors(next);\n    if (Object.keys(next).length) return;\n    setState('busy');\n    window.setTimeout(() => {\n      if (DATA.email) {\n        const body = values.message + '\\n\\n' + values.name + ' (' + values.email + ')';\n        window.location.href = 'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Message from ${values.name}`) + '&body=' + encodeURIComponent(body);\n      }\n      setState('done');\n    }, 400);\n  };\n  return (\n    <section id=\"contact\" className=\"k-section k-section--tint k-contact\" aria-labelledby=\"contact-title\" data-section=\"contact\">\n      <div className=\"k-container k-contact-grid\">\n        <div className=\"k-contact-intro\">\n          <h2 id=\"contact-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.text ? <p className=\"k-lede\">{DATA.text}</p> : null}\n          {DATA.email || DATA.location ? (\n            <dl className=\"k-contact-details\">\n              {DATA.email ? (\n                <div><dt>Email</dt><dd><a className=\"k-link\" href={'mailto:' + DATA.email}>{DATA.email}</a></dd></div>\n              ) : null}\n              {DATA.location ? (\n                <div><dt>Location</dt><dd>{DATA.location}</dd></div>\n              ) : null}\n            </dl>\n          ) : null}\n        </div>\n        <form className=\"k-contact-form\" noValidate onSubmit={submit} aria-describedby=\"contact-form-note\">\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-name\">Name</label>\n            <input id=\"contact-name\" name=\"name\" type=\"text\" autoComplete=\"name\" required value={values.name} aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? 'contact-name-error' : undefined} onChange={(event) => update('name', event.target.value)} />\n            {errors.name ? <p id=\"contact-name-error\" className=\"k-contact-error\">{errors.name}</p> : null}\n          </div>\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-email\">Email</label>\n            <input id=\"contact-email\" name=\"email\" type=\"email\" autoComplete=\"email\" required value={values.email} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? 'contact-email-error' : undefined} onChange={(event) => update('email', event.target.value)} />\n            {errors.email ? <p id=\"contact-email-error\" className=\"k-contact-error\">{errors.email}</p> : null}\n          </div>\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-message\">Message</label>\n            <textarea id=\"contact-message\" name=\"message\" rows={5} required value={values.message} aria-invalid={errors.message ? true : undefined} aria-describedby={errors.message ? 'contact-message-error' : undefined} onChange={(event) => update('message', event.target.value)} />\n            {errors.message ? <p id=\"contact-message-error\" className=\"k-contact-error\">{errors.message}</p> : null}\n          </div>\n          <button type=\"submit\" className=\"k-btn k-btn--primary k-contact-submit\" aria-busy={state === 'busy'} disabled={state === 'busy'}>{state === 'busy' ? 'Preparing\u2026' : DATA.button}</button>\n          <p id=\"contact-form-note\" className=\"k-contact-note\" aria-live=\"polite\">{state === 'done' ? DATA.doneNote : DATA.note}</p>\n        </form>\n      </div>\n    </section>\n  );\n}\n\nexport default Contact;\n",
+      "src/components/Contact.css": ".k-contact .k-contact-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }\n.k-contact .k-contact-intro { display: grid; gap: var(--k-space-3); }\n.k-contact .k-contact-details { display: grid; gap: var(--k-space-2); margin: var(--k-space-2) 0 0; }\n.k-contact .k-contact-details dt { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-contact .k-contact-details dd { margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }\n.k-contact .k-contact-form { display: grid; gap: var(--k-space-3); padding: clamp(20px, 3vw, 36px); border: 1px solid var(--k-line); border-radius: var(--k-radius); background-color: var(--k-bg); color: var(--k-ink); }\n.k-contact .k-contact-field { display: grid; gap: 6px; }\n.k-contact .k-contact-field label { font-weight: 600; font-size: 0.9375rem; }\n.k-contact .k-contact-field input, .k-contact .k-contact-field textarea { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--k-line-strong); border-radius: calc(var(--k-radius-btn) / 2 + 2px); background-color: var(--k-surface); color: var(--k-ink); transition: border-color 160ms ease, box-shadow 160ms ease; }\n.k-contact .k-contact-field textarea { resize: vertical; }\n.k-contact .k-contact-field input:hover, .k-contact .k-contact-field textarea:hover { border-color: var(--k-ink); }\n.k-contact .k-contact-field input:focus-visible, .k-contact .k-contact-field textarea:focus-visible { outline: none; border-color: var(--k-accent-text); box-shadow: 0 0 0 3px var(--k-accent-soft); }\n.k-contact .k-contact-field [aria-invalid=\"true\"] { border-color: #B42318; }\n.k-contact .k-contact-error { font-size: 0.875rem; font-weight: 600; color: var(--k-ink); }\n.k-contact .k-contact-error::before { content: \"! \"; color: #D92D20; }\n.k-contact .k-contact-submit { justify-self: start; }\n.k-contact .k-contact-note { font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 860px) { .k-contact .k-contact-grid { grid-template-columns: minmax(0, 1fr); } }\n",
+      "src/components/Footer.tsx": "import { useState } from 'react';\nimport './Footer.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"tagline\": \"Studio portfolio\",\n  \"links\": [\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    },\n    {\n      \"id\": \"contact\",\n      \"href\": \"#contact\",\n      \"label\": \"Contact\"\n    }\n  ],\n  \"email\": \"\",\n  \"location\": \"\",\n  \"contactHref\": \"#contact\",\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"privacy\": \"This site does not use analytics or advertising cookies. Fonts load from Google Fonts and photos from Unsplash, which receive your IP address to deliver them. If you write to us, your message is used only to reply.\"\n};\n\nexport function Footer() {\n  const [privacy, setPrivacy] = useState(false);\n  const year = new Date().getFullYear();\n  return (\n    <footer id=\"site-footer\" className=\"k-footer\" data-section=\"footer\">\n      <div className=\"k-container k-footer__grid\">\n        <div className=\"k-footer__brand\">\n          <a className=\"k-footer__wordmark\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.tagline ? <p className=\"k-footer__tagline\">{DATA.tagline}</p> : null}\n          {DATA.cta ? <a className=\"k-btn k-btn--ghost k-footer__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        </div>\n        {DATA.links.length ? (\n          <nav className=\"k-footer__col\" aria-label=\"Footer\">\n            <p className=\"k-footer__label\">Explore</p>\n            <ul className=\"k-footer__links\">\n              {DATA.links.map((link: any) => (\n                <li key={link.id}><a className=\"k-footer__link\" href={link.href}>{link.label}</a></li>\n              ))}\n            </ul>\n          </nav>\n        ) : null}\n        <div className=\"k-footer__col\">\n          <p className=\"k-footer__label\">Contact</p>\n          <ul className=\"k-footer__links\">\n            {DATA.email ? <li><a className=\"k-footer__link\" href={'mailto:' + DATA.email}>{DATA.email}</a></li> : null}\n            {DATA.location ? <li><span className=\"k-footer__plain\">{DATA.location}</span></li> : null}\n            {!DATA.email && DATA.contactHref ? <li><a className=\"k-footer__link\" href={DATA.contactHref}>Send a message</a></li> : null}\n            {!DATA.email && !DATA.contactHref ? <li><span className=\"k-footer__plain\">Contact details coming from {DATA.brand} directly.</span></li> : null}\n          </ul>\n        </div>\n      </div>\n      <div className=\"k-container k-footer__base\">\n        <p>\u00a9 {year} {DATA.brand}</p>\n        <div className=\"k-footer__base-links\">\n          <button onClick={() => setPrivacy(!privacy)} type=\"button\" className=\"k-footer__privacy-toggle\" aria-expanded={privacy} aria-controls=\"footer-privacy\">Privacy</button>\n          <a className=\"k-footer__link\" href=\"#site-main\">Back to top</a>\n        </div>\n      </div>\n      <div id=\"footer-privacy\" className=\"k-container k-footer__privacy\" hidden={!privacy}>\n        <p>{DATA.privacy}</p>\n      </div>\n    </footer>\n  );\n}\n\nexport default Footer;\n",
+      "src/components/Footer.css": ".k-footer { padding-block: clamp(56px, 8vw, 96px) 32px; background-color: var(--k-surface); color: var(--k-ink); border-top: 1px solid var(--k-line); }\n.k-footer .k-footer__grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: var(--k-space-6); }\n.k-footer .k-footer__brand { display: grid; gap: var(--k-space-2); align-content: start; justify-items: start; }\n.k-footer .k-footer__wordmark { display: inline-flex; align-items: center; min-height: var(--k-tap); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; text-transform: var(--k-display-case); text-decoration: none; }\n.k-footer .k-footer__tagline { max-width: 34ch; color: var(--k-muted); }\n.k-footer .k-footer__cta { margin-top: var(--k-space-1); }\n.k-footer .k-footer__label { margin-bottom: var(--k-space-1); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-footer .k-footer__links { display: grid; }\n.k-footer .k-footer__link, .k-footer .k-footer__plain { display: inline-flex; align-items: center; min-height: var(--k-tap); text-decoration: none; overflow-wrap: anywhere; }\n.k-footer .k-footer__link { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; transition: text-decoration-color 160ms ease; }\n.k-footer .k-footer__link:hover, .k-footer .k-footer__link:focus-visible { text-decoration-color: currentColor; }\n.k-footer .k-footer__base { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--k-space-2); margin-top: var(--k-space-8); padding-top: var(--k-space-3); border-top: 1px solid var(--k-line); font-size: 0.875rem; color: var(--k-muted); }\n.k-footer .k-footer__base-links { display: flex; gap: var(--k-space-3); align-items: center; }\n.k-footer .k-footer__privacy-toggle { min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: inherit; text-decoration: underline; text-underline-offset: 0.22em; }\n.k-footer .k-footer__privacy-toggle:hover, .k-footer .k-footer__privacy-toggle:focus-visible { color: var(--k-ink); }\n.k-footer .k-footer__privacy p { max-width: 70ch; margin-top: var(--k-space-2); font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 760px) { .k-footer .k-footer__grid { grid-template-columns: minmax(0, 1fr); } }\n"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 6/6 planned sections.\n- Generated component modules: `Header.tsx`, `Header.css`, `Hero.tsx`, `Hero.css`, `WorkShowcase.tsx`.\n\n## Status\n- Section completion: 6 / 6 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 5/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "Portfolio_Site",
+    "prompt": "Build a dark modern portfolio site with work showcase, about me, and contact form",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 252,
+    "contextTokens": 252,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/Portfolio_Site_20261018_121525/",
+    "filePath": "generated_components/Portfolio_Site_20261018_121525/",
+    "folder_name": "Portfolio_Site_20261018_121525",
+    "folderName": "Portfolio_Site_20261018_121525",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305901_079619",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305901_079619",
+    "checkpoints_count": 1,
+    "visual_score": 5,
+    "visual_score_before": 5,
+    "visual_score_after": 5,
+    "visual_score_best": 5,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 5,
+      "interactionsTested": 5,
+      "interactions_required": 1,
+      "interactionsRequired": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "passed",
+      "interactionStatus": "passed",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "passed",
+      "motionRuntimeStatus": "passed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "passed",
+      "errors": [],
+      "interactions_tested": 5,
+      "interactions_required": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 5,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 5,
+      "interactionsTested": 5,
+      "interactions_required": 1,
+      "interactionsRequired": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "passed",
+      "interactionStatus": "passed",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "passed",
+      "motionRuntimeStatus": "passed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792305901_079619",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": true,
+      "entry": "index.html",
+      "symbol": "Portfolio_Site",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [
+      {
+        "turn": 1,
+        "action": "write_site_ok",
+        "section": "header",
+        "strategy": "kit",
+        "files": [
+          "src/components/Header.tsx",
+          "src/components/Header.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 0.0
+      },
+      {
+        "turn": 2,
+        "action": "write_site_ok",
+        "section": "hero",
+        "strategy": "kit",
+        "files": [
+          "src/components/Hero.tsx",
+          "src/components/Hero.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 6.74
+      },
+      {
+        "turn": 3,
+        "action": "write_site_ok",
+        "section": "work-showcase",
+        "strategy": "kit",
+        "files": [
+          "src/components/WorkShowcase.tsx",
+          "src/components/WorkShowcase.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 8.92
+      },
+      {
+        "turn": 4,
+        "action": "write_site_ok",
+        "section": "about",
+        "strategy": "kit",
+        "files": [
+          "src/components/About.tsx",
+          "src/components/About.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 4.46
+      },
+      {
+        "turn": 5,
+        "action": "write_site_ok",
+        "section": "contact",
+        "strategy": "kit",
+        "files": [
+          "src/components/Contact.tsx",
+          "src/components/Contact.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 2.88
+      },
+      {
+        "turn": 6,
+        "action": "write_site_ok",
+        "section": "footer",
+        "strategy": "kit",
+        "files": [
+          "src/components/Footer.tsx",
+          "src/components/Footer.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 0.0
+      }
+    ],
+    "timestamp": "2026-10-18 12:15:56"
+  },
+  {
+    "task_id": "ad962e59-3539-4b35-9672-4bd84500d727",
+    "session_id": "1792305072_1a437b",
+    "mode": "site",
+    "final_passed": false,
+    "completion_status": "FAILED",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "7 / 7",
+    "project_validation": "failed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "ad962e59-3539-4b35-9672-4bd84500d727",
+        "model": {
+          "model_name": "qwen3-siteagent-native-sections-r16-v2",
+          "model_path": "C:\\Users\\AYUSH\\Documents\\slm\\models\\qwen3-siteagent-native-sections-r16-v2",
+          "base_model": "C:\\Users\\AYUSH\\Documents\\slm\\base-model",
+          "base_fingerprint": "07620e498673351e3f2167f4ccebb1d6e319d442d89c29a6add76825f0d19da2",
+          "adapter_fingerprint": "52f668a44af70e7928f925c23fd500b3b5096cacc5ac89675befbd54cbab2f7d",
+          "is_qwen3_architecture": true,
+          "is_mock": false,
+          "adapter_compatible": true,
+          "gpu_ready": true
+        },
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305072_1a437b\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 7,
+          "required_sections": 7,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "failed",
+          "files": [
+            "src/components/Header.tsx"
+          ],
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": false,
+            "runtimePassed": false,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 5,
+            "interactionsTested": 5,
+            "interactions_required": 1,
+            "interactionsRequired": 1,
+            "interaction_evidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "passed",
+            "interactionStatus": "passed",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": false,
+            "motionPassed": false,
+            "motion_status": "failed",
+            "motionStatus": "failed",
+            "motion_runtime_status": "failed",
+            "motionRuntimeStatus": "failed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "projects",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "projects",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "failed",
+            "runtimeStatus": "failed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": false,
+            "codePassed": false,
+            "errors": [
+              "[Motion Runtime Error] scroll_reveal: Scroll reveal did not change opacity or transform when the element entered view."
+            ],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 3,
+            "repairAttempts": 3,
+            "passed": false,
+            "all_gates_passed": false,
+            "allGatesPassed": false
+          }
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "failed",
+          "section_retries": 0,
+          "project_attempts": 3
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "failed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": false,
+            "runtimePassed": false,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 5,
+            "interactionsTested": 5,
+            "interactions_required": 1,
+            "interactionsRequired": 1,
+            "interaction_evidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "contact_form",
+                "locator": "form fields",
+                "initial_state": "initially invalid when required fields empty",
+                "action": "fill valid test data into required fields",
+                "expected_state": "form checkValidity() becomes true",
+                "observed_state": "checkValidity=True",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "passed",
+            "interactionStatus": "passed",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": false,
+            "motionPassed": false,
+            "motion_status": "failed",
+            "motionStatus": "failed",
+            "motion_runtime_status": "failed",
+            "motionRuntimeStatus": "failed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "projects",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "text_reveal",
+                "target_section": "hero",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              },
+              {
+                "type": "scroll_reveal",
+                "target_section": "projects",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "failed",
+            "runtimeStatus": "failed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": false,
+            "codePassed": false,
+            "errors": [
+              "[Motion Runtime Error] scroll_reveal: Scroll reveal did not change opacity or transform when the element entered view."
+            ],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 3,
+            "repairAttempts": 3,
+            "passed": false,
+            "all_gates_passed": false,
+            "allGatesPassed": false
+          }
+        }
+      ]
+    },
+    "strategy": "kit",
+    "native_code_sections": [],
+    "native_code_fallbacks": {},
+    "self_corrected": false,
+    "turns_used": 7,
+    "sections_completed": 7,
+    "sections_planned": 7,
+    "code": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"links\": [\n    {\n      \"id\": \"projects\",\n      \"href\": \"#projects\",\n      \"label\": \"Projects\"\n    },\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: send us your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+    "files": {
+      "src/components/Header.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"links\": [\n    {\n      \"id\": \"projects\",\n      \"href\": \"#projects\",\n      \"label\": \"Projects\"\n    },\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: send us your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+      "src/components/Header.css": ".k-header { position: sticky; top: 0; z-index: 50; height: var(--k-header-h); background-color: var(--k-glass); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--k-line); transition: transform 320ms var(--k-ease); }\n.k-header.is-tucked { transform: translateY(-100%); }\n.k-header .k-header__bar { height: 100%; display: flex; align-items: center; gap: var(--k-space-3); }\n.k-header__brand { display: inline-flex; align-items: center; min-height: var(--k-tap); max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: 1.375rem; letter-spacing: -0.01em; text-transform: var(--k-display-case); text-decoration: none; }\n.k-header .k-header__nav { margin-left: auto; }\n.k-header .k-header__links { display: flex; gap: 2px; }\n.k-header .k-header__link { position: relative; display: inline-flex; align-items: center; min-height: var(--k-tap); padding: 0 0.75rem; font-size: 0.9375rem; font-weight: 500; color: var(--k-muted); text-decoration: none; transition: color 160ms ease; }\n.k-header .k-header__link::after { content: \"\"; position: absolute; left: 0.75rem; right: 0.75rem; bottom: 8px; height: 2px; background-color: var(--k-accent); transform: scaleX(0); transform-origin: left; transition: transform 220ms var(--k-ease); }\n.k-header .k-header__link:hover, .k-header .k-header__link:focus-visible, .k-header .k-header__link[aria-current=\"location\"] { color: var(--k-ink); }\n.k-header .k-header__link:hover::after, .k-header .k-header__link:focus-visible::after, .k-header .k-header__link[aria-current=\"location\"]::after { transform: scaleX(1); }\n.k-header .k-header__tools { display: flex; align-items: center; gap: var(--k-space-1); margin-left: auto; }\n.k-header .k-header__nav ~ .k-header__tools { margin-left: var(--k-space-2); }\n.k-header .k-header__cart { display: inline-flex; align-items: center; gap: 0.5rem; min-height: var(--k-tap); padding: 0 0.875rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__cart:hover, .k-header .k-header__cart:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__cart:active, .k-header .k-header__toggle:active { transform: scale(0.98); }\n.k-header .k-header__count { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.375rem; border-radius: 999px; background-color: var(--k-accent); color: var(--k-accent-ink); font-size: 0.75rem; }\n.k-header .k-header__cta { min-height: var(--k-tap); padding: 0 1.125rem; font-size: 0.9375rem; }\n.k-header .k-header__toggle { display: none; align-items: center; justify-content: center; width: var(--k-tap); height: var(--k-tap); border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__toggle:hover, .k-header .k-header__toggle:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__burger, .k-header .k-header__burger::before, .k-header .k-header__burger::after { display: block; width: 18px; height: 2px; border-radius: 2px; background-color: currentColor; }\n.k-header .k-header__burger { position: relative; }\n.k-header .k-header__burger::before, .k-header .k-header__burger::after { content: \"\"; position: absolute; left: 0; }\n.k-header .k-header__burger::before { top: -6px; }\n.k-header .k-header__burger::after { top: 6px; }\n@media (max-width: 899px) {\n  .k-header .k-header__nav { display: none; }\n  .k-header .k-header__toggle { display: inline-flex; }\n  .k-header .k-header__nav ~ .k-header__tools { margin-left: auto; }\n}\n@media (max-width: 599px) { .k-header .k-header__cta { display: none; } }\n\n.k-header__drawer, .k-header__cartpanel { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: var(--k-space-4); overflow-y: auto; visibility: hidden; opacity: 0; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s linear 240ms; }\n.k-header__drawer { inset: 0; padding: 14px var(--k-gutter) 32px; background-color: var(--k-bg); color: var(--k-ink); transform: translateY(-12px); }\n.k-header__cartpanel { top: 0; right: 0; bottom: 0; width: min(420px, 100%); padding: 14px 24px 32px; background-color: var(--k-surface); color: var(--k-ink); border-left: 1px solid var(--k-line); box-shadow: -24px 0 60px -30px rgba(0, 0, 0, 0.35); transform: translateX(24px); }\n.k-header__drawer.is-open, .k-header__cartpanel.is-open { visibility: visible; opacity: 1; transform: none; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s; }\n.k-header__drawer-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }\n.k-header__close { min-height: var(--k-tap); padding: 0 1rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease; }\n.k-header__close:hover, .k-header__close:focus-visible { border-color: var(--k-ink); }\n.k-header__drawer-links { display: grid; margin-top: var(--k-space-2); }\n.k-header__drawer-link { display: flex; align-items: center; min-height: 60px; border-bottom: 1px solid var(--k-line); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 7vw, 2.5rem); text-transform: var(--k-display-case); text-decoration: none; transition: color 160ms ease, transform 200ms var(--k-ease); }\n.k-header__drawer-link:hover, .k-header__drawer-link:focus-visible { transform: translateX(6px); }\n.k-header__drawer-link[aria-current=\"location\"] { color: var(--k-accent-text); }\n.k-header__drawer-cta { align-self: flex-start; }\n.k-header__drawer-mail { min-height: var(--k-tap); display: inline-flex; align-items: center; }\n.k-header__cart-title { font-weight: 700; font-size: 1.125rem; }\n.k-header__lines { display: grid; gap: var(--k-space-2); }\n.k-header__line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--k-line); }\n.k-header__remove { justify-self: start; min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: var(--k-muted); text-decoration: underline; text-underline-offset: 0.2em; }\n.k-header__remove:hover, .k-header__remove:focus-visible { color: var(--k-ink); }\n.k-header__empty, .k-header__note { color: var(--k-muted); }\n.k-header__total { font-weight: 700; }\n@media (prefers-reduced-motion: reduce) {\n  .k-header, .k-header__drawer, .k-header__cartpanel { transition: none; }\n  .k-header.is-tucked { transform: none; }\n}\n",
+      "src/components/Hero.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Hero.css';\n\nconst DATA: any = {\n  \"headline\": \"Explore our work\",\n  \"lede\": \"View recent projects and learn more about our approach\",\n  \"tagline\": \"Portfolio for studio\",\n  \"eyebrow\": \"Hero\",\n  \"mark\": \"S\",\n  \"primary\": {\n    \"href\": \"#projects\",\n    \"label\": \"View projects\"\n  },\n  \"secondary\": {\n    \"href\": \"#contact\",\n    \"label\": \"Contact us\"\n  },\n  \"fact\": \"\",\n  \"style\": \"product\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&w=1200&q=80\",\n    \"alt\": \"A designer working at a desk\",\n    \"w\": 1200,\n    \"h\": 1500\n  },\n  \"shader\": true,\n  \"shader_colors\": [\n    [\n      0.0471,\n      0.0627,\n      0.0863\n    ],\n    [\n      0.4863,\n      0.5843,\n      1.0\n    ],\n    [\n      0.2549,\n      0.8275,\n      0.7529\n    ]\n  ],\n  \"shader_mix\": [\n    \"0.50\",\n    \"0.42\"\n  ],\n  \"window\": {\n    \"title\": \"Studio overview\",\n    \"labels\": [\n      \"Overview\",\n      \"Activity\",\n      \"Reports\"\n    ],\n    \"bars\": [\n      38,\n      52,\n      46,\n      64,\n      58,\n      72,\n      66,\n      84,\n      78,\n      90\n    ]\n  }\n};\nconst SHADER_COLORS: number[][] = [[0.0471, 0.0627, 0.0863], [0.4863, 0.5843, 1.0], [0.2549, 0.8275, 0.7529]];\nconst SHADER_MIX: string[] = [\"0.50\", \"0.42\"];\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useMagnet<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const el = ref.current;\n    if (!el) return;\n    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (!fine || reduce) return;\n    const move = (event: PointerEvent) => {\n      if (event.pointerType !== 'mouse') return;\n      const box = el.getBoundingClientRect();\n      const x = ((event.clientX - box.left) / box.width - 0.5) * 16;\n      const y = ((event.clientY - box.top) / box.height - 0.5) * 12;\n      el.style.transform = 'translate3d(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px, 0)';\n    };\n    const leave = () => {\n      el.style.transform = '';\n    };\n    el.addEventListener('pointermove', move);\n    el.addEventListener('pointerleave', leave);\n    return () => {\n      el.removeEventListener('pointermove', move);\n      el.removeEventListener('pointerleave', leave);\n    };\n  }, []);\n  return ref;\n}\n\nconst SHADER_VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}';\nconst SHADER_FS = 'precision mediump float;uniform vec2 r;uniform float t;uniform vec2 m;uniform vec3 c0;uniform vec3 c1;uniform vec3 c2;'\n  + 'void main(){vec2 uv=gl_FragCoord.xy/r;'\n  + 'float a=sin(uv.x*3.1+t*0.35)+sin(uv.y*4.3-t*0.27)+sin((uv.x+uv.y)*2.2+t*0.21);'\n  + 'float b=sin(uv.x*5.7-t*0.18+sin(uv.y*2.0+t*0.3))*0.5+0.5;'\n  + 'vec3 col=mix(c0,c1,smoothstep(-1.2,1.8,a)*MIX_A);'\n  + 'col=mix(col,c2,b*smoothstep(0.2,1.0,uv.y)*MIX_B);'\n  + 'float g=0.12/(0.12+distance(uv,m)*2.4);col+=c1*g*0.16;'\n  + 'col=mix(c0,col,smoothstep(0.0,0.38,uv.y));gl_FragColor=vec4(col,1.0);}';\n\nfunction ShaderBackdrop() {\n  const ref = useRef<HTMLCanvasElement | null>(null);\n  const [failed, setFailed] = useState(false);\n  useEffect(() => {\n    const canvas = ref.current;\n    if (!canvas) return;\n    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false });\n    if (!gl) {\n      setFailed(true);\n      return;\n    }\n    const compile = (type: number, source: string) => {\n      const shader = gl.createShader(type);\n      if (!shader) return null;\n      gl.shaderSource(shader, source);\n      gl.compileShader(shader);\n      return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;\n    };\n    const vs = compile(gl.VERTEX_SHADER, SHADER_VS);\n    const fs = compile(gl.FRAGMENT_SHADER, SHADER_FS.replace('MIX_A', SHADER_MIX[0]).replace('MIX_B', SHADER_MIX[1]));\n    const program = gl.createProgram();\n    if (!vs || !fs || !program) {\n      setFailed(true);\n      return;\n    }\n    gl.attachShader(program, vs);\n    gl.attachShader(program, fs);\n    gl.linkProgram(program);\n    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {\n      setFailed(true);\n      return;\n    }\n    gl.useProgram(program);\n    const buffer = gl.createBuffer();\n    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);\n    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);\n    const loc = gl.getAttribLocation(program, 'p');\n    gl.enableVertexAttribArray(loc);\n    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);\n    const uR = gl.getUniformLocation(program, 'r');\n    const uT = gl.getUniformLocation(program, 't');\n    const uM = gl.getUniformLocation(program, 'm');\n    SHADER_COLORS.forEach((rgb: number[], i: number) => gl.uniform3f(gl.getUniformLocation(program, 'c' + i), rgb[0], rgb[1], rgb[2]));\n    const pointer = { x: 0.7, y: 0.6 };\n    const start = performance.now();\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    let visible = true;\n    let lost = false;\n    let timer = 0;\n    const resize = () => {\n      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);\n      const width = Math.max(1, Math.round(canvas.clientWidth * dpr));\n      const height = Math.max(1, Math.round(canvas.clientHeight * dpr));\n      if (canvas.width !== width || canvas.height !== height) {\n        canvas.width = width;\n        canvas.height = height;\n        gl.viewport(0, 0, width, height);\n      }\n    };\n    const draw = () => {\n      resize();\n      gl.uniform2f(uR, canvas.width, canvas.height);\n      gl.uniform1f(uT, reduce ? 0 : (performance.now() - start) / 1000);\n      gl.uniform2f(uM, pointer.x, pointer.y);\n      gl.drawArrays(gl.TRIANGLES, 0, 3);\n    };\n    const loop = () => {\n      timer = 0;\n      if (lost || !visible || document.hidden || reduce) return;\n      draw();\n      timer = window.setTimeout(loop, 33);\n    };\n    const wake = () => {\n      if (!timer && visible && !document.hidden && !reduce) loop();\n    };\n    const host = canvas.parentElement;\n    const onPointer = (event: PointerEvent) => {\n      const box = canvas.getBoundingClientRect();\n      pointer.x = (event.clientX - box.left) / box.width;\n      pointer.y = 1 - (event.clientY - box.top) / box.height;\n    };\n    const onLost = (event: Event) => {\n      event.preventDefault();\n      lost = true;\n      if (timer) window.clearTimeout(timer);\n      timer = 0;\n      setFailed(true);\n    };\n    canvas.addEventListener('webglcontextlost', onLost);\n    const resizeObserver = new ResizeObserver(() => {\n      if (!lost) draw();\n    });\n    resizeObserver.observe(canvas);\n    const io = new IntersectionObserver((entries) => {\n      visible = entries.some((entry) => entry.isIntersecting);\n      wake();\n    });\n    io.observe(canvas);\n    document.addEventListener('visibilitychange', wake);\n    if (host) host.addEventListener('pointermove', onPointer);\n    draw();\n    wake();\n    return () => {\n      if (timer) window.clearTimeout(timer);\n      resizeObserver.disconnect();\n      io.disconnect();\n      document.removeEventListener('visibilitychange', wake);\n      if (host) host.removeEventListener('pointermove', onPointer);\n      canvas.removeEventListener('webglcontextlost', onLost);\n      const lose = gl.getExtension('WEBGL_lose_context');\n      if (lose && !lost) lose.loseContext();\n    };\n  }, []);\n  return (\n    <>\n      <canvas ref={ref} className={'k-shader' + (failed ? ' is-hidden' : '')} aria-hidden=\"true\" />\n      {failed ? <div className=\"k-shader-fallback\" data-webgl-fallback=\"true\" aria-hidden=\"true\" /> : null}\n    </>\n  );\n}\n\nfunction AppWindow({ labels, bars, title }: any) {\n  return (\n    <figure className=\"k-window\">\n      <div className=\"k-window__chrome\" aria-hidden=\"true\"><span /><span /><span /></div>\n      <div className=\"k-window__body\">\n        <div className=\"k-window__side\" aria-hidden=\"true\">\n          {labels.map((label: string, i: number) => (\n            <span key={i} className={'k-window__nav' + (i === 0 ? ' is-active' : '')}>{label}</span>\n          ))}\n        </div>\n        <div className=\"k-window__main\">\n          <p className=\"k-window__title\">{title}</p>\n          <div className=\"k-window__tiles\">\n            {labels.map((label: string, i: number) => (\n              <div className=\"k-window__tile\" key={i}>\n                <span className=\"k-window__label\">{label}</span>\n                <span className=\"k-window__meter\" aria-hidden=\"true\"><span style={{ width: (48 + i * 17) + '%' }} /></span>\n              </div>\n            ))}\n          </div>\n          <div className=\"k-window__chart\" aria-hidden=\"true\">\n            {bars.map((h: number, i: number) => <span key={i} style={{ height: h + '%' }} />)}\n          </div>\n        </div>\n      </div>\n      <figcaption className=\"k-window__caption\">Illustrative interface; not live data</figcaption>\n    </figure>\n  );\n}\n\nexport function Hero() {\n  const magnetRef = useMagnet<HTMLAnchorElement>();\n  return (\n    <section id=\"hero\" className=\"k-section k-hero k-hero--product\" aria-labelledby=\"hero-title\" data-section=\"hero\">\n      <ShaderBackdrop />\n      <div className=\"k-container k-hero__inner\">\n        <div className=\"k-hero__copy k-hero__copy--center\">\n          {DATA.tagline ? <p className=\"k-eyebrow k-hero__eyebrow k-rise-2\">{DATA.tagline}</p> : null}\n          <h1 id=\"hero-title\" className=\"k-display k-hero__title\" data-motion=\"text-in\">{DATA.headline}</h1>\n          <p className=\"k-lede k-hero__lede k-rise-2\">{DATA.lede}</p>\n          <div className=\"k-actions k-rise-3\">\n            <a ref={magnetRef} className=\"k-btn k-btn--primary\" href={DATA.primary.href}>{DATA.primary.label}</a>\n            <a className=\"k-btn k-btn--ghost k-hero__ghost\" href={DATA.secondary.href}>{DATA.secondary.label}</a>\n          </div>\n          {DATA.fact ? <p className=\"k-hero__fact k-rise-3\">{DATA.fact}</p> : null}\n        </div>\n        <div className=\"k-hero__product k-depth-fast\">\n          <AppWindow labels={DATA.window.labels} bars={DATA.window.bars} title={DATA.window.title} />\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default Hero;\n",
+      "src/components/Hero.css": ".k-hero { position: relative; overflow: hidden; isolation: isolate; padding-block: clamp(48px, 7vw, 104px) clamp(64px, 9vw, 128px); }\n.k-hero .k-hero__inner { position: relative; z-index: 1; }\n.k-hero .k-hero__copy { display: grid; gap: var(--k-space-3); justify-items: start; align-content: center; }\n.k-hero .k-hero__title { max-width: 14ch; }\n.k-hero .k-hero__lede { max-width: 40ch; }\n.k-hero .k-actions { margin-top: var(--k-space-1); }\n.k-hero .k-hero__fact { font-size: 0.9375rem; color: var(--k-muted); }\n.k-hero .k-hero__fact::before { content: \"\"; display: inline-block; width: 24px; height: 1px; margin-right: 10px; vertical-align: middle; background-color: currentColor; }\n.k-hero .k-shader { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }\n.k-hero .k-shader.is-hidden { visibility: hidden; }\n.k-hero .k-shader-fallback { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(70% 60% at 70% 30%, var(--k-accent-soft), transparent 70%), radial-gradient(50% 50% at 20% 80%, var(--k-surface-2), transparent 70%); }\n\n.k-hero--split .k-hero__inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(32px, 6vw, 88px); align-items: center; min-height: min(78vh, 760px); }\n.k-hero--split .k-hero__media { aspect-ratio: 4 / 5; width: 100%; }\n@media (max-width: 860px) {\n  .k-hero--split .k-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }\n  .k-hero--split .k-hero__media { aspect-ratio: 4 / 3; }\n}\n\n.k-section.k-hero--fullbleed { display: flex; align-items: flex-end; min-height: min(calc(100svh - var(--k-header-h)), 900px); padding-block: clamp(120px, 18vh, 200px) clamp(48px, 8vh, 96px); background-color: #121212; color: #FFFFFF; isolation: isolate; }\n.k-hero--fullbleed .k-hero__inner { width: 100%; }\n.k-hero--fullbleed .k-hero__bg { position: absolute; inset: 0; z-index: -2; }\n.k-hero--fullbleed .k-hero__bgmedia { position: absolute; inset: 0; border-radius: 0; }\n.k-hero--fullbleed .k-hero__shade { position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(90deg, rgba(10, 10, 12, 0.62) 0%, rgba(10, 10, 12, 0.28) 58%, rgba(10, 10, 12, 0) 100%), linear-gradient(180deg, rgba(10, 10, 12, 0.2) 0%, rgba(10, 10, 12, 0.3) 45%, var(--k-shade) 100%); }\n.k-hero--fullbleed .k-hero__title { max-width: 16ch; }\n.k-hero--fullbleed .k-hero__lede, .k-hero--fullbleed .k-hero__fact, .k-hero--fullbleed .k-hero__eyebrow { color: rgba(255, 255, 255, 0.88); }\n.k-hero--fullbleed .k-hero__ghost { color: #FFFFFF; border-color: rgba(255, 255, 255, 0.55); }\n.k-hero--fullbleed .k-hero__ghost:hover, .k-hero--fullbleed .k-hero__ghost:focus-visible { border-color: #FFFFFF; }\n\n.k-hero--typographic .k-hero__title { max-width: 18ch; font-size: clamp(3rem, 9vw, 8.25rem); }\n.k-hero--typographic .k-hero__rule { width: 100%; height: 1px; margin-block: var(--k-space-3); background-color: var(--k-line-strong); }\n.k-hero--typographic .k-hero__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-4); width: 100%; }\n.k-hero--typographic .k-hero__strip { margin-top: clamp(40px, 6vw, 80px); }\n.k-hero--typographic .k-hero__stripmedia { aspect-ratio: 21 / 9; width: 100%; }\n@media (max-width: 640px) { .k-hero--typographic .k-hero__stripmedia { aspect-ratio: 4 / 3; } }\n\n.k-hero--product .k-hero__copy--center { justify-items: center; text-align: center; margin-inline: auto; max-width: 900px; }\n.k-hero--product .k-hero__title { max-width: 18ch; }\n.k-hero--product .k-hero__lede { margin-inline: auto; }\n.k-hero--product .k-actions { justify-content: center; }\n.k-hero--product .k-hero__product { max-width: 1040px; margin: clamp(40px, 6vw, 72px) auto 0; }\n\n.k-hero .k-window { position: relative; margin: 0; border: 1px solid var(--k-line); border-radius: calc(var(--k-radius) + 4px); background-color: var(--k-surface); overflow: hidden; box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.45); }\n.k-hero .k-window__chrome { display: flex; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--k-line); }\n.k-hero .k-window__chrome span { width: 10px; height: 10px; border-radius: 50%; background-color: var(--k-line-strong); }\n.k-hero .k-window__body { display: grid; grid-template-columns: 160px minmax(0, 1fr); min-height: 300px; }\n.k-hero .k-window__side { display: grid; align-content: start; gap: 4px; padding: 16px 12px; border-right: 1px solid var(--k-line); }\n.k-hero .k-window__nav { padding: 8px 10px; border-radius: 8px; font-size: 0.875rem; color: var(--k-muted); }\n.k-hero .k-window__nav.is-active { background-color: var(--k-accent-soft); color: var(--k-ink); }\n.k-hero .k-window__main { display: grid; gap: 18px; padding: 20px; align-content: start; }\n.k-hero .k-window__title { font-weight: 600; font-size: 0.9375rem; }\n.k-hero .k-window__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }\n.k-hero .k-window__tile { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--k-line); border-radius: 10px; background-color: var(--k-bg); }\n.k-hero .k-window__label { font-size: 0.8125rem; color: var(--k-muted); }\n.k-hero .k-window__meter { display: block; height: 6px; border-radius: 6px; background-color: var(--k-surface-2); overflow: hidden; }\n.k-hero .k-window__meter span { display: block; height: 100%; border-radius: inherit; background-color: var(--k-accent); }\n.k-hero .k-window__chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 12px; border: 1px solid var(--k-line); border-radius: 10px; }\n.k-hero .k-window__chart span { flex: 1; border-radius: 4px 4px 0 0; background-image: linear-gradient(to top, var(--k-accent), var(--k-accent-2)); opacity: 0.85; }\n.k-hero .k-window__caption { padding: 10px 16px; border-top: 1px solid var(--k-line); font-size: 0.75rem; color: var(--k-muted); }\n@media (max-width: 640px) {\n  .k-hero .k-window__body { grid-template-columns: minmax(0, 1fr); }\n  .k-hero .k-window__side { display: none; }\n  .k-hero .k-window__tiles { grid-template-columns: minmax(0, 1fr); }\n}\n",
+      "src/components/Projects.tsx": "import { useEffect, useRef, useState } from 'react';\nimport type { PointerEvent as ReactPointerEvent } from 'react';\nimport './Projects.css';\n\nconst DATA: any = {\n  \"title\": \"Recent Projects\",\n  \"intro\": \"View the latest work we've completed\",\n  \"items\": [\n    {\n      \"title\": \"Urban Renewal Initiative\",\n      \"caption\": \"A comprehensive plan for revitalizing a downtown area\",\n      \"img\": {\n        \"src\": \"https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=1000&q=80\",\n        \"alt\": \"Design sketches and colour swatches\",\n        \"w\": 1000,\n        \"h\": 800\n      }\n    },\n    {\n      \"title\": \"Sustainable Housing Design\",\n      \"caption\": \"A project focused on eco-friendly residential developments\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Corporate Brand Identity\",\n      \"caption\": \"A full brand overhaul for a mid-sized technology company\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Community Center Expansion\",\n      \"caption\": \"A project to increase capacity and functionality of a local center\",\n      \"img\": null\n    }\n  ],\n  \"eyebrow\": \"Projects\",\n  \"mark\": \"S\"\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useReveal<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const root = ref.current;\n    if (!root) return;\n    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-motion=\"scroll-reveal\"]'));\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (reduce || typeof IntersectionObserver === 'undefined') {\n      items.forEach((el) => el.classList.add('is-visible'));\n      return;\n    }\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) {\n          entry.target.classList.add('is-visible');\n          observer.unobserve(entry.target);\n        }\n      });\n    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });\n    items.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n  return ref;\n}\n\nfunction canTilt() {\n  return typeof window !== 'undefined'\n    && window.matchMedia('(hover: hover) and (pointer: fine)').matches\n    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n}\n\nfunction tiltMove(event: ReactPointerEvent<HTMLElement>) {\n  if (event.pointerType !== 'mouse' || !canTilt()) return;\n  const el = event.currentTarget;\n  const box = el.getBoundingClientRect();\n  const px = (event.clientX - box.left) / box.width;\n  const py = (event.clientY - box.top) / box.height;\n  el.style.setProperty('--k-ry', ((px - 0.5) * 8).toFixed(2) + 'deg');\n  el.style.setProperty('--k-rx', ((0.5 - py) * 6).toFixed(2) + 'deg');\n  el.style.setProperty('--k-mx', (px * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-my', (py * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-glow', '0.14');\n}\n\nfunction tiltLeave(event: ReactPointerEvent<HTMLElement>) {\n  const el = event.currentTarget;\n  ['--k-rx', '--k-ry', '--k-glow'].forEach((name: string) => el.style.removeProperty(name));\n}\n\nexport function Projects() {\n  const revealRef = useReveal<HTMLElement>();\n  return (\n    <section id=\"projects\" className=\"k-section k-projects\" aria-labelledby=\"projects-title\" data-section=\"projects\" ref={revealRef}>\n      <div className=\"k-container\">\n        <div className=\"k-head k-head--split\">\n          <div>\n            <h2 id=\"projects-title\" className=\"k-h2\">{DATA.title}</h2>\n          </div>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n        </div>\n        <ul className=\"k-projects-grid k-stagger\">\n          {DATA.items.map((item: any, i: number) => (\n            <li className={'k-projects-cell' + (i === 0 ? ' k-projects-cell--lead' : '')} key={i} data-motion=\"scroll-reveal\">\n              <figure className=\"k-projects-figure k-tilt\" onPointerMove={tiltMove} onPointerLeave={tiltLeave}>\n                <Media img={item.img} variant={(i % 3) + 1} mark={item.title.charAt(0)} className=\"k-projects-media\" />\n                <figcaption className=\"k-projects-caption\">\n                  <h3 className=\"k-h3\">{item.title}</h3>\n                  {item.caption ? <p className=\"k-muted\">{item.caption}</p> : null}\n                </figcaption>\n              </figure>\n            </li>\n          ))}\n        </ul>\n      </div>\n    </section>\n  );\n}\n\nexport default Projects;\n",
+      "src/components/Projects.css": ".k-projects .k-projects-figure { display: grid; gap: var(--k-space-2); height: 100%; margin: 0; border-radius: var(--k-radius); }\n.k-projects .k-projects-caption { display: grid; gap: 4px; }\n.k-projects .k-projects-media { width: 100%; aspect-ratio: 4 / 3; }\n.k-projects .k-projects-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(20px, 3vw, 36px); }\n.k-projects .k-projects-cell { grid-column: span 2; }\n.k-projects .k-projects-cell--lead { grid-column: span 4; grid-row: span 2; }\n.k-projects .k-projects-cell--lead .k-projects-media { aspect-ratio: auto; min-height: 320px; height: calc(100% - 96px); }\n.k-projects .k-projects-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-3); }\n.k-projects .k-projects-top .k-head { flex: 1 1 520px; margin-bottom: 0; }\n.k-projects .k-projects-controls { display: flex; gap: var(--k-space-1); }\n.k-projects .k-projects-arrow { width: 48px; height: 48px; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-size: 1.125rem; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-projects .k-projects-arrow:hover, .k-projects .k-projects-arrow:focus-visible { border-color: var(--k-ink); transform: translateY(-2px); }\n.k-projects .k-projects-arrow:active { transform: scale(0.96); }\n.k-projects .k-projects-track { margin-top: clamp(32px, 5vw, 56px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--k-gutter); overscroll-behavior-x: contain; scrollbar-width: thin; }\n.k-projects .k-projects-reel { display: flex; gap: clamp(16px, 2.4vw, 28px); width: max-content; padding-inline: max(var(--k-gutter), calc((100vw - var(--k-max)) / 2)); padding-bottom: var(--k-space-2); }\n.k-projects .k-projects-card { flex: 0 0 auto; width: min(78vw, 440px); scroll-snap-align: start; }\n.k-projects .k-projects-card .k-projects-media { aspect-ratio: 4 / 5; }\n@media (max-width: 860px) {\n  .k-projects .k-projects-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-projects .k-projects-cell, .k-projects .k-projects-cell--lead { grid-column: auto; grid-row: auto; }\n  .k-projects .k-projects-cell--lead .k-projects-media { aspect-ratio: 4 / 3; min-height: 0; height: auto; }\n}\n",
+      "src/components/WorkShowcase.tsx": "import { useState } from 'react';\nimport type { PointerEvent as ReactPointerEvent } from 'react';\nimport './WorkShowcase.css';\n\nconst DATA: any = {\n  \"title\": \"Recent Projects\",\n  \"intro\": \"See the latest in our portfolio\",\n  \"items\": [\n    {\n      \"title\": \"Urban renewal\",\n      \"caption\": \"Reimagining public spaces with durability and function\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Residential design\",\n      \"caption\": \"Creating homes that adapt to modern living\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Commercial interiors\",\n      \"caption\": \"Designing spaces that serve and inspire\",\n      \"img\": null\n    },\n    {\n      \"title\": \"Infrastructure\",\n      \"caption\": \"Building systems that last and work\",\n      \"img\": null\n    }\n  ],\n  \"eyebrow\": \"Work showcase\",\n  \"mark\": \"S\"\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction canTilt() {\n  return typeof window !== 'undefined'\n    && window.matchMedia('(hover: hover) and (pointer: fine)').matches\n    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n}\n\nfunction tiltMove(event: ReactPointerEvent<HTMLElement>) {\n  if (event.pointerType !== 'mouse' || !canTilt()) return;\n  const el = event.currentTarget;\n  const box = el.getBoundingClientRect();\n  const px = (event.clientX - box.left) / box.width;\n  const py = (event.clientY - box.top) / box.height;\n  el.style.setProperty('--k-ry', ((px - 0.5) * 8).toFixed(2) + 'deg');\n  el.style.setProperty('--k-rx', ((0.5 - py) * 6).toFixed(2) + 'deg');\n  el.style.setProperty('--k-mx', (px * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-my', (py * 100).toFixed(1) + '%');\n  el.style.setProperty('--k-glow', '0.14');\n}\n\nfunction tiltLeave(event: ReactPointerEvent<HTMLElement>) {\n  const el = event.currentTarget;\n  ['--k-rx', '--k-ry', '--k-glow'].forEach((name: string) => el.style.removeProperty(name));\n}\n\nexport function WorkShowcase() {\n  return (\n    <section id=\"work-showcase\" className=\"k-section k-section--tint k-work-showcase\" aria-labelledby=\"work-showcase-title\" data-section=\"work-showcase\">\n      <div className=\"k-container\">\n        <div className=\"k-head k-head--split\">\n          <div>\n            <h2 id=\"work-showcase-title\" className=\"k-h2\">{DATA.title}</h2>\n          </div>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n        </div>\n        <ul className=\"k-work-showcase-grid k-stagger\">\n          {DATA.items.map((item: any, i: number) => (\n            <li className={'k-work-showcase-cell' + (i === 0 ? ' k-work-showcase-cell--lead' : '')} key={i}>\n              <figure className=\"k-work-showcase-figure k-tilt\" onPointerMove={tiltMove} onPointerLeave={tiltLeave}>\n                <Media img={item.img} variant={(i % 3) + 1} mark={item.title.charAt(0)} className=\"k-work-showcase-media\" />\n                <figcaption className=\"k-work-showcase-caption\">\n                  <h3 className=\"k-h3\">{item.title}</h3>\n                  {item.caption ? <p className=\"k-muted\">{item.caption}</p> : null}\n                </figcaption>\n              </figure>\n            </li>\n          ))}\n        </ul>\n      </div>\n    </section>\n  );\n}\n\nexport default WorkShowcase;\n",
+      "src/components/WorkShowcase.css": ".k-work-showcase .k-work-showcase-figure { display: grid; gap: var(--k-space-2); height: 100%; margin: 0; border-radius: var(--k-radius); }\n.k-work-showcase .k-work-showcase-caption { display: grid; gap: 4px; }\n.k-work-showcase .k-work-showcase-media { width: 100%; aspect-ratio: 4 / 3; }\n.k-work-showcase .k-work-showcase-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: clamp(20px, 3vw, 36px); }\n.k-work-showcase .k-work-showcase-cell { grid-column: span 2; }\n.k-work-showcase .k-work-showcase-cell--lead { grid-column: span 4; grid-row: span 2; }\n.k-work-showcase .k-work-showcase-cell--lead .k-work-showcase-media { aspect-ratio: auto; min-height: 320px; height: calc(100% - 96px); }\n.k-work-showcase .k-work-showcase-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-3); }\n.k-work-showcase .k-work-showcase-top .k-head { flex: 1 1 520px; margin-bottom: 0; }\n.k-work-showcase .k-work-showcase-controls { display: flex; gap: var(--k-space-1); }\n.k-work-showcase .k-work-showcase-arrow { width: 48px; height: 48px; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-size: 1.125rem; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-work-showcase .k-work-showcase-arrow:hover, .k-work-showcase .k-work-showcase-arrow:focus-visible { border-color: var(--k-ink); transform: translateY(-2px); }\n.k-work-showcase .k-work-showcase-arrow:active { transform: scale(0.96); }\n.k-work-showcase .k-work-showcase-track { margin-top: clamp(32px, 5vw, 56px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--k-gutter); overscroll-behavior-x: contain; scrollbar-width: thin; }\n.k-work-showcase .k-work-showcase-reel { display: flex; gap: clamp(16px, 2.4vw, 28px); width: max-content; padding-inline: max(var(--k-gutter), calc((100vw - var(--k-max)) / 2)); padding-bottom: var(--k-space-2); }\n.k-work-showcase .k-work-showcase-card { flex: 0 0 auto; width: min(78vw, 440px); scroll-snap-align: start; }\n.k-work-showcase .k-work-showcase-card .k-work-showcase-media { aspect-ratio: 4 / 5; }\n@media (max-width: 860px) {\n  .k-work-showcase .k-work-showcase-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-work-showcase .k-work-showcase-cell, .k-work-showcase .k-work-showcase-cell--lead { grid-column: auto; grid-row: auto; }\n  .k-work-showcase .k-work-showcase-cell--lead .k-work-showcase-media { aspect-ratio: 4 / 3; min-height: 0; height: auto; }\n}\n",
+      "src/components/About.tsx": "import { useState } from 'react';\nimport './About.css';\n\nconst DATA: any = {\n  \"title\": \"About Studio\",\n  \"intro\": \"About Studio.\",\n  \"paragraphs\": [\n    \"We create visual narratives through design and content.\",\n    \"Our approach is grounded in clarity, purpose, and user-centered solutions.\"\n  ],\n  \"bullets\": [\n    \"Visual narratives\",\n    \"Clarity purpose\",\n    \"User-centered solutions\"\n  ],\n  \"eyebrow\": \"About\",\n  \"mark\": \"S\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1000&q=80\",\n    \"alt\": \"Brand design work laid out on a table\",\n    \"w\": 1000,\n    \"h\": 1250\n  }\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nexport function About() {\n  return (\n    <section id=\"about\" className=\"k-section k-about\" aria-labelledby=\"about-title\" data-section=\"about\">\n      <div className=\"k-container k-about-grid k-about-grid--left k-stagger\">\n        <div className=\"k-about-visual\">\n          <Media img={DATA.img} variant={2} mark={DATA.mark} className=\"k-about-media k-settle\" />\n        </div>\n        <div className=\"k-about-copy\">\n          {DATA.eyebrow ? <p className=\"k-eyebrow\">{DATA.eyebrow}</p> : null}\n          <h2 id=\"about-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n          {DATA.paragraphs.map((p: string, i: number) => (\n            <p key={i} className={i === 0 ? 'k-text k-about-first' : 'k-text k-muted'}>{p}</p>\n          ))}\n          {DATA.bullets.length ? (\n            <ul className=\"k-about-list\">\n              {DATA.bullets.map((b: string, i: number) => <li key={i}>{b}</li>)}\n            </ul>\n          ) : null}\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default About;\n",
+      "src/components/About.css": ".k-about .k-about-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 7vw, 112px); align-items: center; }\n.k-about .k-about-grid--right .k-about-visual { order: 2; }\n.k-about .k-about-media { aspect-ratio: 4 / 5; width: 100%; }\n.k-about .k-about-copy { display: grid; gap: var(--k-space-3); justify-items: start; }\n.k-about .k-about-first { font-size: clamp(1.125rem, 1.5vw, 1.25rem); line-height: 1.55; }\n.k-about .k-about-list { display: grid; gap: var(--k-space-1); margin-top: var(--k-space-1); }\n.k-about .k-about-list li { display: flex; gap: 12px; align-items: baseline; font-weight: 500; }\n.k-about .k-about-list li::before { content: \"\"; flex: 0 0 18px; height: 2px; transform: translateY(-4px); background-color: var(--k-accent); }\n@media (max-width: 860px) {\n  .k-about .k-about-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-about .k-about-grid--right .k-about-visual { order: 0; }\n  .k-about .k-about-media { aspect-ratio: 4 / 3; }\n}\n",
+      "src/components/Contact.tsx": "import { useState } from 'react';\nimport type { FormEvent as ReactFormEvent } from 'react';\nimport './Contact.css';\n\nconst DATA: any = {\n  \"title\": \"Get in touch\",\n  \"text\": \"Send us a message with your inquiry or collaboration request\",\n  \"button\": \"Send message\",\n  \"eyebrow\": \"Contact\",\n  \"mark\": \"S\",\n  \"email\": \"\",\n  \"location\": \"\",\n  \"note\": \"This form isn't connected to a mailbox yet, so nothing is sent from here.\",\n  \"doneNote\": \"Thanks. This form isn't connected yet, so please reach us another way for now.\"\n};\n\nexport function Contact() {\n  const [values, setValues] = useState({ name: '', email: '', message: '' });\n  const [errors, setErrors] = useState<Record<string, string>>({});\n  const [state, setState] = useState('idle');\n  const update = (field: string, value: string) => setValues((current: any) => ({ ...current, [field]: value }));\n  const submit = (event: ReactFormEvent<HTMLFormElement>) => {\n    event.preventDefault();\n    const next: Record<string, string> = {};\n    if (!values.name.trim()) next.name = 'Please add your name.';\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(values.email)) next.email = 'Please add a valid email address.';\n    if (values.message.trim().length < 10) next.message = 'Please write a short message of at least ten characters.';\n    setErrors(next);\n    if (Object.keys(next).length) return;\n    setState('busy');\n    window.setTimeout(() => {\n      if (DATA.email) {\n        const body = values.message + '\\n\\n' + values.name + ' (' + values.email + ')';\n        window.location.href = 'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Message from ${values.name}`) + '&body=' + encodeURIComponent(body);\n      }\n      setState('done');\n    }, 400);\n  };\n  return (\n    <section id=\"contact\" className=\"k-section k-section--tint k-contact\" aria-labelledby=\"contact-title\" data-section=\"contact\">\n      <div className=\"k-container k-contact-grid\">\n        <div className=\"k-contact-intro\">\n          <h2 id=\"contact-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.text ? <p className=\"k-lede\">{DATA.text}</p> : null}\n          {DATA.email || DATA.location ? (\n            <dl className=\"k-contact-details\">\n              {DATA.email ? (\n                <div><dt>Email</dt><dd><a className=\"k-link\" href={'mailto:' + DATA.email}>{DATA.email}</a></dd></div>\n              ) : null}\n              {DATA.location ? (\n                <div><dt>Location</dt><dd>{DATA.location}</dd></div>\n              ) : null}\n            </dl>\n          ) : null}\n        </div>\n        <form className=\"k-contact-form\" noValidate onSubmit={submit} aria-describedby=\"contact-form-note\">\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-name\">Name</label>\n            <input id=\"contact-name\" name=\"name\" type=\"text\" autoComplete=\"name\" required value={values.name} aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? 'contact-name-error' : undefined} onChange={(event) => update('name', event.target.value)} />\n            {errors.name ? <p id=\"contact-name-error\" className=\"k-contact-error\">{errors.name}</p> : null}\n          </div>\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-email\">Email</label>\n            <input id=\"contact-email\" name=\"email\" type=\"email\" autoComplete=\"email\" required value={values.email} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? 'contact-email-error' : undefined} onChange={(event) => update('email', event.target.value)} />\n            {errors.email ? <p id=\"contact-email-error\" className=\"k-contact-error\">{errors.email}</p> : null}\n          </div>\n          <div className=\"k-contact-field\">\n            <label htmlFor=\"contact-message\">Message</label>\n            <textarea id=\"contact-message\" name=\"message\" rows={5} required value={values.message} aria-invalid={errors.message ? true : undefined} aria-describedby={errors.message ? 'contact-message-error' : undefined} onChange={(event) => update('message', event.target.value)} />\n            {errors.message ? <p id=\"contact-message-error\" className=\"k-contact-error\">{errors.message}</p> : null}\n          </div>\n          <button type=\"submit\" className=\"k-btn k-btn--primary k-contact-submit\" aria-busy={state === 'busy'} disabled={state === 'busy'}>{state === 'busy' ? 'Preparing\u2026' : DATA.button}</button>\n          <p id=\"contact-form-note\" className=\"k-contact-note\" aria-live=\"polite\">{state === 'done' ? DATA.doneNote : DATA.note}</p>\n        </form>\n      </div>\n    </section>\n  );\n}\n\nexport default Contact;\n",
+      "src/components/Contact.css": ".k-contact .k-contact-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }\n.k-contact .k-contact-intro { display: grid; gap: var(--k-space-3); }\n.k-contact .k-contact-details { display: grid; gap: var(--k-space-2); margin: var(--k-space-2) 0 0; }\n.k-contact .k-contact-details dt { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-contact .k-contact-details dd { margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }\n.k-contact .k-contact-form { display: grid; gap: var(--k-space-3); padding: clamp(20px, 3vw, 36px); border: 1px solid var(--k-line); border-radius: var(--k-radius); background-color: var(--k-bg); color: var(--k-ink); }\n.k-contact .k-contact-field { display: grid; gap: 6px; }\n.k-contact .k-contact-field label { font-weight: 600; font-size: 0.9375rem; }\n.k-contact .k-contact-field input, .k-contact .k-contact-field textarea { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--k-line-strong); border-radius: calc(var(--k-radius-btn) / 2 + 2px); background-color: var(--k-surface); color: var(--k-ink); transition: border-color 160ms ease, box-shadow 160ms ease; }\n.k-contact .k-contact-field textarea { resize: vertical; }\n.k-contact .k-contact-field input:hover, .k-contact .k-contact-field textarea:hover { border-color: var(--k-ink); }\n.k-contact .k-contact-field input:focus-visible, .k-contact .k-contact-field textarea:focus-visible { outline: none; border-color: var(--k-accent-text); box-shadow: 0 0 0 3px var(--k-accent-soft); }\n.k-contact .k-contact-field [aria-invalid=\"true\"] { border-color: #B42318; }\n.k-contact .k-contact-error { font-size: 0.875rem; font-weight: 600; color: var(--k-ink); }\n.k-contact .k-contact-error::before { content: \"! \"; color: #D92D20; }\n.k-contact .k-contact-submit { justify-self: start; }\n.k-contact .k-contact-note { font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 860px) { .k-contact .k-contact-grid { grid-template-columns: minmax(0, 1fr); } }\n",
+      "src/components/Footer.tsx": "import { useState } from 'react';\nimport './Footer.css';\n\nconst DATA: any = {\n  \"brand\": \"Studio\",\n  \"tagline\": \"Portfolio for studio\",\n  \"links\": [\n    {\n      \"id\": \"projects\",\n      \"href\": \"#projects\",\n      \"label\": \"Projects\"\n    },\n    {\n      \"id\": \"work-showcase\",\n      \"href\": \"#work-showcase\",\n      \"label\": \"Work showcase\"\n    },\n    {\n      \"id\": \"about\",\n      \"href\": \"#about\",\n      \"label\": \"About\"\n    },\n    {\n      \"id\": \"contact\",\n      \"href\": \"#contact\",\n      \"label\": \"Contact\"\n    }\n  ],\n  \"email\": \"\",\n  \"location\": \"\",\n  \"contactHref\": \"#contact\",\n  \"cta\": {\n    \"href\": \"#contact\",\n    \"label\": \"Get in touch\"\n  },\n  \"privacy\": \"This site does not use analytics or advertising cookies. Fonts load from Google Fonts and photos from Unsplash, which receive your IP address to deliver them. If you write to us, your message is used only to reply.\"\n};\n\nexport function Footer() {\n  const [privacy, setPrivacy] = useState(false);\n  const year = new Date().getFullYear();\n  return (\n    <footer id=\"site-footer\" className=\"k-footer\" data-section=\"footer\">\n      <div className=\"k-container k-footer__grid\">\n        <div className=\"k-footer__brand\">\n          <a className=\"k-footer__wordmark\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.tagline ? <p className=\"k-footer__tagline\">{DATA.tagline}</p> : null}\n          {DATA.cta ? <a className=\"k-btn k-btn--ghost k-footer__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        </div>\n        {DATA.links.length ? (\n          <nav className=\"k-footer__col\" aria-label=\"Footer\">\n            <p className=\"k-footer__label\">Explore</p>\n            <ul className=\"k-footer__links\">\n              {DATA.links.map((link: any) => (\n                <li key={link.id}><a className=\"k-footer__link\" href={link.href}>{link.label}</a></li>\n              ))}\n            </ul>\n          </nav>\n        ) : null}\n        <div className=\"k-footer__col\">\n          <p className=\"k-footer__label\">Contact</p>\n          <ul className=\"k-footer__links\">\n            {DATA.email ? <li><a className=\"k-footer__link\" href={'mailto:' + DATA.email}>{DATA.email}</a></li> : null}\n            {DATA.location ? <li><span className=\"k-footer__plain\">{DATA.location}</span></li> : null}\n            {!DATA.email && DATA.contactHref ? <li><a className=\"k-footer__link\" href={DATA.contactHref}>Send a message</a></li> : null}\n            {!DATA.email && !DATA.contactHref ? <li><span className=\"k-footer__plain\">Contact details coming from {DATA.brand} directly.</span></li> : null}\n          </ul>\n        </div>\n      </div>\n      <div className=\"k-container k-footer__base\">\n        <p>\u00a9 {year} {DATA.brand}</p>\n        <div className=\"k-footer__base-links\">\n          <button onClick={() => setPrivacy(!privacy)} type=\"button\" className=\"k-footer__privacy-toggle\" aria-expanded={privacy} aria-controls=\"footer-privacy\">Privacy</button>\n          <a className=\"k-footer__link\" href=\"#site-main\">Back to top</a>\n        </div>\n      </div>\n      <div id=\"footer-privacy\" className=\"k-container k-footer__privacy\" hidden={!privacy}>\n        <p>{DATA.privacy}</p>\n      </div>\n    </footer>\n  );\n}\n\nexport default Footer;\n",
+      "src/components/Footer.css": ".k-footer { padding-block: clamp(56px, 8vw, 96px) 32px; background-color: var(--k-surface); color: var(--k-ink); border-top: 1px solid var(--k-line); }\n.k-footer .k-footer__grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: var(--k-space-6); }\n.k-footer .k-footer__brand { display: grid; gap: var(--k-space-2); align-content: start; justify-items: start; }\n.k-footer .k-footer__wordmark { display: inline-flex; align-items: center; min-height: var(--k-tap); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; text-transform: var(--k-display-case); text-decoration: none; }\n.k-footer .k-footer__tagline { max-width: 34ch; color: var(--k-muted); }\n.k-footer .k-footer__cta { margin-top: var(--k-space-1); }\n.k-footer .k-footer__label { margin-bottom: var(--k-space-1); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-footer .k-footer__links { display: grid; }\n.k-footer .k-footer__link, .k-footer .k-footer__plain { display: inline-flex; align-items: center; min-height: var(--k-tap); text-decoration: none; overflow-wrap: anywhere; }\n.k-footer .k-footer__link { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; transition: text-decoration-color 160ms ease; }\n.k-footer .k-footer__link:hover, .k-footer .k-footer__link:focus-visible { text-decoration-color: currentColor; }\n.k-footer .k-footer__base { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--k-space-2); margin-top: var(--k-space-8); padding-top: var(--k-space-3); border-top: 1px solid var(--k-line); font-size: 0.875rem; color: var(--k-muted); }\n.k-footer .k-footer__base-links { display: flex; gap: var(--k-space-3); align-items: center; }\n.k-footer .k-footer__privacy-toggle { min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: inherit; text-decoration: underline; text-underline-offset: 0.22em; }\n.k-footer .k-footer__privacy-toggle:hover, .k-footer .k-footer__privacy-toggle:focus-visible { color: var(--k-ink); }\n.k-footer .k-footer__privacy p { max-width: 70ch; margin-top: var(--k-space-2); font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 760px) { .k-footer .k-footer__grid { grid-template-columns: minmax(0, 1fr); } }\n"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 7/7 planned sections.\n- Generated component modules: `Header.tsx`, `Header.css`, `Hero.tsx`, `Hero.css`, `Projects.tsx`.\n\n## Status\n- Section completion: 7 / 7 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "Portfolio_Site",
+    "prompt": "Build a dark modern portfolio site with work showcase, about me, and contact form",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 252,
+    "contextTokens": 252,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/Portfolio_Site_20261018_120157/",
+    "filePath": "generated_components/Portfolio_Site_20261018_120157/",
+    "folder_name": "Portfolio_Site_20261018_120157",
+    "folderName": "Portfolio_Site_20261018_120157",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305072_1a437b",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792305072_1a437b",
+    "checkpoints_count": 1,
+    "visual_score": null,
+    "visual_score_before": null,
+    "visual_score_after": null,
+    "visual_score_best": null,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 5,
+      "interactionsTested": 5,
+      "interactions_required": 1,
+      "interactionsRequired": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "passed",
+      "interactionStatus": "passed",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": false,
+      "motionPassed": false,
+      "motion_status": "failed",
+      "motionStatus": "failed",
+      "motion_runtime_status": "failed",
+      "motionRuntimeStatus": "failed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "projects",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "projects",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "[Motion Runtime Error] scroll_reveal: Scroll reveal did not change opacity or transform when the element entered view."
+      ],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 3,
+      "repairAttempts": 3,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "passed",
+      "errors": [],
+      "interactions_tested": 5,
+      "interactions_required": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "visual_validation": {
+      "passed": false,
+      "status": "failed",
+      "score": null,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": false,
+      "runtimePassed": false,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 5,
+      "interactionsTested": 5,
+      "interactions_required": 1,
+      "interactionsRequired": 1,
+      "interaction_evidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "contact_form",
+          "locator": "form fields",
+          "initial_state": "initially invalid when required fields empty",
+          "action": "fill valid test data into required fields",
+          "expected_state": "form checkValidity() becomes true",
+          "observed_state": "checkValidity=True",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "passed",
+      "interactionStatus": "passed",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": false,
+      "motionPassed": false,
+      "motion_status": "failed",
+      "motionStatus": "failed",
+      "motion_runtime_status": "failed",
+      "motionRuntimeStatus": "failed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "projects",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "text_reveal",
+          "target_section": "hero",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        },
+        {
+          "type": "scroll_reveal",
+          "target_section": "projects",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "failed",
+      "runtimeStatus": "failed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": false,
+      "codePassed": false,
+      "errors": [
+        "[Motion Runtime Error] scroll_reveal: Scroll reveal did not change opacity or transform when the element entered view."
+      ],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 3,
+      "repairAttempts": 3,
+      "passed": false,
+      "all_gates_passed": false,
+      "allGatesPassed": false
+    },
+    "preview": {
+      "url": "http://127.0.0.1:5174",
+      "live_url": "http://127.0.0.1:5174",
+      "port": 5174,
+      "running": true,
+      "ready": true,
+      "entry": "index.html",
+      "symbol": "Portfolio_Site",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [
+      {
+        "turn": 1,
+        "action": "write_site_ok",
+        "section": "header",
+        "strategy": "kit",
+        "files": [
+          "src/components/Header.tsx",
+          "src/components/Header.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 0.0
+      },
+      {
+        "turn": 2,
+        "action": "write_site_ok",
+        "section": "hero",
+        "strategy": "kit",
+        "files": [
+          "src/components/Hero.tsx",
+          "src/components/Hero.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 6.27
+      },
+      {
+        "turn": 3,
+        "action": "write_site_ok",
+        "section": "projects",
+        "strategy": "kit",
+        "files": [
+          "src/components/Projects.tsx",
+          "src/components/Projects.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 13.18
+      },
+      {
+        "turn": 4,
+        "action": "write_site_ok",
+        "section": "work-showcase",
+        "strategy": "kit",
+        "files": [
+          "src/components/WorkShowcase.tsx",
+          "src/components/WorkShowcase.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 12.76
+      },
+      {
+        "turn": 5,
+        "action": "write_site_ok",
+        "section": "about",
+        "strategy": "kit",
+        "files": [
+          "src/components/About.tsx",
+          "src/components/About.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 6.78
+      },
+      {
+        "turn": 6,
+        "action": "write_site_ok",
+        "section": "contact",
+        "strategy": "kit",
+        "files": [
+          "src/components/Contact.tsx",
+          "src/components/Contact.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 4.2
+      },
+      {
+        "turn": 7,
+        "action": "write_site_ok",
+        "section": "footer",
+        "strategy": "kit",
+        "files": [
+          "src/components/Footer.tsx",
+          "src/components/Footer.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [],
+        "seconds": 0.0
+      }
+    ],
+    "timestamp": "2026-10-18 12:07:09"
+  },
+  {
+    "task_id": "4adbf8b2-4b7e-4f38-89d3-40615ce4a6a6",
+    "session_id": "1792303584_063a01",
+    "mode": "site",
+    "final_passed": true,
+    "completion_status": "COMPLETE",
+    "status": "completed",
+    "blocked_sections": [],
+    "blocked_diagnostics": [],
+    "initial_passed": null,
+    "initial_validation_status": "unverified",
+    "generation_complete": true,
+    "section_completion": "9 / 9",
+    "project_validation": "passed",
+    "generation_quality": "repaired",
+    "generation_scorecards": {
+      "provenance": {
+        "mode": "live",
+        "task_id": "4adbf8b2-4b7e-4f38-89d3-40615ce4a6a6",
+        "model": {
+          "model_name": "qwen3-siteagent-native-sections-r16-v2",
+          "model_path": "C:\\Users\\AYUSH\\Documents\\slm\\models\\qwen3-siteagent-native-sections-r16-v2",
+          "base_model": "C:\\Users\\AYUSH\\Documents\\slm\\base-model",
+          "base_fingerprint": "07620e498673351e3f2167f4ccebb1d6e319d442d89c29a6add76825f0d19da2",
+          "adapter_fingerprint": "52f668a44af70e7928f925c23fd500b3b5096cacc5ac89675befbd54cbab2f7d",
+          "is_qwen3_architecture": true,
+          "is_mock": false,
+          "adapter_compatible": true,
+          "gpu_ready": true
+        },
+        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792303584_063a01\\raw_generation"
+      },
+      "stages": [
+        {
+          "id": "native",
+          "label": "Model native",
+          "status": "unverified",
+          "first_attempt_sections": 9,
+          "required_sections": 9,
+          "normalized_files": [],
+          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
+        },
+        {
+          "id": "deterministic_repair",
+          "label": "Deterministic repair",
+          "status": "passed",
+          "files": [
+            "src/components/Header.tsx"
+          ],
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 4,
+            "interactionsTested": 4,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "passed",
+            "motionRuntimeStatus": "passed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "scroll_reveal",
+                "target_section": "faq",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "scroll_reveal",
+                "target_section": "faq",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        },
+        {
+          "id": "model_repair",
+          "label": "Model repair",
+          "status": "not_applied",
+          "section_retries": 0,
+          "project_attempts": 0
+        },
+        {
+          "id": "final",
+          "label": "Final site",
+          "status": "passed",
+          "validation": {
+            "typecheck_passed": true,
+            "typecheckPassed": true,
+            "build_passed": true,
+            "buildPassed": true,
+            "lint_passed": true,
+            "lintPassed": true,
+            "contract_passed": true,
+            "contractPassed": true,
+            "accessibility_passed": true,
+            "accessibilityPassed": true,
+            "runtime_passed": true,
+            "runtimePassed": true,
+            "interaction_passed": true,
+            "interactionPassed": true,
+            "interactions_tested": 4,
+            "interactionsTested": 4,
+            "interactions_required": 0,
+            "interactionsRequired": 0,
+            "interaction_evidence": [
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interactionEvidence": [
+              {
+                "requirement_id": "generic_control_0",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_1",
+                "locator": "input[role=input]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_2",
+                "locator": "button[role=button]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              },
+              {
+                "requirement_id": "generic_control_3",
+                "locator": "a[role=a]",
+                "initial_state": "visible in DOM",
+                "action": "hover and click",
+                "expected_state": "exercised cleanly without runtime exception",
+                "observed_state": "interaction cleanly executed",
+                "passed": true,
+                "error": null
+              }
+            ],
+            "interaction_errors": [],
+            "interactionErrors": [],
+            "interaction_status": "not_requested",
+            "interactionStatus": "not_requested",
+            "runtime_unverified": false,
+            "runtimeUnverified": false,
+            "typecheck_status": "passed",
+            "typecheckStatus": "passed",
+            "build_status": "passed",
+            "buildStatus": "passed",
+            "lint_status": "passed",
+            "lintStatus": "passed",
+            "contract_status": "passed",
+            "contractStatus": "passed",
+            "accessibility_status": "passed",
+            "accessibilityStatus": "passed",
+            "motion_passed": true,
+            "motionPassed": true,
+            "motion_status": "passed",
+            "motionStatus": "passed",
+            "motion_runtime_status": "passed",
+            "motionRuntimeStatus": "passed",
+            "three_d_passed": true,
+            "threeDPassed": true,
+            "three_d_status": "not_requested",
+            "threeDStatus": "not_requested",
+            "three_d_static_status": "not_requested",
+            "threeDStaticStatus": "not_requested",
+            "three_d_runtime_status": "not_requested",
+            "threeDRuntimeStatus": "not_requested",
+            "motion_plan": [
+              {
+                "type": "scroll_reveal",
+                "target_section": "faq",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motionPlan": [
+              {
+                "type": "scroll_reveal",
+                "target_section": "faq",
+                "intensity": "subtle",
+                "axis": "y",
+                "trigger": "viewport",
+                "reduced_motion_behavior": "static",
+                "mobile_fallback": "stack",
+                "implementation": "native"
+              }
+            ],
+            "motion_failures": [],
+            "motionFailures": [],
+            "runtime_status": "passed",
+            "runtimeStatus": "passed",
+            "preview_status": "passed",
+            "previewStatus": "passed",
+            "preview_running": true,
+            "previewRunning": true,
+            "code_passed": true,
+            "codePassed": true,
+            "errors": [],
+            "warnings": [
+              "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+            ],
+            "repair_attempts": 0,
+            "repairAttempts": 0,
+            "passed": true,
+            "all_gates_passed": true,
+            "allGatesPassed": true
+          }
+        }
+      ]
+    },
+    "strategy": "native",
+    "native_code_sections": [
+      "header",
+      "hero",
+      "menu",
+      "our-story",
+      "the-team",
+      "testimonials",
+      "faq",
+      "visit-us",
+      "footer"
+    ],
+    "native_code_fallbacks": {},
+    "self_corrected": false,
+    "turns_used": 9,
+    "sections_completed": 9,
+    "sections_planned": 9,
+    "code": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Saltmarsh Kitchen\",\n  \"links\": [\n    {\n      \"id\": \"menu\",\n      \"href\": \"#menu\",\n      \"label\": \"Menu\"\n    },\n    {\n      \"id\": \"our-story\",\n      \"href\": \"#our-story\",\n      \"label\": \"Our story\"\n    },\n    {\n      \"id\": \"the-team\",\n      \"href\": \"#the-team\",\n      \"label\": \"The team\"\n    },\n    {\n      \"id\": \"testimonials\",\n      \"href\": \"#testimonials\",\n      \"label\": \"Testimonials\"\n    },\n    {\n      \"id\": \"faq\",\n      \"href\": \"#faq\",\n      \"label\": \"FAQ\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#visit-us\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"table@saltmarshkitchen.co.uk\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: email table@saltmarshkitchen.co.uk with your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+    "files": {
+      "src/components/Header.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Header.css';\n\nconst DATA: any = {\n  \"brand\": \"Saltmarsh Kitchen\",\n  \"links\": [\n    {\n      \"id\": \"menu\",\n      \"href\": \"#menu\",\n      \"label\": \"Menu\"\n    },\n    {\n      \"id\": \"our-story\",\n      \"href\": \"#our-story\",\n      \"label\": \"Our story\"\n    },\n    {\n      \"id\": \"the-team\",\n      \"href\": \"#the-team\",\n      \"label\": \"The team\"\n    },\n    {\n      \"id\": \"testimonials\",\n      \"href\": \"#testimonials\",\n      \"label\": \"Testimonials\"\n    },\n    {\n      \"id\": \"faq\",\n      \"href\": \"#faq\",\n      \"label\": \"FAQ\"\n    }\n  ],\n  \"cta\": {\n    \"href\": \"#visit-us\",\n    \"label\": \"Get in touch\"\n  },\n  \"store\": false,\n  \"email\": \"table@saltmarshkitchen.co.uk\",\n  \"currency\": \"\",\n  \"checkoutNote\": \"Checkout is handled by email for now: email table@saltmarshkitchen.co.uk with your list and we'll confirm availability and payment.\"\n};\n\nfunction parsePrice(value: string): number {\n  const n = parseFloat(String(value || '').replace(/[^0-9.]/g, ''));\n  return isNaN(n) ? 0 : n;\n}\n\nfunction useCart() {\n  const [lines, setLines] = useState<any[]>([]);\n  useEffect(() => {\n    const onAdd = (event: Event) => {\n      const detail = (event as CustomEvent).detail || {};\n      if (!detail.name) return;\n      setLines((current: any[]) => {\n        if (current.some((line: any) => line.name === detail.name)) {\n          return current.map((line: any) => (line.name === detail.name ? { ...line, qty: line.qty + 1 } : line));\n        }\n        return [...current, { name: detail.name, price: detail.price || '', qty: 1 }];\n      });\n    };\n    window.addEventListener('kit-cart-add', onAdd);\n    return () => window.removeEventListener('kit-cart-add', onAdd);\n  }, []);\n  const remove = (name: string) => setLines((current: any[]) => current.filter((line: any) => line.name !== name));\n  return { lines, remove };\n}\n\nfunction cartTotal(lines: any[]) {\n  return lines.reduce((sum: number, line: any) => sum + parsePrice(line.price) * line.qty, 0);\n}\n\nfunction orderBody(lines: any[], currency: string) {\n  return lines.map((line: any) => line.qty + ' x ' + line.name + (line.price ? ' (' + line.price + ')' : '')).join('\\n')\n    + (currency ? '\\n\\nTotal: ' + currency + cartTotal(lines).toFixed(2) : '');\n}\n\nexport function Header() {\n  const [open, setOpen] = useState(false);\n  const [tucked, setTucked] = useState(false);\n  const [active, setActive] = useState('');\n  const [cartOpen, setCartOpen] = useState(false);\n  const toggleRef = useRef<HTMLButtonElement | null>(null);\n  const cartButtonRef = useRef<HTMLButtonElement | null>(null);\n  const firstLinkRef = useRef<HTMLAnchorElement | null>(null);\n  const navigatedAt = useRef(0);\n  const cart = useCart();\n  const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);\n\n  useEffect(() => {\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');\n    let last = window.scrollY;\n    let pending = 0;\n    const settle = () => {\n      pending = 0;\n      const y = window.scrollY;\n      if (Date.now() - navigatedAt.current < 1500) {\n        // An in-page link is scrolling the page; keep the navigation in view.\n        setTucked(false);\n        last = y;\n        return;\n      }\n      if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);\n      else if (y < last - 4 || y <= 120) setTucked(false);\n      last = y;\n    };\n    const onScroll = () => {\n      if (!pending) pending = window.setTimeout(settle, 80);\n    };\n    const onAnchor = (event: MouseEvent) => {\n      const target = event.target as Element | null;\n      if (target && target.closest && target.closest('a[href^=\"#\"]')) navigatedAt.current = Date.now();\n    };\n    const onHash = () => {\n      navigatedAt.current = Date.now();\n    };\n    window.addEventListener('scroll', onScroll, { passive: true });\n    document.addEventListener('click', onAnchor, true);\n    window.addEventListener('hashchange', onHash);\n    return () => {\n      window.removeEventListener('scroll', onScroll);\n      document.removeEventListener('click', onAnchor, true);\n      window.removeEventListener('hashchange', onHash);\n      if (pending) window.clearTimeout(pending);\n    };\n  }, []);\n\n  useEffect(() => {\n    if (typeof IntersectionObserver === 'undefined') return;\n    const targets = DATA.links\n      .map((link: any) => document.getElementById(link.id))\n      .filter((el: HTMLElement | null) => Boolean(el)) as HTMLElement[];\n    if (!targets.length) return;\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) setActive(entry.target.id);\n      });\n    }, { rootMargin: '-45% 0px -50% 0px' });\n    targets.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n\n  useEffect(() => {\n    if (!open && !cartOpen) return;\n    const previous = document.body.style.overflow;\n    document.body.style.overflow = 'hidden';\n    if (open) firstLinkRef.current?.focus();\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key !== 'Escape') return;\n      if (open) {\n        setOpen(false);\n        toggleRef.current?.focus();\n      }\n      if (cartOpen) {\n        setCartOpen(false);\n        cartButtonRef.current?.focus();\n      }\n    };\n    const desktop = window.matchMedia('(min-width: 900px)');\n    const onWide = () => {\n      if (desktop.matches) setOpen(false);\n    };\n    document.addEventListener('keydown', onKey);\n    desktop.addEventListener('change', onWide);\n    return () => {\n      document.body.style.overflow = previous;\n      document.removeEventListener('keydown', onKey);\n      desktop.removeEventListener('change', onWide);\n    };\n  }, [open, cartOpen]);\n\n  const closeMenu = () => {\n    setOpen(false);\n    toggleRef.current?.focus();\n  };\n\n  return (\n    <>\n      <header id=\"header\" className={'k-header' + (tucked && !open && !cartOpen ? ' is-tucked' : '')} data-section=\"header\">\n        <div className=\"k-container k-header__bar\">\n          <a className=\"k-header__brand\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.links.length ? (\n            <nav className=\"k-header__nav\" aria-label=\"Primary\">\n              <ul className=\"k-header__links\">\n                {DATA.links.map((link: any) => (\n                  <li key={link.id}>\n                    <a className=\"k-header__link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n                  </li>\n                ))}\n              </ul>\n            </nav>\n          ) : null}\n          <div className=\"k-header__tools\">\n            {DATA.store ? (\n              <button onClick={() => setCartOpen(!cartOpen)} ref={cartButtonRef} type=\"button\" className=\"k-header__cart\" data-cart-count={count} aria-label={'Cart, ' + count + (count === 1 ? ' item' : ' items')} aria-expanded={cartOpen} aria-controls=\"site-cart-panel\">\n                <span>Cart</span>\n                <span className=\"k-header__count\" aria-hidden=\"true\">{count}</span>\n              </button>\n            ) : null}\n            {DATA.cta ? <a className=\"k-btn k-btn--primary k-header__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n            <button onClick={() => setOpen(true)} ref={toggleRef} type=\"button\" className=\"k-header__toggle\" aria-expanded={open} aria-controls=\"site-menu\" aria-label=\"Open menu\">\n              <span className=\"k-header__burger\" aria-hidden=\"true\" />\n            </button>\n          </div>\n        </div>\n      </header>\n      <div id=\"site-menu\" className={'k-header__drawer' + (open ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Site menu\" inert={!open}>\n        <div className=\"k-header__drawer-top\">\n          <span className=\"k-header__brand\">{DATA.brand}</span>\n          <button onClick={closeMenu} type=\"button\" className=\"k-header__close\" aria-label=\"Close menu\">Close</button>\n        </div>\n        <nav aria-label=\"Mobile\">\n          <ul className=\"k-header__drawer-links\">\n            {DATA.links.map((link: any, i: number) => (\n              <li key={link.id}>\n                <a ref={i === 0 ? firstLinkRef : undefined} onClick={() => setOpen(false)} className=\"k-header__drawer-link\" href={link.href} aria-current={active === link.id ? 'location' : undefined}>{link.label}</a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        {DATA.cta ? <a onClick={() => setOpen(false)} className=\"k-btn k-btn--primary k-header__drawer-cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        {DATA.email ? <a className=\"k-link k-header__drawer-mail\" href={'mailto:' + DATA.email}>{DATA.email}</a> : null}\n      </div>\n      {DATA.store ? (\n        <div id=\"site-cart-panel\" className={'k-header__cartpanel' + (cartOpen ? ' is-open' : '')} role=\"dialog\" aria-modal=\"true\" aria-label=\"Cart\" inert={!cartOpen}>\n          <div className=\"k-header__drawer-top\">\n            <p className=\"k-header__cart-title\">Your cart</p>\n            <button onClick={() => { setCartOpen(false); cartButtonRef.current?.focus(); }} type=\"button\" className=\"k-header__close\" aria-label=\"Close cart\">Close</button>\n          </div>\n          {cart.lines.length ? (\n            <ul className=\"k-header__lines\">\n              {cart.lines.map((line: any) => (\n                <li key={line.name} className=\"k-header__line\">\n                  <span>{line.qty} \u00d7 {line.name}</span>\n                  <span>{line.price}</span>\n                  <button onClick={() => cart.remove(line.name)} type=\"button\" className=\"k-header__remove\" aria-label={'Remove ' + line.name}>Remove</button>\n                </li>\n              ))}\n            </ul>\n          ) : (\n            <p className=\"k-header__empty\">Your cart is empty. Add something you like and it will appear here.</p>\n          )}\n          {cart.lines.length && DATA.currency ? <p className=\"k-header__total\">Total {DATA.currency}{cartTotal(cart.lines).toFixed(2)}</p> : null}\n          <p className=\"k-header__note\">{DATA.checkoutNote}</p>\n          {cart.lines.length && DATA.email ? (\n            <a className=\"k-btn k-btn--primary\" href={'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Order from ${DATA.brand}`) + '&body=' + encodeURIComponent(orderBody(cart.lines, DATA.currency))}>Email this order</a>\n          ) : null}\n        </div>\n      ) : null}\n    </>\n  );\n}\n\nexport default Header;\n",
+      "src/components/Header.css": ".k-header { position: sticky; top: 0; z-index: 50; height: var(--k-header-h); background-color: var(--k-glass); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid var(--k-line); transition: transform 320ms var(--k-ease); }\n.k-header.is-tucked { transform: translateY(-100%); }\n.k-header .k-header__bar { height: 100%; display: flex; align-items: center; gap: var(--k-space-3); }\n.k-header__brand { display: inline-flex; align-items: center; min-height: var(--k-tap); max-width: 62vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: 1.375rem; letter-spacing: -0.01em; text-transform: var(--k-display-case); text-decoration: none; }\n.k-header .k-header__nav { margin-left: auto; }\n.k-header .k-header__links { display: flex; gap: 2px; }\n.k-header .k-header__link { position: relative; display: inline-flex; align-items: center; min-height: var(--k-tap); padding: 0 0.75rem; font-size: 0.9375rem; font-weight: 500; color: var(--k-muted); text-decoration: none; transition: color 160ms ease; }\n.k-header .k-header__link::after { content: \"\"; position: absolute; left: 0.75rem; right: 0.75rem; bottom: 8px; height: 2px; background-color: var(--k-accent); transform: scaleX(0); transform-origin: left; transition: transform 220ms var(--k-ease); }\n.k-header .k-header__link:hover, .k-header .k-header__link:focus-visible, .k-header .k-header__link[aria-current=\"location\"] { color: var(--k-ink); }\n.k-header .k-header__link:hover::after, .k-header .k-header__link:focus-visible::after, .k-header .k-header__link[aria-current=\"location\"]::after { transform: scaleX(1); }\n.k-header .k-header__tools { display: flex; align-items: center; gap: var(--k-space-1); margin-left: auto; }\n.k-header .k-header__nav ~ .k-header__tools { margin-left: var(--k-space-2); }\n.k-header .k-header__cart { display: inline-flex; align-items: center; gap: 0.5rem; min-height: var(--k-tap); padding: 0 0.875rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__cart:hover, .k-header .k-header__cart:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__cart:active, .k-header .k-header__toggle:active { transform: scale(0.98); }\n.k-header .k-header__count { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 0.375rem; border-radius: 999px; background-color: var(--k-accent); color: var(--k-accent-ink); font-size: 0.75rem; }\n.k-header .k-header__cta { min-height: var(--k-tap); padding: 0 1.125rem; font-size: 0.9375rem; }\n.k-header .k-header__toggle { display: none; align-items: center; justify-content: center; width: var(--k-tap); height: var(--k-tap); border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-header .k-header__toggle:hover, .k-header .k-header__toggle:focus-visible { border-color: var(--k-ink); }\n.k-header .k-header__burger, .k-header .k-header__burger::before, .k-header .k-header__burger::after { display: block; width: 18px; height: 2px; border-radius: 2px; background-color: currentColor; }\n.k-header .k-header__burger { position: relative; }\n.k-header .k-header__burger::before, .k-header .k-header__burger::after { content: \"\"; position: absolute; left: 0; }\n.k-header .k-header__burger::before { top: -6px; }\n.k-header .k-header__burger::after { top: 6px; }\n@media (max-width: 899px) {\n  .k-header .k-header__nav { display: none; }\n  .k-header .k-header__toggle { display: inline-flex; }\n  .k-header .k-header__nav ~ .k-header__tools { margin-left: auto; }\n}\n@media (max-width: 599px) { .k-header .k-header__cta { display: none; } }\n\n.k-header__drawer, .k-header__cartpanel { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: var(--k-space-4); overflow-y: auto; visibility: hidden; opacity: 0; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s linear 240ms; }\n.k-header__drawer { inset: 0; padding: 14px var(--k-gutter) 32px; background-color: var(--k-bg); color: var(--k-ink); transform: translateY(-12px); }\n.k-header__cartpanel { top: 0; right: 0; bottom: 0; width: min(420px, 100%); padding: 14px 24px 32px; background-color: var(--k-surface); color: var(--k-ink); border-left: 1px solid var(--k-line); box-shadow: -24px 0 60px -30px rgba(0, 0, 0, 0.35); transform: translateX(24px); }\n.k-header__drawer.is-open, .k-header__cartpanel.is-open { visibility: visible; opacity: 1; transform: none; transition: opacity 240ms var(--k-ease), transform 240ms var(--k-ease), visibility 0s; }\n.k-header__drawer-top { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }\n.k-header__close { min-height: var(--k-tap); padding: 0 1rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; font-weight: 600; transition: border-color 160ms ease; }\n.k-header__close:hover, .k-header__close:focus-visible { border-color: var(--k-ink); }\n.k-header__drawer-links { display: grid; margin-top: var(--k-space-2); }\n.k-header__drawer-link { display: flex; align-items: center; min-height: 60px; border-bottom: 1px solid var(--k-line); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 7vw, 2.5rem); text-transform: var(--k-display-case); text-decoration: none; transition: color 160ms ease, transform 200ms var(--k-ease); }\n.k-header__drawer-link:hover, .k-header__drawer-link:focus-visible { transform: translateX(6px); }\n.k-header__drawer-link[aria-current=\"location\"] { color: var(--k-accent-text); }\n.k-header__drawer-cta { align-self: flex-start; }\n.k-header__drawer-mail { min-height: var(--k-tap); display: inline-flex; align-items: center; }\n.k-header__cart-title { font-weight: 700; font-size: 1.125rem; }\n.k-header__lines { display: grid; gap: var(--k-space-2); }\n.k-header__line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding-bottom: 12px; border-bottom: 1px solid var(--k-line); }\n.k-header__remove { justify-self: start; min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: var(--k-muted); text-decoration: underline; text-underline-offset: 0.2em; }\n.k-header__remove:hover, .k-header__remove:focus-visible { color: var(--k-ink); }\n.k-header__empty, .k-header__note { color: var(--k-muted); }\n.k-header__total { font-weight: 700; }\n@media (prefers-reduced-motion: reduce) {\n  .k-header, .k-header__drawer, .k-header__cartpanel { transition: none; }\n  .k-header.is-tucked { transform: none; }\n}\n",
+      "src/components/Hero.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './Hero.css';\n\nconst DATA: any = {\n  \"headline\": \"Seasonal seafood at Saltmarsh Kitchen\",\n  \"lede\": \"Fresh catches, local ingredients, and a menu that changes with the seasons.\",\n  \"tagline\": \"Seafood with a purpose\",\n  \"eyebrow\": \"Hero\",\n  \"mark\": \"S\",\n  \"primary\": {\n    \"href\": \"#menu\",\n    \"label\": \"Explore the menu\"\n  },\n  \"secondary\": {\n    \"href\": \"#visit-us\",\n    \"label\": \"Visit us\"\n  },\n  \"fact\": \"Based in Whitstable\",\n  \"style\": \"fullbleed\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=2000&q=80\",\n    \"alt\": \"A chef plating food in a kitchen\",\n    \"w\": 2000,\n    \"h\": 1300\n  },\n  \"shader\": false,\n  \"window\": {\n    \"title\": \"Saltmarsh Kitchen overview\",\n    \"labels\": [\n      \"Overview\",\n      \"Activity\",\n      \"Reports\"\n    ],\n    \"bars\": [\n      38,\n      52,\n      46,\n      64,\n      58,\n      72,\n      66,\n      84,\n      78,\n      90\n    ]\n  }\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useMagnet<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const el = ref.current;\n    if (!el) return;\n    const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (!fine || reduce) return;\n    const move = (event: PointerEvent) => {\n      if (event.pointerType !== 'mouse') return;\n      const box = el.getBoundingClientRect();\n      const x = ((event.clientX - box.left) / box.width - 0.5) * 16;\n      const y = ((event.clientY - box.top) / box.height - 0.5) * 12;\n      el.style.transform = 'translate3d(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px, 0)';\n    };\n    const leave = () => {\n      el.style.transform = '';\n    };\n    el.addEventListener('pointermove', move);\n    el.addEventListener('pointerleave', leave);\n    return () => {\n      el.removeEventListener('pointermove', move);\n      el.removeEventListener('pointerleave', leave);\n    };\n  }, []);\n  return ref;\n}\n\nexport function Hero() {\n  const magnetRef = useMagnet<HTMLAnchorElement>();\n  return (\n    <section id=\"hero\" className=\"k-section k-hero k-hero--fullbleed\" aria-labelledby=\"hero-title\" data-section=\"hero\">\n      <div className=\"k-hero__bg\">\n        <Media img={DATA.img} priority={true} variant={1} className=\"k-hero__bgmedia\" />\n      </div>\n      <div className=\"k-hero__shade\" aria-hidden=\"true\" />\n      <div className=\"k-container k-hero__inner\">\n        <div className=\"k-hero__copy\">\n          {DATA.tagline ? <p className=\"k-eyebrow k-hero__eyebrow k-rise-2\">{DATA.tagline}</p> : null}\n          <h1 id=\"hero-title\" className=\"k-display k-hero__title\" data-motion=\"text-in\">{DATA.headline}</h1>\n          <p className=\"k-lede k-hero__lede k-rise-2\">{DATA.lede}</p>\n          <div className=\"k-actions k-rise-3\">\n            <a ref={magnetRef} className=\"k-btn k-btn--primary\" href={DATA.primary.href}>{DATA.primary.label}</a>\n            <a className=\"k-btn k-btn--ghost k-hero__ghost\" href={DATA.secondary.href}>{DATA.secondary.label}</a>\n          </div>\n          {DATA.fact ? <p className=\"k-hero__fact k-rise-3\">{DATA.fact}</p> : null}\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default Hero;\n",
+      "src/components/Hero.css": ".k-hero { position: relative; overflow: hidden; isolation: isolate; padding-block: clamp(48px, 7vw, 104px) clamp(64px, 9vw, 128px); }\n.k-hero .k-hero__inner { position: relative; z-index: 1; }\n.k-hero .k-hero__copy { display: grid; gap: var(--k-space-3); justify-items: start; align-content: center; }\n.k-hero .k-hero__title { max-width: 14ch; }\n.k-hero .k-hero__lede { max-width: 40ch; }\n.k-hero .k-actions { margin-top: var(--k-space-1); }\n.k-hero .k-hero__fact { font-size: 0.9375rem; color: var(--k-muted); }\n.k-hero .k-hero__fact::before { content: \"\"; display: inline-block; width: 24px; height: 1px; margin-right: 10px; vertical-align: middle; background-color: currentColor; }\n.k-hero .k-shader { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }\n.k-hero .k-shader.is-hidden { visibility: hidden; }\n.k-hero .k-shader-fallback { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(70% 60% at 70% 30%, var(--k-accent-soft), transparent 70%), radial-gradient(50% 50% at 20% 80%, var(--k-surface-2), transparent 70%); }\n\n.k-hero--split .k-hero__inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(32px, 6vw, 88px); align-items: center; min-height: min(78vh, 760px); }\n.k-hero--split .k-hero__media { aspect-ratio: 4 / 5; width: 100%; }\n@media (max-width: 860px) {\n  .k-hero--split .k-hero__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; }\n  .k-hero--split .k-hero__media { aspect-ratio: 4 / 3; }\n}\n\n.k-section.k-hero--fullbleed { display: flex; align-items: flex-end; min-height: min(calc(100svh - var(--k-header-h)), 900px); padding-block: clamp(120px, 18vh, 200px) clamp(48px, 8vh, 96px); background-color: #121212; color: #FFFFFF; isolation: isolate; }\n.k-hero--fullbleed .k-hero__inner { width: 100%; }\n.k-hero--fullbleed .k-hero__bg { position: absolute; inset: 0; z-index: -2; }\n.k-hero--fullbleed .k-hero__bgmedia { position: absolute; inset: 0; border-radius: 0; }\n.k-hero--fullbleed .k-hero__shade { position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(90deg, rgba(10, 10, 12, 0.62) 0%, rgba(10, 10, 12, 0.28) 58%, rgba(10, 10, 12, 0) 100%), linear-gradient(180deg, rgba(10, 10, 12, 0.2) 0%, rgba(10, 10, 12, 0.3) 45%, var(--k-shade) 100%); }\n.k-hero--fullbleed .k-hero__title { max-width: 16ch; }\n.k-hero--fullbleed .k-hero__lede, .k-hero--fullbleed .k-hero__fact, .k-hero--fullbleed .k-hero__eyebrow { color: rgba(255, 255, 255, 0.88); }\n.k-hero--fullbleed .k-hero__ghost { color: #FFFFFF; border-color: rgba(255, 255, 255, 0.55); }\n.k-hero--fullbleed .k-hero__ghost:hover, .k-hero--fullbleed .k-hero__ghost:focus-visible { border-color: #FFFFFF; }\n\n.k-hero--typographic .k-hero__title { max-width: 18ch; font-size: clamp(3rem, 9vw, 8.25rem); }\n.k-hero--typographic .k-hero__rule { width: 100%; height: 1px; margin-block: var(--k-space-3); background-color: var(--k-line-strong); }\n.k-hero--typographic .k-hero__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--k-space-4); width: 100%; }\n.k-hero--typographic .k-hero__strip { margin-top: clamp(40px, 6vw, 80px); }\n.k-hero--typographic .k-hero__stripmedia { aspect-ratio: 21 / 9; width: 100%; }\n@media (max-width: 640px) { .k-hero--typographic .k-hero__stripmedia { aspect-ratio: 4 / 3; } }\n\n.k-hero--product .k-hero__copy--center { justify-items: center; text-align: center; margin-inline: auto; max-width: 900px; }\n.k-hero--product .k-hero__title { max-width: 18ch; }\n.k-hero--product .k-hero__lede { margin-inline: auto; }\n.k-hero--product .k-actions { justify-content: center; }\n.k-hero--product .k-hero__product { max-width: 1040px; margin: clamp(40px, 6vw, 72px) auto 0; }\n\n.k-hero .k-window { position: relative; margin: 0; border: 1px solid var(--k-line); border-radius: calc(var(--k-radius) + 4px); background-color: var(--k-surface); overflow: hidden; box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.45); }\n.k-hero .k-window__chrome { display: flex; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--k-line); }\n.k-hero .k-window__chrome span { width: 10px; height: 10px; border-radius: 50%; background-color: var(--k-line-strong); }\n.k-hero .k-window__body { display: grid; grid-template-columns: 160px minmax(0, 1fr); min-height: 300px; }\n.k-hero .k-window__side { display: grid; align-content: start; gap: 4px; padding: 16px 12px; border-right: 1px solid var(--k-line); }\n.k-hero .k-window__nav { padding: 8px 10px; border-radius: 8px; font-size: 0.875rem; color: var(--k-muted); }\n.k-hero .k-window__nav.is-active { background-color: var(--k-accent-soft); color: var(--k-ink); }\n.k-hero .k-window__main { display: grid; gap: 18px; padding: 20px; align-content: start; }\n.k-hero .k-window__title { font-weight: 600; font-size: 0.9375rem; }\n.k-hero .k-window__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }\n.k-hero .k-window__tile { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--k-line); border-radius: 10px; background-color: var(--k-bg); }\n.k-hero .k-window__label { font-size: 0.8125rem; color: var(--k-muted); }\n.k-hero .k-window__meter { display: block; height: 6px; border-radius: 6px; background-color: var(--k-surface-2); overflow: hidden; }\n.k-hero .k-window__meter span { display: block; height: 100%; border-radius: inherit; background-color: var(--k-accent); }\n.k-hero .k-window__chart { display: flex; align-items: flex-end; gap: 8px; height: 140px; padding: 12px; border: 1px solid var(--k-line); border-radius: 10px; }\n.k-hero .k-window__chart span { flex: 1; border-radius: 4px 4px 0 0; background-image: linear-gradient(to top, var(--k-accent), var(--k-accent-2)); opacity: 0.85; }\n.k-hero .k-window__caption { padding: 10px 16px; border-top: 1px solid var(--k-line); font-size: 0.75rem; color: var(--k-muted); }\n@media (max-width: 640px) {\n  .k-hero .k-window__body { grid-template-columns: minmax(0, 1fr); }\n  .k-hero .k-window__side { display: none; }\n  .k-hero .k-window__tiles { grid-template-columns: minmax(0, 1fr); }\n}\n",
+      "src/components/Menu.tsx": "import { useRef, useState } from 'react';\nimport type { KeyboardEvent as ReactKeyboardEvent } from 'react';\nimport { flushSync } from 'react-dom';\nimport './Menu.css';\n\nconst DATA: any = {\n  \"title\": \"Menu\",\n  \"intro\": \"Seasonal seafood at Saltmarsh Kitchen\",\n  \"categories\": [\n    {\n      \"name\": \"Starters\",\n      \"items\": [\n        {\n          \"name\": \"Seafood Skewers\",\n          \"description\": \"Grilled seafood on a stick with a side of lemon aioli\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Crab Cakes\",\n          \"description\": \"Crispy with a tangy tartar sauce\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Oyster Omelette\",\n          \"description\": \"Fresh oysters in a creamy egg dish\",\n          \"price\": \"\"\n        }\n      ]\n    },\n    {\n      \"name\": \"Mains\",\n      \"items\": [\n        {\n          \"name\": \"Sea Bass\",\n          \"description\": \"Baked with a buttery herb sauce\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Lamb Chops\",\n          \"description\": \"Searingly cooked with a red wine reduction\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Shellfish Platter\",\n          \"description\": \"Mixed seafood with a house-made sauce\",\n          \"price\": \"\"\n        }\n      ]\n    },\n    {\n      \"name\": \"Desserts\",\n      \"items\": [\n        {\n          \"name\": \"Seafood Pudding\",\n          \"description\": \"A rich dessert with a seafood twist\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Cr\u00e8me Br\u00fbl\u00e9e\",\n          \"description\": \"A classic with a caramelized sugar top\",\n          \"price\": \"\"\n        },\n        {\n          \"name\": \"Sea Salt Caramel\",\n          \"description\": \"A sweet with a hint of ocean breeze\",\n          \"price\": \"\"\n        }\n      ]\n    }\n  ],\n  \"eyebrow\": \"\",\n  \"mark\": \"S\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=80\",\n    \"alt\": \"A plated dish in a restaurant\",\n    \"w\": 1000,\n    \"h\": 1250\n  },\n  \"empty\": \"Ask Saltmarsh Kitchen for today's menu.\",\n  \"askToday\": \"Ask us what's on today \u2014 write to table@saltmarshkitchen.co.uk.\"\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nexport function Menu() {\n  const [active, setActive] = useState(0);\n  const tabsRef = useRef<Array<HTMLButtonElement | null>>([]);\n  const select = (index: number, focus: boolean) => {\n    const count = DATA.categories.length;\n    const next = (index + count) % count;\n    const apply = () => setActive(next);\n    const doc: any = document;\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (doc.startViewTransition && !reduce) {\n      doc.startViewTransition(() => flushSync(apply));\n    } else {\n      apply();\n    }\n    if (focus) tabsRef.current[next]?.focus();\n  };\n  const onKey = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {\n    const last = DATA.categories.length - 1;\n    const moves: Record<string, number> = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: last };\n    if (event.key in moves) {\n      event.preventDefault();\n      select(moves[event.key], true);\n    }\n  };\n  return (\n    <section id=\"menu\" className=\"k-section k-menu\" aria-labelledby=\"menu-title\" data-section=\"menu\">\n      <div className=\"k-container k-menu-grid\">\n        <div className=\"k-menu-intro\">\n          <h2 id=\"menu-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n          <Media img={DATA.img} variant={3} mark={DATA.mark} className=\"k-menu-media k-settle\" />\n        </div>\n        <div className=\"k-menu-board\">\n          <div className=\"k-menu-tabs\" role=\"tablist\" aria-label={DATA.title}>\n            {DATA.categories.map((cat: any, i: number) => (\n              <button onClick={() => select(i, false)} onKeyDown={(event: ReactKeyboardEvent<HTMLButtonElement>) => onKey(event, i)} ref={(el: HTMLButtonElement | null) => { tabsRef.current[i] = el; }} key={i} type=\"button\" role=\"tab\" id={'menu-tab-' + i} aria-selected={active === i} aria-controls=\"menu-panel\" tabIndex={active === i ? 0 : -1} className=\"k-menu-tab\">{cat.name}</button>\n            ))}\n          </div>\n          <div id=\"menu-panel\" role=\"tabpanel\" aria-labelledby={'menu-tab-' + active} className=\"k-menu-panel\" tabIndex={0}>\n            {DATA.categories[active].items.length ? (\n            <ul className=\"k-menu-dishes\">\n              {DATA.categories[active].items.map((dish: any, i: number) => (\n                <li className=\"k-menu-dish\" key={i}>\n                  <div className=\"k-menu-dishrow\">\n                    <h3 className=\"k-menu-dishname\">{dish.name}</h3>\n                    {dish.price ? <span className=\"k-menu-leader\" aria-hidden=\"true\" /> : null}\n                    {dish.price ? <span className=\"k-menu-price\">{dish.price}</span> : null}\n                  </div>\n                  {dish.description ? <p className=\"k-muted\">{dish.description}</p> : null}\n                </li>\n              ))}\n            </ul>\n            ) : (\n              <p className=\"k-lede k-menu-empty\">{DATA.askToday}</p>\n            )}\n          </div>\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default Menu;\n",
+      "src/components/Menu.css": ".k-menu .k-menu-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: clamp(32px, 6vw, 96px); align-items: start; }\n.k-menu .k-menu-intro { display: grid; gap: var(--k-space-3); position: sticky; top: calc(var(--k-header-h) + 24px); }\n.k-menu .k-menu-media { width: 100%; aspect-ratio: 4 / 3; margin-top: var(--k-space-2); }\n.k-menu .k-menu-tabs { display: flex; flex-wrap: wrap; gap: var(--k-space-1); margin-bottom: var(--k-space-4); }\n.k-menu .k-menu-tab { min-height: var(--k-tap); padding: 0 1.125rem; border: 1px solid var(--k-line-strong); border-radius: var(--k-radius-btn); background-color: transparent; color: var(--k-ink); font-weight: 600; transition: border-color 160ms ease, transform 160ms var(--k-ease); }\n.k-menu .k-menu-tab:hover, .k-menu .k-menu-tab:focus-visible { border-color: var(--k-ink); transform: translateY(-1px); }\n.k-menu .k-menu-tab[aria-selected=\"true\"] { background-color: var(--k-accent); color: var(--k-accent-ink); border-color: var(--k-accent); }\n.k-menu .k-menu-panel { view-transition-name: k-panel-menu; }\n.k-menu .k-menu-panel:focus-visible { outline-offset: 8px; }\n.k-menu .k-menu-dishes { display: grid; }\n.k-menu .k-menu-dish { display: grid; gap: 4px; padding-block: var(--k-space-3); border-bottom: 1px solid var(--k-line); }\n.k-menu .k-menu-dishrow { display: flex; align-items: baseline; gap: var(--k-space-2); }\n.k-menu .k-menu-dishname { font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.2rem, 1.6vw, 1.4rem); line-height: 1.25; }\n.k-menu .k-menu-leader { flex: 1; border-bottom: 1px dotted var(--k-line-strong); transform: translateY(-4px); }\n.k-menu .k-menu-price { font-weight: 600; font-variant-numeric: tabular-nums; }\n::view-transition-old(k-panel-menu), ::view-transition-new(k-panel-menu) { animation-duration: 240ms; }\n@media (max-width: 860px) {\n  .k-menu .k-menu-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-menu .k-menu-intro { position: static; }\n}\n",
+      "src/components/OurStory.tsx": "import { useEffect, useRef, useState } from 'react';\nimport './OurStory.css';\n\nconst DATA: any = {\n  \"title\": \"Our Story\",\n  \"intro\": \"About Saltmarsh Kitchen.\",\n  \"paragraphs\": [\n    \"Saltmarsh Kitchen is a seasonal seafood restaurant nestled in Whitstable. We source fresh ingredients and prepare meals with care.\",\n    \"Our focus is on seasonal ingredients and traditional techniques. We believe in simplicity and authenticity in every dish.\"\n  ],\n  \"bullets\": [\n    \"Seasonal seafood\",\n    \"Fresh ingredients\",\n    \"Traditional techniques\"\n  ],\n  \"eyebrow\": \"\",\n  \"mark\": \"S\",\n  \"img\": {\n    \"src\": \"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80\",\n    \"alt\": \"A restaurant dining room set for service\",\n    \"w\": 1000,\n    \"h\": 1250\n  }\n};\n\nfunction Media({ img, priority, variant, mark, className }: any) {\n  const [missing, setMissing] = useState(false);\n  return (\n    <div className={'k-media k-art' + (className ? ' ' + className : '')} data-variant={variant || 1}>\n      {mark ? <span className=\"k-art__mark\" aria-hidden=\"true\">{mark}</span> : null}\n      {img && !missing ? (\n        <img alt={img.alt} src={img.src} width={img.w} height={img.h} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'auto'} decoding={priority ? 'sync' : 'async'} onError={() => setMissing(true)} />\n      ) : null}\n    </div>\n  );\n}\n\nfunction useReveal<T extends HTMLElement>() {\n  const ref = useRef<T | null>(null);\n  useEffect(() => {\n    const root = ref.current;\n    if (!root) return;\n    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-motion=\"scroll-reveal\"]'));\n    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;\n    if (reduce || typeof IntersectionObserver === 'undefined') {\n      items.forEach((el) => el.classList.add('is-visible'));\n      return;\n    }\n    const observer = new IntersectionObserver((entries) => {\n      entries.forEach((entry) => {\n        if (entry.isIntersecting) {\n          entry.target.classList.add('is-visible');\n          observer.unobserve(entry.target);\n        }\n      });\n    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });\n    items.forEach((el) => observer.observe(el));\n    return () => observer.disconnect();\n  }, []);\n  return ref;\n}\n\nexport function OurStory() {\n  const revealRef = useReveal<HTMLElement>();\n  return (\n    <section id=\"our-story\" className=\"k-section k-section--tint k-our-story\" aria-labelledby=\"our-story-title\" data-section=\"our-story\" ref={revealRef}>\n      <div className=\"k-container k-our-story-grid k-our-story-grid--right k-stagger\">\n        <div className=\"k-our-story-visual\" data-motion=\"scroll-reveal\">\n          <Media img={DATA.img} variant={2} mark={DATA.mark} className=\"k-our-story-media k-settle\" />\n        </div>\n        <div className=\"k-our-story-copy\" data-motion=\"scroll-reveal\">\n          {DATA.eyebrow ? <p className=\"k-eyebrow\">{DATA.eyebrow}</p> : null}\n          <h2 id=\"our-story-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n          {DATA.paragraphs.map((p: string, i: number) => (\n            <p key={i} className={i === 0 ? 'k-text k-our-story-first' : 'k-text k-muted'}>{p}</p>\n          ))}\n          {DATA.bullets.length ? (\n            <ul className=\"k-our-story-list\">\n              {DATA.bullets.map((b: string, i: number) => <li key={i}>{b}</li>)}\n            </ul>\n          ) : null}\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default OurStory;\n",
+      "src/components/OurStory.css": ".k-our-story .k-our-story-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 7vw, 112px); align-items: center; }\n.k-our-story .k-our-story-grid--right .k-our-story-visual { order: 2; }\n.k-our-story .k-our-story-media { aspect-ratio: 4 / 5; width: 100%; }\n.k-our-story .k-our-story-copy { display: grid; gap: var(--k-space-3); justify-items: start; }\n.k-our-story .k-our-story-first { font-size: clamp(1.125rem, 1.5vw, 1.25rem); line-height: 1.55; }\n.k-our-story .k-our-story-list { display: grid; gap: var(--k-space-1); margin-top: var(--k-space-1); }\n.k-our-story .k-our-story-list li { display: flex; gap: 12px; align-items: baseline; font-weight: 500; }\n.k-our-story .k-our-story-list li::before { content: \"\"; flex: 0 0 18px; height: 2px; transform: translateY(-4px); background-color: var(--k-accent); }\n@media (max-width: 860px) {\n  .k-our-story .k-our-story-grid { grid-template-columns: minmax(0, 1fr); }\n  .k-our-story .k-our-story-grid--right .k-our-story-visual { order: 0; }\n  .k-our-story .k-our-story-media { aspect-ratio: 4 / 3; }\n}\n",
+      "src/components/TheTeam.tsx": "import './TheTeam.css';\n\nconst DATA: any = {\n  \"title\": \"The Team\",\n  \"intro\": \"Behind every great meal is a team dedicated to the craft of seafood.\",\n  \"members\": [\n    {\n      \"name\": \"\",\n      \"role\": \"Head Chef\",\n      \"text\": \"With over a decade of experience, they source the freshest ingredients and create dishes that reflect the season.\"\n    },\n    {\n      \"name\": \"\",\n      \"role\": \"Menu Director\",\n      \"text\": \"They curate a menu that changes with the seasons, ensuring every dish is a reflection of the time of year.\"\n    },\n    {\n      \"name\": \"\",\n      \"role\": \"Bar Manager\",\n      \"text\": \"They craft cocktails that complement the seafood menu, offering a tasting experience that pairs perfectly with each course.\"\n    }\n  ],\n  \"eyebrow\": \"\",\n  \"mark\": \"S\"\n};\n\nexport function TheTeam() {\n  return (\n    <section id=\"the-team\" className=\"k-section k-the-team\" aria-labelledby=\"the-team-title\" data-section=\"the-team\">\n      <div className=\"k-container\">\n        <div className=\"k-head k-head--split\">\n          <div>\n            <h2 id=\"the-team-title\" className=\"k-h2\">{DATA.title}</h2>\n          </div>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n        </div>\n        <ul className=\"k-the-team-list k-the-team-list--grid k-stagger\">\n          {DATA.members.map((item: any, i: number) => (\n            <li className=\"k-the-team-item\" key={i}>\n              <span className=\"k-the-team-index\" aria-hidden=\"true\">{String(i + 1).padStart(2, '0')}</span>\n              <h3 className=\"k-h3\">{item.name || item.role || item.title}</h3>\n              {item.name && item.role ? <p className=\"k-the-team-role\">{item.role}</p> : null}\n              {item.text ? <p className=\"k-muted\">{item.text}</p> : null}\n            </li>\n          ))}\n        </ul>\n      </div>\n    </section>\n  );\n}\n\nexport default TheTeam;\n",
+      "src/components/TheTeam.css": ".k-the-team .k-the-team-list--grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: clamp(28px, 4vw, 48px) clamp(24px, 3vw, 40px); }\n.k-the-team .k-the-team-list--grid .k-the-team-item { display: grid; gap: var(--k-space-2); align-content: start; padding-top: var(--k-space-3); border-top: 2px solid var(--k-ink); }\n.k-the-team .k-the-team-list--rows { display: grid; border-top: 1px solid var(--k-line-strong); }\n.k-the-team .k-the-team-list--rows .k-the-team-item { display: grid; grid-template-columns: 64px minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--k-space-3) var(--k-space-6); align-items: baseline; padding-block: clamp(22px, 3vw, 36px); border-bottom: 1px solid var(--k-line-strong); }\n.k-the-team .k-the-team-index { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; color: var(--k-accent-text); font-variant-numeric: tabular-nums; }\n.k-the-team .k-the-team-role { font-size: 0.875rem; font-weight: 600; color: var(--k-accent-text); }\n.k-the-team .k-the-team-item p { max-width: 52ch; }\n@media (max-width: 760px) {\n  .k-the-team .k-the-team-list--rows .k-the-team-item { grid-template-columns: minmax(0, 1fr); gap: var(--k-space-1); }\n}\n",
+      "src/components/Testimonials.tsx": "import './Testimonials.css';\n\nconst DATA: any = {\n  \"title\": \"What our customers say\",\n  \"intro\": \"Real stories from our regulars and visitors\",\n  \"invite\": \"Share your experience with us\",\n  \"quotes\": [],\n  \"eyebrow\": \"Testimonials\",\n  \"mark\": \"S\",\n  \"feedbackHref\": \"mailto:table@saltmarshkitchen.co.uk?subject=Feedback%20for%20Saltmarsh%20Kitchen\"\n};\n\nexport function Testimonials() {\n  return (\n    <section id=\"testimonials\" className=\"k-section k-section--tint k-testimonials\" aria-labelledby=\"testimonials-title\" data-section=\"testimonials\">\n      <div className=\"k-container\">\n        {/* One heading for both states: ids must be unique in the source, not only at runtime. */}\n        <div className={DATA.quotes.length ? 'k-head' : 'k-testimonials-invite'}>\n          <h2 id=\"testimonials-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.quotes.length ? null : (\n            <>\n              {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n              <p className=\"k-text\">{DATA.invite}</p>\n              <a className=\"k-btn k-btn--ghost\" href={DATA.feedbackHref}>Share your experience</a>\n            </>\n          )}\n        </div>\n        {DATA.quotes.length ? (\n          <ul className=\"k-testimonials-grid\">\n            {DATA.quotes.map((q: any, i: number) => (\n              <li key={i}>\n                <figure className=\"k-testimonials-quote\">\n                  <blockquote><p>{q.quote}</p></blockquote>\n                  {q.author ? <figcaption>{q.author}</figcaption> : null}\n                </figure>\n              </li>\n            ))}\n          </ul>\n        ) : null}\n      </div>\n    </section>\n  );\n}\n\nexport default Testimonials;\n",
+      "src/components/Testimonials.css": ".k-testimonials .k-testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--k-space-4); }\n.k-testimonials .k-testimonials-quote { display: grid; gap: var(--k-space-2); margin: 0; padding-top: var(--k-space-3); border-top: 2px solid var(--k-ink); }\n.k-testimonials .k-testimonials-quote blockquote { margin: 0; font-family: var(--k-font-display); font-size: clamp(1.25rem, 2vw, 1.6rem); line-height: 1.3; }\n.k-testimonials .k-testimonials-quote figcaption { color: var(--k-muted); font-size: 0.9375rem; }\n.k-testimonials .k-testimonials-invite { display: grid; gap: var(--k-space-3); justify-items: start; max-width: 760px; }\n",
+      "src/components/Faq.tsx": "import { useState } from 'react';\nimport './Faq.css';\n\nconst DATA: any = {\n  \"title\": \"Frequently Asked Questions\",\n  \"intro\": \"Common questions about our restaurant and menu\",\n  \"items\": [\n    {\n      \"q\": \"Do you source your seafood locally?\",\n      \"a\": \"We prioritize fresh, locally sourced seafood to ensure quality and sustainability.\"\n    },\n    {\n      \"q\": \"What are your menu options for dietary restrictions?\",\n      \"a\": \"We can accommodate various dietary needs upon request.\"\n    },\n    {\n      \"q\": \"Can I make a reservation in advance?\",\n      \"a\": \"Reservations can be made by contacting us at table@saltmarshkitchen.co.uk.\"\n    },\n    {\n      \"q\": \"How do I receive updates about seasonal menu changes?\",\n      \"a\": \"Sign up for our newsletter to get updates on seasonal menu changes.\"\n    }\n  ],\n  \"eyebrow\": \"FAQ\",\n  \"mark\": \"S\"\n};\n\nexport function Faq() {\n  const [open, setOpen] = useState(0);\n  return (\n    <section id=\"faq\" className=\"k-section k-faq\" aria-labelledby=\"faq-title\" data-section=\"faq\">\n      <div className=\"k-container k-faq-grid\">\n        <div className=\"k-head\">\n          <div>\n            <h2 id=\"faq-title\" className=\"k-h2\">{DATA.title}</h2>\n          </div>\n          {DATA.intro ? <p className=\"k-lede\">{DATA.intro}</p> : null}\n        </div>\n        <div className=\"k-faq-list\">\n          {DATA.items.map((item: any, i: number) => (\n            <div className=\"k-faq-item\" key={i}>\n              <h3 className=\"k-faq-q\">\n                <button onClick={() => setOpen(open === i ? -1 : i)} type=\"button\" id={'faq-q-' + i} aria-expanded={open === i} aria-controls={'faq-a-' + i} className=\"k-faq-trigger\">\n                  <span>{item.q}</span>\n                  <span className=\"k-faq-icon\" aria-hidden=\"true\" />\n                </button>\n              </h3>\n              <div id={'faq-a-' + i} role=\"region\" aria-labelledby={'faq-q-' + i} className=\"k-faq-answer\" hidden={open !== i}>\n                <p>{item.a}</p>\n              </div>\n            </div>\n          ))}\n        </div>\n      </div>\n    </section>\n  );\n}\n\nexport default Faq;\n",
+      "src/components/Faq.css": ".k-faq .k-faq-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 96px); align-items: start; }\n.k-faq .k-faq-list { border-top: 1px solid var(--k-line-strong); }\n.k-faq .k-faq-item { border-bottom: 1px solid var(--k-line-strong); }\n.k-faq .k-faq-q { font-size: inherit; font-weight: inherit; }\n.k-faq .k-faq-trigger { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--k-space-3); min-height: 64px; padding: var(--k-space-2) 0; border: 0; background-color: transparent; color: var(--k-ink); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.125rem, 1.6vw, 1.375rem); line-height: 1.3; text-align: left; transition: color 160ms ease; }\n.k-faq .k-faq-trigger:hover, .k-faq .k-faq-trigger:focus-visible { color: var(--k-accent-text); }\n.k-faq .k-faq-icon { position: relative; flex: 0 0 18px; height: 18px; }\n.k-faq .k-faq-icon::before, .k-faq .k-faq-icon::after { content: \"\"; position: absolute; top: 8px; left: 0; width: 18px; height: 2px; background-color: currentColor; transition: transform 220ms var(--k-ease); }\n.k-faq .k-faq-icon::after { transform: rotate(90deg); }\n.k-faq .k-faq-trigger[aria-expanded=\"true\"] .k-faq-icon::after { transform: rotate(0deg); }\n.k-faq .k-faq-answer { padding-bottom: var(--k-space-3); color: var(--k-muted); }\n.k-faq .k-faq-answer p { max-width: 60ch; }\n.k-faq .k-faq-answer:not([hidden]) { animation: k-faq-open 260ms var(--k-ease); }\n@keyframes k-faq-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }\n@media (max-width: 860px) { .k-faq .k-faq-grid { grid-template-columns: minmax(0, 1fr); } }\n",
+      "src/components/VisitUs.tsx": "import { useState } from 'react';\nimport type { FormEvent as ReactFormEvent } from 'react';\nimport './VisitUs.css';\n\nconst DATA: any = {\n  \"title\": \"Visit Us\",\n  \"text\": \"Find us in whitstable. Explore our seasonal menu.\",\n  \"button\": \"Email us\",\n  \"eyebrow\": \"\",\n  \"mark\": \"S\",\n  \"email\": \"table@saltmarshkitchen.co.uk\",\n  \"location\": \"Whitstable\",\n  \"note\": \"Sending opens your email app with the message ready to go.\",\n  \"doneNote\": \"Your email app should now open with the message ready to send.\"\n};\n\nexport function VisitUs() {\n  const [values, setValues] = useState({ name: '', email: '', message: '' });\n  const [errors, setErrors] = useState<Record<string, string>>({});\n  const [state, setState] = useState('idle');\n  const update = (field: string, value: string) => setValues((current: any) => ({ ...current, [field]: value }));\n  const submit = (event: ReactFormEvent<HTMLFormElement>) => {\n    event.preventDefault();\n    const next: Record<string, string> = {};\n    if (!values.name.trim()) next.name = 'Please add your name.';\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(values.email)) next.email = 'Please add a valid email address.';\n    if (values.message.trim().length < 10) next.message = 'Please write a short message of at least ten characters.';\n    setErrors(next);\n    if (Object.keys(next).length) return;\n    setState('busy');\n    window.setTimeout(() => {\n      if (DATA.email) {\n        const body = values.message + '\\n\\n' + values.name + ' (' + values.email + ')';\n        window.location.href = 'mailto:' + DATA.email + '?subject=' + encodeURIComponent(`Message from ${values.name}`) + '&body=' + encodeURIComponent(body);\n      }\n      setState('done');\n    }, 400);\n  };\n  return (\n    <section id=\"visit-us\" className=\"k-section k-section--tint k-visit-us\" aria-labelledby=\"visit-us-title\" data-section=\"visit-us\">\n      <div className=\"k-container k-visit-us-grid\">\n        <div className=\"k-visit-us-intro\">\n          <h2 id=\"visit-us-title\" className=\"k-h2\">{DATA.title}</h2>\n          {DATA.text ? <p className=\"k-lede\">{DATA.text}</p> : null}\n          {DATA.email || DATA.location ? (\n            <dl className=\"k-visit-us-details\">\n              {DATA.email ? (\n                <div><dt>Email</dt><dd><a className=\"k-link\" href={'mailto:' + DATA.email}>{DATA.email}</a></dd></div>\n              ) : null}\n              {DATA.location ? (\n                <div><dt>Location</dt><dd>{DATA.location}</dd></div>\n              ) : null}\n            </dl>\n          ) : null}\n        </div>\n        <form className=\"k-visit-us-form\" noValidate onSubmit={submit} aria-describedby=\"visit-us-form-note\">\n          <div className=\"k-visit-us-field\">\n            <label htmlFor=\"visit-us-name\">Name</label>\n            <input id=\"visit-us-name\" name=\"name\" type=\"text\" autoComplete=\"name\" required value={values.name} aria-invalid={errors.name ? true : undefined} aria-describedby={errors.name ? 'visit-us-name-error' : undefined} onChange={(event) => update('name', event.target.value)} />\n            {errors.name ? <p id=\"visit-us-name-error\" className=\"k-visit-us-error\">{errors.name}</p> : null}\n          </div>\n          <div className=\"k-visit-us-field\">\n            <label htmlFor=\"visit-us-email\">Email</label>\n            <input id=\"visit-us-email\" name=\"email\" type=\"email\" autoComplete=\"email\" required value={values.email} aria-invalid={errors.email ? true : undefined} aria-describedby={errors.email ? 'visit-us-email-error' : undefined} onChange={(event) => update('email', event.target.value)} />\n            {errors.email ? <p id=\"visit-us-email-error\" className=\"k-visit-us-error\">{errors.email}</p> : null}\n          </div>\n          <div className=\"k-visit-us-field\">\n            <label htmlFor=\"visit-us-message\">Message</label>\n            <textarea id=\"visit-us-message\" name=\"message\" rows={5} required value={values.message} aria-invalid={errors.message ? true : undefined} aria-describedby={errors.message ? 'visit-us-message-error' : undefined} onChange={(event) => update('message', event.target.value)} />\n            {errors.message ? <p id=\"visit-us-message-error\" className=\"k-visit-us-error\">{errors.message}</p> : null}\n          </div>\n          <button type=\"submit\" className=\"k-btn k-btn--primary k-visit-us-submit\" aria-busy={state === 'busy'} disabled={state === 'busy'}>{state === 'busy' ? 'Preparing\u2026' : DATA.button}</button>\n          <p id=\"visit-us-form-note\" className=\"k-visit-us-note\" aria-live=\"polite\">{state === 'done' ? DATA.doneNote : DATA.note}</p>\n        </form>\n      </div>\n    </section>\n  );\n}\n\nexport default VisitUs;\n",
+      "src/components/VisitUs.css": ".k-visit-us .k-visit-us-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }\n.k-visit-us .k-visit-us-intro { display: grid; gap: var(--k-space-3); }\n.k-visit-us .k-visit-us-details { display: grid; gap: var(--k-space-2); margin: var(--k-space-2) 0 0; }\n.k-visit-us .k-visit-us-details dt { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-visit-us .k-visit-us-details dd { margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }\n.k-visit-us .k-visit-us-form { display: grid; gap: var(--k-space-3); padding: clamp(20px, 3vw, 36px); border: 1px solid var(--k-line); border-radius: var(--k-radius); background-color: var(--k-bg); color: var(--k-ink); }\n.k-visit-us .k-visit-us-field { display: grid; gap: 6px; }\n.k-visit-us .k-visit-us-field label { font-weight: 600; font-size: 0.9375rem; }\n.k-visit-us .k-visit-us-field input, .k-visit-us .k-visit-us-field textarea { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--k-line-strong); border-radius: calc(var(--k-radius-btn) / 2 + 2px); background-color: var(--k-surface); color: var(--k-ink); transition: border-color 160ms ease, box-shadow 160ms ease; }\n.k-visit-us .k-visit-us-field textarea { resize: vertical; }\n.k-visit-us .k-visit-us-field input:hover, .k-visit-us .k-visit-us-field textarea:hover { border-color: var(--k-ink); }\n.k-visit-us .k-visit-us-field input:focus-visible, .k-visit-us .k-visit-us-field textarea:focus-visible { outline: none; border-color: var(--k-accent-text); box-shadow: 0 0 0 3px var(--k-accent-soft); }\n.k-visit-us .k-visit-us-field [aria-invalid=\"true\"] { border-color: #B42318; }\n.k-visit-us .k-visit-us-error { font-size: 0.875rem; font-weight: 600; color: var(--k-ink); }\n.k-visit-us .k-visit-us-error::before { content: \"! \"; color: #D92D20; }\n.k-visit-us .k-visit-us-submit { justify-self: start; }\n.k-visit-us .k-visit-us-note { font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 860px) { .k-visit-us .k-visit-us-grid { grid-template-columns: minmax(0, 1fr); } }\n",
+      "src/components/Footer.tsx": "import { useState } from 'react';\nimport './Footer.css';\n\nconst DATA: any = {\n  \"brand\": \"Saltmarsh Kitchen\",\n  \"tagline\": \"Seafood with a purpose\",\n  \"links\": [\n    {\n      \"id\": \"menu\",\n      \"href\": \"#menu\",\n      \"label\": \"Menu\"\n    },\n    {\n      \"id\": \"our-story\",\n      \"href\": \"#our-story\",\n      \"label\": \"Our story\"\n    },\n    {\n      \"id\": \"the-team\",\n      \"href\": \"#the-team\",\n      \"label\": \"The team\"\n    },\n    {\n      \"id\": \"testimonials\",\n      \"href\": \"#testimonials\",\n      \"label\": \"Testimonials\"\n    },\n    {\n      \"id\": \"faq\",\n      \"href\": \"#faq\",\n      \"label\": \"FAQ\"\n    },\n    {\n      \"id\": \"visit-us\",\n      \"href\": \"#visit-us\",\n      \"label\": \"Visit us\"\n    }\n  ],\n  \"email\": \"table@saltmarshkitchen.co.uk\",\n  \"location\": \"Whitstable\",\n  \"contactHref\": \"#visit-us\",\n  \"cta\": {\n    \"href\": \"#visit-us\",\n    \"label\": \"Get in touch\"\n  },\n  \"privacy\": \"This site does not use analytics or advertising cookies. Fonts load from Google Fonts and photos from Unsplash, which receive your IP address to deliver them. If you write to us, your message is used only to reply.\"\n};\n\nexport function Footer() {\n  const [privacy, setPrivacy] = useState(false);\n  const year = new Date().getFullYear();\n  return (\n    <footer id=\"site-footer\" className=\"k-footer\" data-section=\"footer\">\n      <div className=\"k-container k-footer__grid\">\n        <div className=\"k-footer__brand\">\n          <a className=\"k-footer__wordmark\" href=\"#site-main\">{DATA.brand}</a>\n          {DATA.tagline ? <p className=\"k-footer__tagline\">{DATA.tagline}</p> : null}\n          {DATA.cta ? <a className=\"k-btn k-btn--ghost k-footer__cta\" href={DATA.cta.href}>{DATA.cta.label}</a> : null}\n        </div>\n        {DATA.links.length ? (\n          <nav className=\"k-footer__col\" aria-label=\"Footer\">\n            <p className=\"k-footer__label\">Explore</p>\n            <ul className=\"k-footer__links\">\n              {DATA.links.map((link: any) => (\n                <li key={link.id}><a className=\"k-footer__link\" href={link.href}>{link.label}</a></li>\n              ))}\n            </ul>\n          </nav>\n        ) : null}\n        <div className=\"k-footer__col\">\n          <p className=\"k-footer__label\">Contact</p>\n          <ul className=\"k-footer__links\">\n            {DATA.email ? <li><a className=\"k-footer__link\" href={'mailto:' + DATA.email}>{DATA.email}</a></li> : null}\n            {DATA.location ? <li><span className=\"k-footer__plain\">{DATA.location}</span></li> : null}\n            {!DATA.email && DATA.contactHref ? <li><a className=\"k-footer__link\" href={DATA.contactHref}>Send a message</a></li> : null}\n            {!DATA.email && !DATA.contactHref ? <li><span className=\"k-footer__plain\">Contact details coming from {DATA.brand} directly.</span></li> : null}\n          </ul>\n        </div>\n      </div>\n      <div className=\"k-container k-footer__base\">\n        <p>\u00a9 {year} {DATA.brand}</p>\n        <div className=\"k-footer__base-links\">\n          <button onClick={() => setPrivacy(!privacy)} type=\"button\" className=\"k-footer__privacy-toggle\" aria-expanded={privacy} aria-controls=\"footer-privacy\">Privacy</button>\n          <a className=\"k-footer__link\" href=\"#site-main\">Back to top</a>\n        </div>\n      </div>\n      <div id=\"footer-privacy\" className=\"k-container k-footer__privacy\" hidden={!privacy}>\n        <p>{DATA.privacy}</p>\n      </div>\n    </footer>\n  );\n}\n\nexport default Footer;\n",
+      "src/components/Footer.css": ".k-footer { padding-block: clamp(56px, 8vw, 96px) 32px; background-color: var(--k-surface); color: var(--k-ink); border-top: 1px solid var(--k-line); }\n.k-footer .k-footer__grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: var(--k-space-6); }\n.k-footer .k-footer__brand { display: grid; gap: var(--k-space-2); align-content: start; justify-items: start; }\n.k-footer .k-footer__wordmark { display: inline-flex; align-items: center; min-height: var(--k-tap); font-family: var(--k-font-display); font-weight: var(--k-display-weight); font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.05; text-transform: var(--k-display-case); text-decoration: none; }\n.k-footer .k-footer__tagline { max-width: 34ch; color: var(--k-muted); }\n.k-footer .k-footer__cta { margin-top: var(--k-space-1); }\n.k-footer .k-footer__label { margin-bottom: var(--k-space-1); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--k-muted); }\n.k-footer .k-footer__links { display: grid; }\n.k-footer .k-footer__link, .k-footer .k-footer__plain { display: inline-flex; align-items: center; min-height: var(--k-tap); text-decoration: none; overflow-wrap: anywhere; }\n.k-footer .k-footer__link { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; transition: text-decoration-color 160ms ease; }\n.k-footer .k-footer__link:hover, .k-footer .k-footer__link:focus-visible { text-decoration-color: currentColor; }\n.k-footer .k-footer__base { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--k-space-2); margin-top: var(--k-space-8); padding-top: var(--k-space-3); border-top: 1px solid var(--k-line); font-size: 0.875rem; color: var(--k-muted); }\n.k-footer .k-footer__base-links { display: flex; gap: var(--k-space-3); align-items: center; }\n.k-footer .k-footer__privacy-toggle { min-height: var(--k-tap); padding: 0; border: 0; background-color: transparent; color: inherit; text-decoration: underline; text-underline-offset: 0.22em; }\n.k-footer .k-footer__privacy-toggle:hover, .k-footer .k-footer__privacy-toggle:focus-visible { color: var(--k-ink); }\n.k-footer .k-footer__privacy p { max-width: 70ch; margin-top: var(--k-space-2); font-size: 0.875rem; color: var(--k-muted); }\n@media (max-width: 760px) { .k-footer .k-footer__grid { grid-template-columns: minmax(0, 1fr); } }\n"
+    },
+    "diffs": {},
+    "summary": "## What I did\n- Synthesized full-page site across 9/9 planned sections.\n- Generated component modules: `Header.tsx`, `Header.css`, `Hero.tsx`, `Hero.css`, `Menu.tsx`.\n\n## Status\n- Section completion: 9 / 9 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 5/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
+    "symbol": "Saltmarsh_Kitchen",
+    "prompt": "Saltmarsh Kitchen \u2014 a seasonal seafood restaurant in Whitstable. Sections: menu (Starters, Mains, Desserts), our story, the team, testimonials, FAQ, visit us. Deep navy and brass tones, gentle scroll reveals. Do not mention opening hours. Email table@saltmarshkitchen.co.uk.",
+    "style_preset": null,
+    "stylePreset": null,
+    "style_tokens": null,
+    "styleTokens": null,
+    "context_tokens": 851,
+    "contextTokens": 851,
+    "max_context_tokens": 8192,
+    "maxContextTokens": 8192,
+    "file_path": "generated_components/Saltmarsh_Kitchen_20261018_115646/",
+    "filePath": "generated_components/Saltmarsh_Kitchen_20261018_115646/",
+    "folder_name": "Saltmarsh_Kitchen_20261018_115646",
+    "folderName": "Saltmarsh_Kitchen_20261018_115646",
+    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792303584_063a01",
+    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792303584_063a01",
+    "checkpoints_count": 1,
+    "visual_score": 5,
+    "visual_score_before": 5,
+    "visual_score_after": 5,
+    "visual_score_best": 5,
+    "visual_issues": [],
+    "validation": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 4,
+      "interactionsTested": 4,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "passed",
+      "motionRuntimeStatus": "passed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "scroll_reveal",
+          "target_section": "faq",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "scroll_reveal",
+          "target_section": "faq",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "interaction_validation": {
+      "passed": true,
+      "status": "not_requested",
+      "errors": [],
+      "interactions_tested": 4,
+      "interactions_required": 0,
+      "interaction_evidence": [
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ]
+    },
+    "visual_validation": {
+      "passed": true,
+      "status": "passed",
+      "score": 5,
+      "issues": [],
+      "screenshot_path": null
+    },
+    "build_state": {
+      "typecheck_passed": true,
+      "typecheckPassed": true,
+      "build_passed": true,
+      "buildPassed": true,
+      "lint_passed": true,
+      "lintPassed": true,
+      "contract_passed": true,
+      "contractPassed": true,
+      "accessibility_passed": true,
+      "accessibilityPassed": true,
+      "runtime_passed": true,
+      "runtimePassed": true,
+      "interaction_passed": true,
+      "interactionPassed": true,
+      "interactions_tested": 4,
+      "interactionsTested": 4,
+      "interactions_required": 0,
+      "interactionsRequired": 0,
+      "interaction_evidence": [
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interactionEvidence": [
+        {
+          "requirement_id": "generic_control_0",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_1",
+          "locator": "input[role=input]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_2",
+          "locator": "button[role=button]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        },
+        {
+          "requirement_id": "generic_control_3",
+          "locator": "a[role=a]",
+          "initial_state": "visible in DOM",
+          "action": "hover and click",
+          "expected_state": "exercised cleanly without runtime exception",
+          "observed_state": "interaction cleanly executed",
+          "passed": true,
+          "error": null
+        }
+      ],
+      "interaction_errors": [],
+      "interactionErrors": [],
+      "interaction_status": "not_requested",
+      "interactionStatus": "not_requested",
+      "runtime_unverified": false,
+      "runtimeUnverified": false,
+      "typecheck_status": "passed",
+      "typecheckStatus": "passed",
+      "build_status": "passed",
+      "buildStatus": "passed",
+      "lint_status": "passed",
+      "lintStatus": "passed",
+      "contract_status": "passed",
+      "contractStatus": "passed",
+      "accessibility_status": "passed",
+      "accessibilityStatus": "passed",
+      "motion_passed": true,
+      "motionPassed": true,
+      "motion_status": "passed",
+      "motionStatus": "passed",
+      "motion_runtime_status": "passed",
+      "motionRuntimeStatus": "passed",
+      "three_d_passed": true,
+      "threeDPassed": true,
+      "three_d_status": "not_requested",
+      "threeDStatus": "not_requested",
+      "three_d_static_status": "not_requested",
+      "threeDStaticStatus": "not_requested",
+      "three_d_runtime_status": "not_requested",
+      "threeDRuntimeStatus": "not_requested",
+      "motion_plan": [
+        {
+          "type": "scroll_reveal",
+          "target_section": "faq",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motionPlan": [
+        {
+          "type": "scroll_reveal",
+          "target_section": "faq",
+          "intensity": "subtle",
+          "axis": "y",
+          "trigger": "viewport",
+          "reduced_motion_behavior": "static",
+          "mobile_fallback": "stack",
+          "implementation": "native"
+        }
+      ],
+      "motion_failures": [],
+      "motionFailures": [],
+      "runtime_status": "passed",
+      "runtimeStatus": "passed",
+      "preview_status": "passed",
+      "previewStatus": "passed",
+      "preview_running": true,
+      "previewRunning": true,
+      "code_passed": true,
+      "codePassed": true,
+      "errors": [],
+      "warnings": [
+        "[Motion Rule Warning] Micro-interaction transition duration (600ms) exceeds recommended 120\u2013250ms range."
+      ],
+      "repair_attempts": 0,
+      "repairAttempts": 0,
+      "passed": true,
+      "all_gates_passed": true,
+      "allGatesPassed": true
+    },
+    "preview": {
+      "url": "/preview/1792303584_063a01",
+      "live_url": null,
+      "port": null,
+      "running": false,
+      "ready": true,
+      "entry": "index.html",
+      "symbol": "Saltmarsh_Kitchen",
+      "mode": "site"
+    },
+    "auto_recovered_sections": [],
+    "turn_logs": [
+      {
+        "turn": 1,
+        "action": "write_site_ok",
+        "section": "header",
+        "strategy": "native",
+        "files": [
+          "src/components/Header.tsx",
+          "src/components/Header.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 0.0
+      },
+      {
+        "turn": 2,
+        "action": "write_site_ok",
+        "section": "hero",
+        "strategy": "native",
+        "files": [
+          "src/components/Hero.tsx",
+          "src/components/Hero.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 5.35
+      },
+      {
+        "turn": 3,
+        "action": "write_site_ok",
+        "section": "menu",
+        "strategy": "native",
+        "files": [
+          "src/components/Menu.tsx",
+          "src/components/Menu.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 22.46
+      },
+      {
+        "turn": 4,
+        "action": "write_site_ok",
+        "section": "our-story",
+        "strategy": "native",
+        "files": [
+          "src/components/OurStory.tsx",
+          "src/components/OurStory.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 6.24
+      },
+      {
+        "turn": 5,
+        "action": "write_site_ok",
+        "section": "the-team",
+        "strategy": "native",
+        "files": [
+          "src/components/TheTeam.tsx",
+          "src/components/TheTeam.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 10.25
+      },
+      {
+        "turn": 6,
+        "action": "write_site_ok",
+        "section": "testimonials",
+        "strategy": "native",
+        "files": [
+          "src/components/Testimonials.tsx",
+          "src/components/Testimonials.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 3.11
+      },
+      {
+        "turn": 7,
+        "action": "write_site_ok",
+        "section": "faq",
+        "strategy": "native",
+        "files": [
+          "src/components/Faq.tsx",
+          "src/components/Faq.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 11.87
+      },
+      {
+        "turn": 8,
+        "action": "write_site_ok",
+        "section": "visit-us",
+        "strategy": "native",
+        "files": [
+          "src/components/VisitUs.tsx",
+          "src/components/VisitUs.css"
+        ],
+        "attempts": 1,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 2.93
+      },
+      {
+        "turn": 9,
+        "action": "write_site_ok",
+        "section": "footer",
+        "strategy": "native",
+        "files": [
+          "src/components/Footer.tsx",
+          "src/components/Footer.css"
+        ],
+        "attempts": 0,
+        "fallback_copy": false,
+        "notes": [
+          "section code written by the model"
+        ],
+        "seconds": 0.0
+      }
+    ],
+    "timestamp": "2026-10-18 11:57:32"
+  },
   {
     "task_id": "113d135f-a056-496c-8bad-dd7bda28d86d",
     "session_id": "1792200377_1892d2",
@@ -113123,1702 +117490,6 @@ echo "Training complete! Model saved to ./my-react-agent-lora"
     "auto_recovered_sections": [],
     "turn_logs": [],
     "timestamp": "2026-10-16 03:29:29"
-  },
-  {
-    "task_id": "test_state_model_01",
-    "session_id": "1792101513_0755fe",
-    "mode": "site",
-    "final_passed": true,
-    "completion_status": "COMPLETE",
-    "status": "completed",
-    "blocked_sections": [],
-    "blocked_diagnostics": [],
-    "initial_passed": null,
-    "initial_validation_status": "unverified",
-    "generation_complete": true,
-    "section_completion": "2 / 2",
-    "project_validation": "passed",
-    "generation_quality": "native",
-    "generation_scorecards": {
-      "provenance": {
-        "mode": "live",
-        "task_id": "test_state_model_01",
-        "model": {},
-        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101513_0755fe\\raw_generation"
-      },
-      "stages": [
-        {
-          "id": "native",
-          "label": "Model native",
-          "status": "failed",
-          "first_attempt_sections": 0,
-          "required_sections": 2,
-          "normalized_files": [],
-          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
-        },
-        {
-          "id": "deterministic_repair",
-          "label": "Deterministic repair",
-          "status": "not_applied",
-          "files": [],
-          "validation": null
-        },
-        {
-          "id": "model_repair",
-          "label": "Model repair",
-          "status": "not_applied",
-          "section_retries": 0,
-          "project_attempts": 0
-        },
-        {
-          "id": "final",
-          "label": "Final site",
-          "status": "passed",
-          "validation": {
-            "typecheck_passed": true,
-            "typecheckPassed": true,
-            "build_passed": true,
-            "buildPassed": true,
-            "lint_passed": true,
-            "lintPassed": true,
-            "contract_passed": true,
-            "contractPassed": true,
-            "accessibility_passed": true,
-            "accessibilityPassed": true,
-            "runtime_passed": true,
-            "runtimePassed": true,
-            "interaction_passed": true,
-            "interactionPassed": true,
-            "interactions_tested": 0,
-            "interactionsTested": 0,
-            "interactions_required": 0,
-            "interactionsRequired": 0,
-            "interaction_evidence": [],
-            "interactionEvidence": [],
-            "interaction_errors": [],
-            "interactionErrors": [],
-            "interaction_status": "not_requested",
-            "interactionStatus": "not_requested",
-            "runtime_unverified": false,
-            "runtimeUnverified": false,
-            "typecheck_status": "passed",
-            "typecheckStatus": "passed",
-            "build_status": "passed",
-            "buildStatus": "passed",
-            "lint_status": "passed",
-            "lintStatus": "passed",
-            "contract_status": "passed",
-            "contractStatus": "passed",
-            "accessibility_status": "passed",
-            "accessibilityStatus": "passed",
-            "motion_passed": true,
-            "motionPassed": true,
-            "motion_status": "passed",
-            "motionStatus": "passed",
-            "motion_runtime_status": "not_requested",
-            "motionRuntimeStatus": "not_requested",
-            "three_d_passed": true,
-            "threeDPassed": true,
-            "three_d_status": "not_requested",
-            "threeDStatus": "not_requested",
-            "three_d_static_status": "not_requested",
-            "threeDStaticStatus": "not_requested",
-            "three_d_runtime_status": "not_requested",
-            "threeDRuntimeStatus": "not_requested",
-            "motion_plan": [],
-            "motionPlan": [],
-            "motion_failures": [],
-            "motionFailures": [],
-            "runtime_status": "passed",
-            "runtimeStatus": "passed",
-            "preview_status": "passed",
-            "previewStatus": "passed",
-            "preview_running": true,
-            "previewRunning": true,
-            "code_passed": true,
-            "codePassed": true,
-            "errors": [],
-            "warnings": [],
-            "repair_attempts": 0,
-            "repairAttempts": 0,
-            "passed": true,
-            "all_gates_passed": true,
-            "allGatesPassed": true
-          }
-        }
-      ]
-    },
-    "self_corrected": false,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 2,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "CompanySite",
-    "prompt": "Build a modern company website",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/CompanySite_20261016_032834/",
-    "filePath": "generated_components/CompanySite_20261016_032834/",
-    "folder_name": "CompanySite_20261016_032834",
-    "folderName": "CompanySite_20261016_032834",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101513_0755fe",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101513_0755fe",
-    "checkpoints_count": 1,
-    "visual_score": 4.2,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "passed",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.2,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1792101513_0755fe",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "CompanySite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-10-16 03:28:34"
-  },
-  {
-    "task_id": "edit_test_task_456",
-    "session_id": "1792101275_1e12b3",
-    "mode": "site",
-    "final_passed": false,
-    "initial_passed": false,
-    "self_corrected": false,
-    "repair_attempts": 0,
-    "turns_used": 3,
-    "sections_completed": 1,
-    "sections_planned": 1,
-    "code": "",
-    "files": {
-      ".gitignore": "# Node & Bundler artifacts\nnode_modules/\n.vite/\ndist/\ndist-ssr/\n*.local\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Snapshots & Media\n.snapshots/\nscreenshot.webp\n*.log\n",
-      "src/components/Hero.tsx": "export function Hero() { return <div>Good Version</div>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Applied targeted edits to `Hero.tsx` based on your instruction.\n- Updated layout structure and functional JSX components.\n\n## Status\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).\n- Use `@Component` mentions to target another specific section.",
-    "symbol": "EditSite",
-    "prompt": "Change hero to broken",
-    "style_preset": null,
-    "style_tokens": null,
-    "file_path": "generated_components/session_1792101275_1e12b3/",
-    "filePath": "generated_components/session_1792101275_1e12b3/",
-    "folder_name": "session_1792101275_1e12b3",
-    "folderName": "session_1792101275_1e12b3",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101275_1e12b3",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101275_1e12b3",
-    "checkpoints_count": 2,
-    "visual_score": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "Persistent compile failure"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "validation_status": "failed",
-    "validationStatus": "failed",
-    "build_state": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "Persistent compile failure"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "/preview/1792101275_1e12b3",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "EditSite",
-      "mode": "site"
-    },
-    "is_edit": true,
-    "timestamp": "2026-10-16 03:24:36"
-  },
-  {
-    "task_id": "site_test_task_123",
-    "session_id": "1792101274_8a29de",
-    "mode": "site",
-    "final_passed": false,
-    "completion_status": "FAILED",
-    "status": "completed",
-    "blocked_sections": [],
-    "blocked_diagnostics": [],
-    "initial_passed": null,
-    "initial_validation_status": "unverified",
-    "generation_complete": false,
-    "section_completion": "2 / 5",
-    "project_validation": "passed",
-    "generation_quality": "repaired",
-    "generation_scorecards": {
-      "provenance": {
-        "mode": "live",
-        "task_id": "site_test_task_123",
-        "model": {},
-        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101274_8a29de\\raw_generation"
-      },
-      "stages": [
-        {
-          "id": "native",
-          "label": "Model native",
-          "status": "unverified",
-          "first_attempt_sections": 0,
-          "required_sections": 0,
-          "normalized_files": [],
-          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
-        },
-        {
-          "id": "deterministic_repair",
-          "label": "Deterministic repair",
-          "status": "not_applied",
-          "files": [],
-          "validation": null
-        },
-        {
-          "id": "model_repair",
-          "label": "Model repair",
-          "status": "failed",
-          "section_retries": 0,
-          "project_attempts": 1
-        },
-        {
-          "id": "final",
-          "label": "Final site",
-          "status": "failed",
-          "validation": {
-            "typecheck_passed": true,
-            "typecheckPassed": true,
-            "build_passed": true,
-            "buildPassed": true,
-            "lint_passed": true,
-            "lintPassed": true,
-            "contract_passed": true,
-            "contractPassed": true,
-            "accessibility_passed": true,
-            "accessibilityPassed": true,
-            "runtime_passed": true,
-            "runtimePassed": true,
-            "interaction_passed": true,
-            "interactionPassed": true,
-            "interactions_tested": 0,
-            "interactionsTested": 0,
-            "interactions_required": 0,
-            "interactionsRequired": 0,
-            "interaction_evidence": [],
-            "interactionEvidence": [],
-            "interaction_errors": [],
-            "interactionErrors": [],
-            "interaction_status": "not_requested",
-            "interactionStatus": "not_requested",
-            "runtime_unverified": false,
-            "runtimeUnverified": false,
-            "typecheck_status": "passed",
-            "typecheckStatus": "passed",
-            "build_status": "passed",
-            "buildStatus": "passed",
-            "lint_status": "passed",
-            "lintStatus": "passed",
-            "contract_status": "passed",
-            "contractStatus": "passed",
-            "accessibility_status": "passed",
-            "accessibilityStatus": "passed",
-            "motion_passed": true,
-            "motionPassed": true,
-            "motion_status": "passed",
-            "motionStatus": "passed",
-            "motion_runtime_status": "not_requested",
-            "motionRuntimeStatus": "not_requested",
-            "three_d_passed": true,
-            "threeDPassed": true,
-            "three_d_status": "not_requested",
-            "threeDStatus": "not_requested",
-            "three_d_static_status": "not_requested",
-            "threeDStaticStatus": "not_requested",
-            "three_d_runtime_status": "not_requested",
-            "threeDRuntimeStatus": "not_requested",
-            "motion_plan": [],
-            "motionPlan": [],
-            "motion_failures": [],
-            "motionFailures": [],
-            "runtime_status": "passed",
-            "runtimeStatus": "passed",
-            "preview_status": "passed",
-            "previewStatus": "passed",
-            "preview_running": true,
-            "previewRunning": true,
-            "code_passed": true,
-            "codePassed": true,
-            "errors": [],
-            "warnings": [],
-            "repair_attempts": 0,
-            "repairAttempts": 0,
-            "passed": true,
-            "all_gates_passed": true,
-            "allGatesPassed": true
-          }
-        }
-      ]
-    },
-    "self_corrected": true,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 5,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Footer.tsx": "export function Footer() { return <footer>Footer</footer>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/5 planned sections.\n- Generated component modules: `Header.tsx`, `Footer.tsx`.\n\n## Status\n- Section completion: 2 / 5 planned sections generated.\n- Generation quality: repaired (native / repaired / fallback).\n- Visual check: 4.5/5\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "TestSite",
-    "prompt": "Build TestSite",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/TestSite_20261016_032434/",
-    "filePath": "generated_components/TestSite_20261016_032434/",
-    "folder_name": "TestSite_20261016_032434",
-    "folderName": "TestSite_20261016_032434",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101274_8a29de",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101274_8a29de",
-    "checkpoints_count": 1,
-    "visual_score": 4.5,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "not_requested",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.5,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1792101274_8a29de",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "TestSite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-10-16 03:24:35"
-  },
-  {
-    "task_id": "test_state_model_01",
-    "session_id": "1792101244_202c37",
-    "mode": "site",
-    "final_passed": true,
-    "completion_status": "COMPLETE",
-    "status": "completed",
-    "blocked_sections": [],
-    "blocked_diagnostics": [],
-    "initial_passed": null,
-    "initial_validation_status": "unverified",
-    "generation_complete": true,
-    "section_completion": "2 / 2",
-    "project_validation": "passed",
-    "generation_quality": "native",
-    "generation_scorecards": {
-      "provenance": {
-        "mode": "live",
-        "task_id": "test_state_model_01",
-        "model": {},
-        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101244_202c37\\raw_generation"
-      },
-      "stages": [
-        {
-          "id": "native",
-          "label": "Model native",
-          "status": "failed",
-          "first_attempt_sections": 0,
-          "required_sections": 2,
-          "normalized_files": [],
-          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
-        },
-        {
-          "id": "deterministic_repair",
-          "label": "Deterministic repair",
-          "status": "not_applied",
-          "files": [],
-          "validation": null
-        },
-        {
-          "id": "model_repair",
-          "label": "Model repair",
-          "status": "not_applied",
-          "section_retries": 0,
-          "project_attempts": 0
-        },
-        {
-          "id": "final",
-          "label": "Final site",
-          "status": "passed",
-          "validation": {
-            "typecheck_passed": true,
-            "typecheckPassed": true,
-            "build_passed": true,
-            "buildPassed": true,
-            "lint_passed": true,
-            "lintPassed": true,
-            "contract_passed": true,
-            "contractPassed": true,
-            "accessibility_passed": true,
-            "accessibilityPassed": true,
-            "runtime_passed": true,
-            "runtimePassed": true,
-            "interaction_passed": true,
-            "interactionPassed": true,
-            "interactions_tested": 0,
-            "interactionsTested": 0,
-            "interactions_required": 0,
-            "interactionsRequired": 0,
-            "interaction_evidence": [],
-            "interactionEvidence": [],
-            "interaction_errors": [],
-            "interactionErrors": [],
-            "interaction_status": "not_requested",
-            "interactionStatus": "not_requested",
-            "runtime_unverified": false,
-            "runtimeUnverified": false,
-            "typecheck_status": "passed",
-            "typecheckStatus": "passed",
-            "build_status": "passed",
-            "buildStatus": "passed",
-            "lint_status": "passed",
-            "lintStatus": "passed",
-            "contract_status": "passed",
-            "contractStatus": "passed",
-            "accessibility_status": "passed",
-            "accessibilityStatus": "passed",
-            "motion_passed": true,
-            "motionPassed": true,
-            "motion_status": "passed",
-            "motionStatus": "passed",
-            "motion_runtime_status": "not_requested",
-            "motionRuntimeStatus": "not_requested",
-            "three_d_passed": true,
-            "threeDPassed": true,
-            "three_d_status": "not_requested",
-            "threeDStatus": "not_requested",
-            "three_d_static_status": "not_requested",
-            "threeDStaticStatus": "not_requested",
-            "three_d_runtime_status": "not_requested",
-            "threeDRuntimeStatus": "not_requested",
-            "motion_plan": [],
-            "motionPlan": [],
-            "motion_failures": [],
-            "motionFailures": [],
-            "runtime_status": "passed",
-            "runtimeStatus": "passed",
-            "preview_status": "passed",
-            "previewStatus": "passed",
-            "preview_running": true,
-            "previewRunning": true,
-            "code_passed": true,
-            "codePassed": true,
-            "errors": [],
-            "warnings": [],
-            "repair_attempts": 0,
-            "repairAttempts": 0,
-            "passed": true,
-            "all_gates_passed": true,
-            "allGatesPassed": true
-          }
-        }
-      ]
-    },
-    "self_corrected": false,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 2,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "CompanySite",
-    "prompt": "Build a modern company website",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/CompanySite_20261016_032404/",
-    "filePath": "generated_components/CompanySite_20261016_032404/",
-    "folder_name": "CompanySite_20261016_032404",
-    "folderName": "CompanySite_20261016_032404",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101244_202c37",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792101244_202c37",
-    "checkpoints_count": 1,
-    "visual_score": 4.2,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "passed",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.2,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1792101244_202c37",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "CompanySite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-10-16 03:24:05"
-  },
-  {
-    "task_id": "test_state_model_01",
-    "session_id": "1792100876_39e322",
-    "mode": "site",
-    "final_passed": true,
-    "completion_status": "COMPLETE",
-    "status": "completed",
-    "blocked_sections": [],
-    "blocked_diagnostics": [],
-    "initial_passed": null,
-    "initial_validation_status": "unverified",
-    "generation_complete": true,
-    "section_completion": "2 / 2",
-    "project_validation": "passed",
-    "generation_quality": "native",
-    "generation_scorecards": {
-      "provenance": {
-        "mode": "live",
-        "task_id": "test_state_model_01",
-        "model": {},
-        "raw_output_directory": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792100876_39e322\\raw_generation"
-      },
-      "stages": [
-        {
-          "id": "native",
-          "label": "Model native",
-          "status": "failed",
-          "first_attempt_sections": 0,
-          "required_sections": 2,
-          "normalized_files": [],
-          "note": "First-attempt section acceptance; raw full-site browser validation is not captured."
-        },
-        {
-          "id": "deterministic_repair",
-          "label": "Deterministic repair",
-          "status": "not_applied",
-          "files": [],
-          "validation": null
-        },
-        {
-          "id": "model_repair",
-          "label": "Model repair",
-          "status": "not_applied",
-          "section_retries": 0,
-          "project_attempts": 0
-        },
-        {
-          "id": "final",
-          "label": "Final site",
-          "status": "passed",
-          "validation": {
-            "typecheck_passed": true,
-            "typecheckPassed": true,
-            "build_passed": true,
-            "buildPassed": true,
-            "lint_passed": true,
-            "lintPassed": true,
-            "contract_passed": true,
-            "contractPassed": true,
-            "accessibility_passed": true,
-            "accessibilityPassed": true,
-            "runtime_passed": true,
-            "runtimePassed": true,
-            "interaction_passed": true,
-            "interactionPassed": true,
-            "interactions_tested": 0,
-            "interactionsTested": 0,
-            "interactions_required": 0,
-            "interactionsRequired": 0,
-            "interaction_evidence": [],
-            "interactionEvidence": [],
-            "interaction_errors": [],
-            "interactionErrors": [],
-            "interaction_status": "not_requested",
-            "interactionStatus": "not_requested",
-            "runtime_unverified": false,
-            "runtimeUnverified": false,
-            "typecheck_status": "passed",
-            "typecheckStatus": "passed",
-            "build_status": "passed",
-            "buildStatus": "passed",
-            "lint_status": "passed",
-            "lintStatus": "passed",
-            "contract_status": "passed",
-            "contractStatus": "passed",
-            "accessibility_status": "passed",
-            "accessibilityStatus": "passed",
-            "motion_passed": true,
-            "motionPassed": true,
-            "motion_status": "passed",
-            "motionStatus": "passed",
-            "motion_runtime_status": "not_requested",
-            "motionRuntimeStatus": "not_requested",
-            "three_d_passed": true,
-            "threeDPassed": true,
-            "three_d_status": "not_requested",
-            "threeDStatus": "not_requested",
-            "three_d_static_status": "not_requested",
-            "threeDStaticStatus": "not_requested",
-            "three_d_runtime_status": "not_requested",
-            "threeDRuntimeStatus": "not_requested",
-            "motion_plan": [],
-            "motionPlan": [],
-            "motion_failures": [],
-            "motionFailures": [],
-            "runtime_status": "passed",
-            "runtimeStatus": "passed",
-            "preview_status": "passed",
-            "previewStatus": "passed",
-            "preview_running": true,
-            "previewRunning": true,
-            "code_passed": true,
-            "codePassed": true,
-            "errors": [],
-            "warnings": [],
-            "repair_attempts": 0,
-            "repairAttempts": 0,
-            "passed": true,
-            "all_gates_passed": true,
-            "allGatesPassed": true
-          }
-        }
-      ]
-    },
-    "self_corrected": false,
-    "turns_used": 0,
-    "sections_completed": 2,
-    "sections_planned": 2,
-    "code": "export function Header() { return <header>Header</header>; }",
-    "files": {
-      "src/components/Header.tsx": "export function Header() { return <header>Header</header>; }",
-      "src/components/Hero.tsx": "export function Hero() { return <main id='site-main'>Hero</main>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Synthesized full-page site across 2/2 planned sections.\n- Generated component modules: `Header.tsx`, `Hero.tsx`.\n\n## Status\n- Section completion: 2 / 2 planned sections generated.\n- Generation quality: native (native / repaired / fallback).\n- Visual check: 4.2/5\n- \u2705 All TypeScript types, JSX syntax, and CSS style tokens passed validation.\n\n## Try next\n- Request a targeted revision on any section (e.g. `@Footer add phone number and hours`).\n- Inspect the live preview or view before/after diffs.",
-    "symbol": "CompanySite",
-    "prompt": "Build a modern company website",
-    "style_preset": null,
-    "stylePreset": null,
-    "style_tokens": null,
-    "styleTokens": null,
-    "context_tokens": 0,
-    "contextTokens": 0,
-    "max_context_tokens": 8192,
-    "maxContextTokens": 8192,
-    "file_path": "generated_components/CompanySite_20261016_031756/",
-    "filePath": "generated_components/CompanySite_20261016_031756/",
-    "folder_name": "CompanySite_20261016_031756",
-    "folderName": "CompanySite_20261016_031756",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792100876_39e322",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792100876_39e322",
-    "checkpoints_count": 1,
-    "visual_score": 4.2,
-    "visual_score_before": null,
-    "visual_score_after": null,
-    "visual_score_best": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "interaction_validation": {
-      "passed": true,
-      "status": "passed",
-      "errors": [],
-      "interactions_tested": 0,
-      "interactions_required": 0,
-      "interaction_evidence": []
-    },
-    "visual_validation": {
-      "passed": true,
-      "status": "passed",
-      "score": 4.2,
-      "issues": [],
-      "screenshot_path": null
-    },
-    "build_state": {
-      "typecheck_passed": true,
-      "typecheckPassed": true,
-      "build_passed": true,
-      "buildPassed": true,
-      "lint_passed": true,
-      "lintPassed": true,
-      "contract_passed": true,
-      "contractPassed": true,
-      "accessibility_passed": true,
-      "accessibilityPassed": true,
-      "runtime_passed": true,
-      "runtimePassed": true,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "passed",
-      "typecheckStatus": "passed",
-      "build_status": "passed",
-      "buildStatus": "passed",
-      "lint_status": "passed",
-      "lintStatus": "passed",
-      "contract_status": "passed",
-      "contractStatus": "passed",
-      "accessibility_status": "passed",
-      "accessibilityStatus": "passed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "passed",
-      "runtimeStatus": "passed",
-      "preview_status": "passed",
-      "previewStatus": "passed",
-      "preview_running": true,
-      "previewRunning": true,
-      "code_passed": true,
-      "codePassed": true,
-      "errors": [],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": true,
-      "all_gates_passed": true,
-      "allGatesPassed": true
-    },
-    "preview": {
-      "url": "/preview/1792100876_39e322",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "CompanySite",
-      "mode": "site"
-    },
-    "auto_recovered_sections": [],
-    "turn_logs": [],
-    "timestamp": "2026-10-16 03:17:57"
-  },
-  {
-    "task_id": "edit_test_task_456",
-    "session_id": "1792100374_b2db54",
-    "mode": "site",
-    "final_passed": false,
-    "initial_passed": false,
-    "self_corrected": false,
-    "repair_attempts": 0,
-    "turns_used": 3,
-    "sections_completed": 1,
-    "sections_planned": 1,
-    "code": "",
-    "files": {
-      ".gitignore": "# Node & Bundler artifacts\nnode_modules/\n.vite/\ndist/\ndist-ssr/\n*.local\nnpm-debug.log*\nyarn-debug.log*\nyarn-error.log*\n\n# Snapshots & Media\n.snapshots/\nscreenshot.webp\n*.log\n",
-      "src/components/Hero.tsx": "export function Hero() { return <div>Good Version</div>; }"
-    },
-    "diffs": {},
-    "summary": "## What I did\n- Applied targeted edits to `Hero.tsx` based on your instruction.\n- Updated layout structure and functional JSX components.\n\n## Status\n- \u26a0\ufe0f Generation finished with warnings; inspect terminal logs for details.\n\n## Try next\n- Ask for further component refinements (e.g. `\"make the CTA button larger\"`).\n- Use `@Component` mentions to target another specific section.",
-    "symbol": "EditSite",
-    "prompt": "Change hero to broken",
-    "style_preset": null,
-    "style_tokens": null,
-    "file_path": "generated_components/session_1792100374_b2db54/",
-    "filePath": "generated_components/session_1792100374_b2db54/",
-    "folder_name": "session_1792100374_b2db54",
-    "folderName": "session_1792100374_b2db54",
-    "full_path": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792100374_b2db54",
-    "fullPath": "C:\\Users\\AYUSH\\Documents\\slm\\generated_components\\session_1792100374_b2db54",
-    "checkpoints_count": 2,
-    "visual_score": null,
-    "visual_issues": [],
-    "validation": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "Persistent compile failure"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "validation_status": "failed",
-    "validationStatus": "failed",
-    "build_state": {
-      "typecheck_passed": false,
-      "typecheckPassed": false,
-      "build_passed": false,
-      "buildPassed": false,
-      "lint_passed": false,
-      "lintPassed": false,
-      "contract_passed": false,
-      "contractPassed": false,
-      "accessibility_passed": false,
-      "accessibilityPassed": false,
-      "runtime_passed": false,
-      "runtimePassed": false,
-      "interaction_passed": true,
-      "interactionPassed": true,
-      "interactions_tested": 0,
-      "interactionsTested": 0,
-      "interactions_required": 0,
-      "interactionsRequired": 0,
-      "interaction_evidence": [],
-      "interactionEvidence": [],
-      "interaction_errors": [],
-      "interactionErrors": [],
-      "interaction_status": "not_requested",
-      "interactionStatus": "not_requested",
-      "runtime_unverified": false,
-      "runtimeUnverified": false,
-      "typecheck_status": "failed",
-      "typecheckStatus": "failed",
-      "build_status": "failed",
-      "buildStatus": "failed",
-      "lint_status": "failed",
-      "lintStatus": "failed",
-      "contract_status": "failed",
-      "contractStatus": "failed",
-      "accessibility_status": "failed",
-      "accessibilityStatus": "failed",
-      "motion_passed": true,
-      "motionPassed": true,
-      "motion_status": "passed",
-      "motionStatus": "passed",
-      "motion_runtime_status": "not_requested",
-      "motionRuntimeStatus": "not_requested",
-      "three_d_passed": true,
-      "threeDPassed": true,
-      "three_d_status": "not_requested",
-      "threeDStatus": "not_requested",
-      "three_d_static_status": "not_requested",
-      "threeDStaticStatus": "not_requested",
-      "three_d_runtime_status": "not_requested",
-      "threeDRuntimeStatus": "not_requested",
-      "motion_plan": [],
-      "motionPlan": [],
-      "motion_failures": [],
-      "motionFailures": [],
-      "runtime_status": "failed",
-      "runtimeStatus": "failed",
-      "preview_status": "failed",
-      "previewStatus": "failed",
-      "preview_running": false,
-      "previewRunning": false,
-      "code_passed": false,
-      "codePassed": false,
-      "errors": [
-        "Persistent compile failure"
-      ],
-      "warnings": [],
-      "repair_attempts": 0,
-      "repairAttempts": 0,
-      "passed": false,
-      "all_gates_passed": false,
-      "allGatesPassed": false
-    },
-    "preview": {
-      "url": "/preview/1792100374_b2db54",
-      "live_url": null,
-      "port": null,
-      "running": false,
-      "ready": false,
-      "entry": "",
-      "symbol": "EditSite",
-      "mode": "site"
-    },
-    "is_edit": true,
-    "timestamp": "2026-10-16 03:09:35"
   }
 ]
 `````
@@ -133160,76 +135831,128 @@ The most important behavioral change is:
 #### `README.md`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/README.md`
-- **Lines**: 208 | **Size**: 12,057 bytes | **SHA-256**: `807afc5bc0d5709983794a03e12b5b05813000771f0ff45b0b7b511024b8e9a1` | **Newline**: `True`
+- **Lines**: 262 | **Size**: 14,769 bytes | **SHA-256**: `822f3cc98e2f8994f79327a00cdd0b1422f280db256c9133c215d4b46c810882` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Project README and system overview.
 
 `````markdown
-# ReactAgent SLM 🚀
+# SiteAgent (ReactAgent SLM)
 
-> **Autonomous Small Language Model (SLM) for React, TypeScript, and Modern CSS.**  
-> Built on `Qwen/Qwen3-4B` to generate, test, and self-correct web components and complete websites. Runs locally on consumer GPUs (e.g., 6GB RTX 4050).
+> **A local website builder powered by a small language model.**
+> Describe a site in plain English; SiteAgent plans it, writes it as a React + TypeScript project,
+> builds it, checks it in a real browser (types, build, accessibility, motion, runtime) and shows a
+> live preview you can inspect and edit. Built on `Qwen/Qwen3-4B`; runs on your own machine —
+> an NVIDIA/AMD GPU, an Apple Silicon Mac, or just a CPU.
 
 ---
 
-## ⚡ Quick Start
+## Quick start
 
-### 1. Setup Environment & Base Weights
-Clone the repository and run the setup script:
+**You need:** Python 3.10–3.13, [Node.js 18+](https://nodejs.org), Git, ~15 GB of free disk
+(8 GB is the model). A GPU is optional.
+
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/setup.sh
+git clone <this-repo-url> siteagent
+cd siteagent
+```
 
-# Windows Command Prompt
+**1. Install** (creates `.venv`, picks the right PyTorch for your hardware, builds the UI,
+downloads Qwen3-4B, then runs a health check):
+
+```bash
+# macOS / Linux / Git Bash
+bash scripts/setup.sh
+```
+
+```bat
+:: Windows (Command Prompt or PowerShell)
 scripts\setup.bat
 ```
-*Installs Python and npm dependencies, and downloads `Qwen/Qwen3-4B` base weights into `./base-model`.*
 
-### 2. Launch the Web Workbench (One Command)
+Options: `--cpu` (force CPU), `--skip-model` (download later with `python slm.py download`),
+`--base Qwen/Qwen3-1.7B` (smaller model for low-memory machines),
+`--adapter USER/REPO` (also download a fine-tuned native adapter).
+
+**2. Run the workbench** at <http://127.0.0.1:5000>:
+
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/run_web_ui.sh
-
-# Windows Command Prompt
-scripts\run_web_ui.bat
-
-# Or via unified CLI:
-python slm.py serve
+bash scripts/run_web_ui.sh          # macOS / Linux / Git Bash
+scripts\run_web_ui.bat              # Windows
 ```
-*Spawns the Flask SSE backend and isolated PTY terminal server, and automatically opens `http://127.0.0.1:5000` in your browser.*
+
+**3. Check your setup at any time:**
+
+```bash
+python slm.py doctor
+```
+
+It prints your hardware profile (GPU, memory, backend, context length) and every missing piece
+with the command that fixes it. The top bar of the workbench shows the model's state:
+amber **Loading model** while it loads, green **Ready** when you can send a prompt.
+
+### Hardware
+
+The model loader (`agent/hardware.py`) detects your machine and picks the backend, precision and
+context length automatically:
+
+| Machine | How the model runs | Notes |
+|---|---|---|
+| NVIDIA GPU, 6 GB+ VRAM | 4-bit (Unsloth or bitsandbytes) on the GPU | Developed on a 6 GB RTX 4050. ~25 tokens/s. |
+| NVIDIA GPU, 8 GB+ without 4-bit libraries | float16 on the GPU | Used automatically if Unsloth/bitsandbytes can't install. |
+| AMD GPU (Linux, ROCm) | Transformers on the GPU | Unsloth is NVIDIA-only. |
+| Apple Silicon (M1+), 16 GB+ | float16 on Metal | |
+| CPU only, 12 GB+ RAM | bfloat16 on the CPU | Works; a few tokens/s. Kit mode stays usable. |
+| Less memory | use `--base Qwen/Qwen3-1.7B` | Kit mode only (the native adapter needs Qwen3-4B). |
+
+Override anything with environment variables: `SLM_DEVICE=cuda|mps|cpu`,
+`SLM_BACKEND=unsloth|transformers`, `SLM_LOAD_IN_4BIT=0|1`, `SLM_CONTEXT_LENGTH=8192`,
+`MODEL_PATH=<model or adapter folder>`.
+
+### Two ways to build a site
+
+* **Design kit (default, fast — about 1–2 minutes per site).** The model writes each section's
+  copy as JSON and the design kit (`agent/site_kit/`) renders accessible, token-driven React/CSS:
+  12 contrast-checked art directions, vetted photography, menus, galleries, carts, FAQs, forms,
+  a native motion system, favicons and OpenGraph tags.
+* **Native (the model writes the code — about 20–40 minutes per site on a 6 GB GPU).** A
+  fine-tuned LoRA adapter writes every section's React component and CSS itself; the kit only
+  plans the site and supplies shared design tokens. Each section is accepted only if it
+  typechecks, keeps the approved copy exactly and keeps every behaviour the design system requires;
+  otherwise the kit renders that section. On held-out business types the adapter's sections were
+  accepted 92% of the time vs 6% for the untuned model — see
+  [docs/NATIVE_SECTION_TRAINING.md](docs/NATIVE_SECTION_TRAINING.md).
+  Choose it per request in the composer (*Advanced → Site code written by → The model*), or start
+  with `scripts/run_web_ui.sh --native`. It needs an adapter in `models/`: download one with
+  `python slm.py download --adapter USER/REPO`, or train your own (below).
 
 ### Website requests
 
-The site planner supports portfolios, stores, publications, restaurants, events, dashboards, SaaS sites, and requests outside those categories. Describe the audience, content, visual style, and interactions you want. For an unusual layout, include an inline `Sections:` list or a numbered section list; the planner preserves those sections. Products, projects, prices, testimonials, and contact details should be supplied in the request when they need to appear as real business facts.
+Describe the audience, content, visual style and interactions you want. An inline
+`Sections: a, b, c` or `Include: a, b, c` list is followed exactly. Products, prices, projects,
+testimonials and contact details appear only when you supply them — the site never invents them.
 
-**How sites are built (design kit).** By default (`SITE_STRATEGY=kit`) the model writes only the *copy* for
-each section as a small JSON object; `agent/site_kit/` renders it into token-driven, accessible TSX/CSS:
+### Training your own adapter
 
-- 12 contrast-checked art directions chosen from the prompt's subject (`themes.py`), with Google Fonts that
-  actually ship the requested weights;
-- vetted, subject-matched Unsplash photography or a designed art panel — never a placeholder (`imagery.py`);
-- integrity filters that drop instructions, style words and invented facts from the copy (`content.py`);
-- renderers for headers, heroes, menus (ARIA tabs), scrollytelling steps, galleries, products/cart, FAQ,
-  pricing, contact forms and footers, with a native motion system that respects reduced motion (`render.py`);
-- favicon, Apple touch icon, OpenGraph tags and a themed `404.html` for every site.
-
-Unusable model output never blocks a section: the kit falls back to honest, deterministic copy.
-Set `SITE_STRATEGY=freeform` (or send `"strategy": "freeform"` to `/api/generate`) to use the legacy loop
-in which the model writes each section's TSX/CSS itself.
-
-### 3. Full Training Pipeline (One Command)
-To rebuild datasets and retrain from scratch:
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/train_all.sh
-
-# Windows Command Prompt
-scripts\train_all.bat
-
-# Or via unified CLI:
-python slm.py pipeline
+python scripts/build_native_section_data.py generate --per-family 5   # copy from the base model (GPU, ~2 h)
+python scripts/build_native_section_data.py assemble                   # train/validation rows
+python training/train_native_sections.py                               # QLoRA, ~4-5 h on a 6 GB GPU
+python scripts/eval_native_sections.py --model models/<adapter> --out runs/eval.json
+python scripts/publish_adapter.py models/<adapter> --repo YOUR_NAME/siteagent-native-qwen3-4b  # share it
 ```
-*Merges all trajectory datasets → validates syntax and types through Vitest & tsc → trains with QLoRA SFT.*
+
+Training needs an NVIDIA GPU with Unsloth (`pip install -r requirements-gpu.txt`).
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Top bar stays **Loading model** | Check the server console; run `python slm.py doctor`. |
+| CUDA out of memory | Close other GPU apps, or `SLM_CONTEXT_LENGTH=4096`, or `SLM_DEVICE=cpu`. |
+| `bitsandbytes`/`unsloth` failed to install | Fine — the loader falls back to float16 Transformers (needs ~8 GB VRAM). |
+| Preview shows "build failed" | The panel shows the error; fix the file in the Code tab or click *Rebuild preview*. |
+| Browser checks skipped | `python -m playwright install chromium` |
+| Blank workbench page | `cd frontend && npm ci && npm run build` |
 
 ---
 
@@ -133323,9 +136046,10 @@ reactagent-slm/
 
 ## 🧠 Model & LoRA Configuration
 
-**Adapter status:** no adapter has passed the promotion gate (`models/promoted_model.json` is `BLOCKED`), so the
-workbench runs the **base `Qwen/Qwen3-4B` model** by default — with the design kit it only writes section copy.
-Candidate adapters under `models/` are unpromoted; set `MODEL_PATH` to try one explicitly.
+**Default model:** the workbench runs the **base `Qwen/Qwen3-4B` model** (design kit mode). The native
+section adapter (`models/qwen3-siteagent-native-sections-r16-v2`, trained with
+`training/train_native_sections.py`) is loaded with `MODEL_PATH` / `scripts/run_web_ui.sh --native`.
+Older candidate adapters under `models/` are unpromoted experiments.
 `my-react-agent-lora/` holds the historical Qwen2.5 adapter and is not loaded by default.
 
 The QLoRA training profile used for Qwen3 candidates:
@@ -133350,6 +136074,9 @@ The root CLI provides a unified interface across all workflows:
 | Command | Description |
 |---|---|
 | `python slm.py pipeline` | Full end-to-end training pipeline (merge → validate → train SFT) |
+| `python slm.py setup` | Install everything for this machine (`--cpu`, `--skip-model`, `--adapter`) |
+| `python slm.py doctor` | Check hardware, dependencies and models; print fixes |
+| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter USER/REPO`) |
 | `python slm.py serve` | Launch web UI workbench on `http://127.0.0.1:5000` |
 | `python slm.py train` | Run QLoRA SFT training (`training/train_sft.py`) |
 | `python slm.py train-dpo` | Run Direct Preference Optimization (`training/train_dpo.py`) |
@@ -133363,10 +136090,8 @@ The root CLI provides a unified interface across all workflows:
 
 ## 💻 Hardware Requirements
 
-- **Inference**: NVIDIA GPU with >= 6GB VRAM (e.g., RTX 4050 Laptop GPU, RTX 3060, or better). Runs comfortably in 4-bit/8-bit QLoRA.
-- **Training**: 6GB VRAM (QLoRA with Unsloth gradient checkpointing, `max_seq_length=9216`, batch size 1 with gradient accumulation).
-- **RAM**: 16GB+ recommended.
-- **OS**: Windows 10/11 or Linux / macOS.
+See [Hardware](#hardware) above: NVIDIA (4-bit, 6 GB+), AMD ROCm, Apple Silicon and CPU-only machines
+are supported for inference. Training scripts need an NVIDIA GPU (6 GB is enough) with Unsloth.
 
 ---
 
@@ -141650,7 +144375,7 @@ export default Cart;
 #### `evaluation/motion_benchmark.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/evaluation/motion_benchmark.py`
-- **Lines**: 1,627 | **Size**: 59,522 bytes | **SHA-256**: `ab6a34c5065a02f834df50d3a6bd4558fb590e23da9d7f7a5512902de1ca1608` | **Newline**: `True`
+- **Lines**: 1,653 | **Size**: 60,816 bytes | **SHA-256**: `33a83ebe21d2cdc11122f3d6c2e23d17fbbbe7b7d29980acf35e294d3b258529` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Motion benchmark test runner evaluating native motion rules, 60fps performance, and reduced-motion fallbacks.
 
@@ -141997,6 +144722,32 @@ def check_scroll_reveal_behavior(
                 selector=resolved_selector,
                 errors=[f"Target element {resolved_selector} disappeared from DOM."],
             )
+
+        # Reveals are usually one-shot: if earlier checks already scrolled past the
+        # target, it is revealed while still off-screen and nothing can change.
+        # Reload so the reveal is measured from its real initial state.
+        if (not before_state["inViewport"] and before_state["opacity"] >= 0.9
+                and before_state["transform"] in ("none", "", None)):
+            page.reload(wait_until="load")
+            page.wait_for_timeout(600)
+            page.evaluate("window.scrollTo(0, 0)")
+            page.wait_for_timeout(100)
+            reloaded = page.evaluate("""(sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return null;
+                const rect = el.getBoundingClientRect();
+                const style = window.getComputedStyle(el);
+                return {
+                    opacity: parseFloat(style.opacity || '1'),
+                    transform: style.transform,
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    inViewport: (rect.top < window.innerHeight && rect.bottom > 0)
+                };
+            }""", resolved_selector)
+            if reloaded:
+                before_state = reloaded
+                metrics["reloaded_before_measuring"] = True
 
         metrics["before_scroll"] = before_state
 

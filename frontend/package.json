@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && node -e \"require('fs').rmSync('../web_ui_static/assets',{recursive:true,force:true})\" && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config vitest.config.ts"

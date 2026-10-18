@@ -22,6 +22,9 @@ SCRIPT_PATHS = {
     "curate_dataset": BASE_DIR / "data_pipeline" / "curate_dataset.py",
     "generate_trajectories": BASE_DIR / "data_pipeline" / "generate_trajectories.py",
     "star": BASE_DIR / "generate_star.py",
+    "setup": BASE_DIR / "scripts" / "install.py",
+    "doctor": BASE_DIR / "scripts" / "doctor.py",
+    "download": BASE_DIR / "scripts" / "download_models.py",
 }
 
 
@@ -89,6 +92,11 @@ def main():
     # 8. Agent
     subparsers.add_parser("agent", help="Run the autonomous agent loop manually")
 
+    # 9. Setup, health check and model download (work on any hardware)
+    subparsers.add_parser("setup", help="Install everything for this machine (see scripts/install.py --help)")
+    subparsers.add_parser("doctor", help="Check this machine can run the workbench and how to fix what can't")
+    subparsers.add_parser("download", help="Download Qwen3-4B (and optionally a native adapter)")
+
     # If no args, print help
     if len(sys.argv) == 1:
         parser.print_help()
@@ -150,6 +158,9 @@ def main():
 
     elif args.command == "agent":
         run_script(SCRIPT_PATHS["agent"], unknown_args)
+
+    elif args.command in ("setup", "doctor", "download"):
+        run_script(SCRIPT_PATHS[args.command], unknown_args)
 
 
 if __name__ == "__main__":

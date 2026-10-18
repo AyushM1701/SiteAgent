@@ -119,7 +119,13 @@ class ModelRuntimeConfig(metaclass=_ModelRuntimeConfigMeta):
             except Exception:
                 pass
 
-        # 4. Fallback default
+        # 4. What fits this machine (agent/hardware.py); 8192 if detection fails.
+        if os.environ.get("SLM_HARDWARE_CONTEXT", "1") != "0":
+            try:
+                from agent.hardware import get_profile
+                return get_profile().context_length
+            except Exception:
+                pass
         return 8192
 
     @classmethod

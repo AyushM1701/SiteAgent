@@ -33,7 +33,8 @@ def test_doc_export_file_exists():
 def test_server_app_py_uncontaminated():
     """Verifies server/app.py section is completely uncontaminated and byte-exact."""
     assert APP_PY.exists(), "Missing server/app.py on disk"
-    disk_bytes = APP_PY.read_bytes()
+    # Git may check files out with CRLF (Windows) or LF; compare content, not line endings.
+    disk_bytes = APP_PY.read_bytes().replace(b"\r\n", b"\n")
     disk_sha = hashlib.sha256(disk_bytes).hexdigest()
 
     doc_text = OUT_MD.open("r", encoding="utf-8", newline="").read()
@@ -69,6 +70,7 @@ def test_server_app_py_uncontaminated():
 
     reconstructed = (body + "\n").encode("utf-8") if has_nl else body.encode("utf-8")
     assert hashlib.sha256(reconstructed).hexdigest() == recorded_sha, "SHA-256 mismatch with metadata"
+    reconstructed = reconstructed.replace(b"\r\n", b"\n")
     assert hashlib.sha256(reconstructed).hexdigest() == disk_sha, "SHA-256 mismatch with disk"
     assert len(reconstructed) == len(disk_bytes), f"Size mismatch: {len(reconstructed)} vs {len(disk_bytes)}"
     assert reconstructed == disk_bytes, "Byte-for-byte mismatch with server/app.py on disk!"
@@ -113,7 +115,8 @@ def test_round_trip_reconstruction_integrity():
             # web_ui_history.json is a runtime session ledger updated whenever sessions or tests run
             if rel_path == "web_ui_history.json":
                 continue
-            assert reconstructed == disk_file.read_bytes(), f"Byte mismatch with disk for {rel_path}"
+            assert reconstructed.replace(b"\r\n", b"\n") == disk_file.read_bytes().replace(b"\r\n", b"\n"), \
+                f"Content mismatch with disk for {rel_path}"
             verified_disk_count += 1
 
     assert verified_disk_count >= 250, f"Expected at least 250 disk-verified files, got {verified_disk_count}"

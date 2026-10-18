@@ -150,20 +150,30 @@ def test_windows_process_tree_cleanup():
 def test_cpu_loader_skips_unsloth_and_uses_float32(monkeypatch, tmp_path):
     import sys
     from agent import base_model_fingerprint
-    torch = SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False), float32="float32", float16="float16")
+    from agent import hardware
+    torch = SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False),
+                            float32="float32", float16="float16", bfloat16="bfloat16")
     model_loader, tokenizer_loader = Mock(), Mock()
+    base = model_loader.from_pretrained.return_value
+    base.to.return_value = base
+    peft = SimpleNamespace(PeftModel=Mock())
     monkeypatch.setitem(sys.modules, "torch", torch)
     monkeypatch.setitem(sys.modules, "transformers", SimpleNamespace(AutoModelForCausalLM=model_loader, AutoTokenizer=tokenizer_loader))
+    monkeypatch.setitem(sys.modules, "peft", peft)
+    monkeypatch.setitem(sys.modules, "unsloth", None)  # importing it would raise
+    monkeypatch.setattr(hardware, "_PROFILE", hardware.HardwareProfile("cpu", "transformers", False, "float32", 8192))
     adapter_dir = tmp_path / "adapter"
     adapter_dir.mkdir()
     (adapter_dir / "adapter_config.json").write_text("{}", encoding="utf-8")
     monkeypatch.setattr(base_model_fingerprint, "verify_lora_adapter_compatibility", lambda *args: None)
     ns = dict(DEFAULT_INFERENCE_MAX_SEQ_LENGTH=8192, DEFAULT_MAX_NEW_TOKENS=4096,
-              List=list, Dict=dict, Path=Path, __file__=str(ROOT / "agent" / "agent.py"))
+              List=list, Dict=dict, Any=object, Path=Path, __file__=str(ROOT / "agent" / "agent.py"))
     load_definitions("agent/agent.py", {"AgentModelRunner"}, ns)
     runner = ns["AgentModelRunner"](str(adapter_dir))
-    assert model_loader.from_pretrained.call_args.kwargs["device_map"] == "cpu"
-    assert model_loader.from_pretrained.call_args.kwargs["torch_dtype"] == "float32"
+    kwargs = model_loader.from_pretrained.call_args.kwargs
+    assert kwargs["torch_dtype"] == "float32" and "quantization_config" not in kwargs
+    base.to.assert_called_once_with("cpu")
+    peft.PeftModel.from_pretrained.assert_called_once()  # the adapter is applied on the CPU base
     runner.model.eval.assert_called_once()
 
 

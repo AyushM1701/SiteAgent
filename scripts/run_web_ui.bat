@@ -1,17 +1,27 @@
 @echo off
 REM ==============================================================================
-REM ReactAgent SLM - One-Command Web UI Workbench Launcher (Windows)
-REM Launches Flask SSE server + Isolated PTY shell runner and opens browser
+REM SiteAgent - start the workbench at http://127.0.0.1:5000
+REM   scripts\run_web_ui.bat            design kit (fast; the model writes the copy)
+REM   scripts\run_web_ui.bat --native   the model writes each section's code too
+REM                                     (needs a native adapter in models\)
 REM ==============================================================================
 setlocal enabledelayedexpansion
-
 cd /d "%~dp0.."
 
-REM The base Qwen3-4B model writes the site copy for the design kit by default.
-REM Set MODEL_PATH yourself to try a specific (unpromoted) adapter, e.g.
-REM   set "MODEL_PATH=%CD%\models\qwen3-siteagent-audit-v6-candidate"
-REM Set SITE_STRATEGY=freeform to use the legacy code-writing loop.
+set "PY=python"
+if exist .venv\Scripts\python.exe set "PY=.venv\Scripts\python.exe"
 
-echo Starting ReactAgent SLM Workbench at http://127.0.0.1:5000...
-python server\app.py %*
-pause
+if /i "%~1"=="--native" (
+    set "ADAPTER="
+    for /f "delims=" %%d in ('dir /b /ad /o:n models\*native* 2^>nul') do set "ADAPTER=models\%%d"
+    if "!ADAPTER!"=="" (
+        echo No native adapter in models\. Download one with: python scripts\download_models.py --adapter USER/REPO
+        exit /b 1
+    )
+    set "MODEL_PATH=!ADAPTER!"
+    set "SITE_STRATEGY=native"
+    echo Using adapter !ADAPTER! ^(native mode^)
+)
+
+echo Starting SiteAgent workbench at http://127.0.0.1:5000 ...
+"%PY%" server\app.py

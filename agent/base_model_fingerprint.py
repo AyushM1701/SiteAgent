@@ -40,8 +40,14 @@ def verify_lora_adapter_compatibility(adapter_dir: Path, base_dir: Path) -> None
     adapter_dir = Path(adapter_dir).resolve()
     base_dir = Path(base_dir).resolve()
     adapter_cfg = json.loads((adapter_dir / "adapter_config.json").read_text(encoding="utf-8"))
-    claimed_base = Path(adapter_cfg.get("base_model_name_or_path", "")).resolve()
-    if claimed_base != base_dir:
+    raw_base = str(adapter_cfg.get("base_model_name_or_path", ""))
+    claimed_base = Path(raw_base).resolve()
+    # Portable references to the same base are accepted (the tensor shapes below are
+    # the real check): this repo's base-model folder on any machine, or the hub id the
+    # base was downloaded from. Any other model name or path is refused.
+    portable = (Path(raw_base.replace("\\", "/")).name == base_dir.name == "base-model"
+                or re.fullmatch(r"(?:qwen|unsloth)/qwen3-4b(?:-instruct-2507)?", raw_base.strip().lower()) is not None)
+    if claimed_base != base_dir and not portable:
         raise IncompatibleBaseModelError(f"Adapter base {claimed_base} differs from {base_dir}")
     cfg = json.loads((base_dir / "config.json").read_text(encoding="utf-8"))
     if cfg.get("model_type") != "qwen3" or "Qwen3ForCausalLM" not in cfg.get("architectures", []):

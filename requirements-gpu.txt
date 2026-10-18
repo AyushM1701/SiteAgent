@@ -1,0 +1,10 @@
+# ==============================================================================
+# Optional NVIDIA extras (installed by the setup script when an NVIDIA GPU is found)
+#
+# bitsandbytes  4-bit loading: Qwen3-4B fits in ~3 GB of VRAM instead of ~8 GB.
+# unsloth       faster 4-bit inference and the QLoRA training scripts.
+#
+# Without these the workbench still runs with plain Transformers (float16 on the GPU).
+# ==============================================================================
+bitsandbytes>=0.43.0
+unsloth>=2024.8

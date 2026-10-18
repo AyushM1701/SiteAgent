@@ -1,68 +1,120 @@
-# ReactAgent SLM 🚀
+# SiteAgent (ReactAgent SLM)
 
-> **Autonomous Small Language Model (SLM) for React, TypeScript, and Modern CSS.**  
-> Built on `Qwen/Qwen3-4B` to generate, test, and self-correct web components and complete websites. Runs locally on consumer GPUs (e.g., 6GB RTX 4050).
+> **A local website builder powered by a small language model.**
+> Describe a site in plain English; SiteAgent plans it, writes it as a React + TypeScript project,
+> builds it, checks it in a real browser (types, build, accessibility, motion, runtime) and shows a
+> live preview you can inspect and edit. Built on `Qwen/Qwen3-4B`; runs on your own machine —
+> an NVIDIA/AMD GPU, an Apple Silicon Mac, or just a CPU.
 
 ---
 
-## ⚡ Quick Start
+## Quick start
 
-### 1. Setup Environment & Base Weights
-Clone the repository and run the setup script:
+**You need:** Python 3.10–3.13, [Node.js 18+](https://nodejs.org), Git, ~15 GB of free disk
+(8 GB is the model). A GPU is optional.
+
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/setup.sh
+git clone <this-repo-url> siteagent
+cd siteagent
+```
 
-# Windows Command Prompt
+**1. Install** (creates `.venv`, picks the right PyTorch for your hardware, builds the UI,
+downloads Qwen3-4B, then runs a health check):
+
+```bash
+# macOS / Linux / Git Bash
+bash scripts/setup.sh
+```
+
+```bat
+:: Windows (Command Prompt or PowerShell)
 scripts\setup.bat
 ```
-*Installs Python and npm dependencies, and downloads `Qwen/Qwen3-4B` base weights into `./base-model`.*
 
-### 2. Launch the Web Workbench (One Command)
+Options: `--cpu` (force CPU), `--skip-model` (download later with `python slm.py download`),
+`--base Qwen/Qwen3-1.7B` (smaller model for low-memory machines),
+`--adapter USER/REPO` (also download a fine-tuned native adapter).
+
+**2. Run the workbench** at <http://127.0.0.1:5000>:
+
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/run_web_ui.sh
-
-# Windows Command Prompt
-scripts\run_web_ui.bat
-
-# Or via unified CLI:
-python slm.py serve
+bash scripts/run_web_ui.sh          # macOS / Linux / Git Bash
+scripts\run_web_ui.bat              # Windows
 ```
-*Spawns the Flask SSE backend and isolated PTY terminal server, and automatically opens `http://127.0.0.1:5000` in your browser.*
+
+**3. Check your setup at any time:**
+
+```bash
+python slm.py doctor
+```
+
+It prints your hardware profile (GPU, memory, backend, context length) and every missing piece
+with the command that fixes it. The top bar of the workbench shows the model's state:
+amber **Loading model** while it loads, green **Ready** when you can send a prompt.
+
+### Hardware
+
+The model loader (`agent/hardware.py`) detects your machine and picks the backend, precision and
+context length automatically:
+
+| Machine | How the model runs | Notes |
+|---|---|---|
+| NVIDIA GPU, 6 GB+ VRAM | 4-bit (Unsloth or bitsandbytes) on the GPU | Developed on a 6 GB RTX 4050. ~25 tokens/s. |
+| NVIDIA GPU, 8 GB+ without 4-bit libraries | float16 on the GPU | Used automatically if Unsloth/bitsandbytes can't install. |
+| AMD GPU (Linux, ROCm) | Transformers on the GPU | Unsloth is NVIDIA-only. |
+| Apple Silicon (M1+), 16 GB+ | float16 on Metal | |
+| CPU only, 12 GB+ RAM | bfloat16 on the CPU | Works; a few tokens/s. Kit mode stays usable. |
+| Less memory | use `--base Qwen/Qwen3-1.7B` | Kit mode only (the native adapter needs Qwen3-4B). |
+
+Override anything with environment variables: `SLM_DEVICE=cuda|mps|cpu`,
+`SLM_BACKEND=unsloth|transformers`, `SLM_LOAD_IN_4BIT=0|1`, `SLM_CONTEXT_LENGTH=8192`,
+`MODEL_PATH=<model or adapter folder>`.
+
+### Two ways to build a site
+
+* **Design kit (default, fast — about 1–2 minutes per site).** The model writes each section's
+  copy as JSON and the design kit (`agent/site_kit/`) renders accessible, token-driven React/CSS:
+  12 contrast-checked art directions, vetted photography, menus, galleries, carts, FAQs, forms,
+  a native motion system, favicons and OpenGraph tags.
+* **Native (the model writes the code — about 20–40 minutes per site on a 6 GB GPU).** A
+  fine-tuned LoRA adapter writes every section's React component and CSS itself; the kit only
+  plans the site and supplies shared design tokens. Each section is accepted only if it
+  typechecks, keeps the approved copy exactly and keeps every behaviour the design system requires;
+  otherwise the kit renders that section. On held-out business types the adapter's sections were
+  accepted 92% of the time vs 6% for the untuned model — see
+  [docs/NATIVE_SECTION_TRAINING.md](docs/NATIVE_SECTION_TRAINING.md).
+  Choose it per request in the composer (*Advanced → Site code written by → The model*), or start
+  with `scripts/run_web_ui.sh --native`. It needs an adapter in `models/`: download one with
+  `python slm.py download --adapter USER/REPO`, or train your own (below).
 
 ### Website requests
 
-The site planner supports portfolios, stores, publications, restaurants, events, dashboards, SaaS sites, and requests outside those categories. Describe the audience, content, visual style, and interactions you want. For an unusual layout, include an inline `Sections:` list or a numbered section list; the planner preserves those sections. Products, projects, prices, testimonials, and contact details should be supplied in the request when they need to appear as real business facts.
+Describe the audience, content, visual style and interactions you want. An inline
+`Sections: a, b, c` or `Include: a, b, c` list is followed exactly. Products, prices, projects,
+testimonials and contact details appear only when you supply them — the site never invents them.
 
-**How sites are built (design kit).** By default (`SITE_STRATEGY=kit`) the model writes only the *copy* for
-each section as a small JSON object; `agent/site_kit/` renders it into token-driven, accessible TSX/CSS:
+### Training your own adapter
 
-- 12 contrast-checked art directions chosen from the prompt's subject (`themes.py`), with Google Fonts that
-  actually ship the requested weights;
-- vetted, subject-matched Unsplash photography or a designed art panel — never a placeholder (`imagery.py`);
-- integrity filters that drop instructions, style words and invented facts from the copy (`content.py`);
-- renderers for headers, heroes, menus (ARIA tabs), scrollytelling steps, galleries, products/cart, FAQ,
-  pricing, contact forms and footers, with a native motion system that respects reduced motion (`render.py`);
-- favicon, Apple touch icon, OpenGraph tags and a themed `404.html` for every site.
-
-Unusable model output never blocks a section: the kit falls back to honest, deterministic copy.
-Set `SITE_STRATEGY=freeform` (or send `"strategy": "freeform"` to `/api/generate`) to use the legacy loop
-in which the model writes each section's TSX/CSS itself.
-
-### 3. Full Training Pipeline (One Command)
-To rebuild datasets and retrain from scratch:
 ```bash
-# POSIX / Linux / macOS / Git Bash
-bash scripts/train_all.sh
-
-# Windows Command Prompt
-scripts\train_all.bat
-
-# Or via unified CLI:
-python slm.py pipeline
+python scripts/build_native_section_data.py generate --per-family 5   # copy from the base model (GPU, ~2 h)
+python scripts/build_native_section_data.py assemble                   # train/validation rows
+python training/train_native_sections.py                               # QLoRA, ~4-5 h on a 6 GB GPU
+python scripts/eval_native_sections.py --model models/<adapter> --out runs/eval.json
+python scripts/publish_adapter.py models/<adapter> --repo YOUR_NAME/siteagent-native-qwen3-4b  # share it
 ```
-*Merges all trajectory datasets → validates syntax and types through Vitest & tsc → trains with QLoRA SFT.*
+
+Training needs an NVIDIA GPU with Unsloth (`pip install -r requirements-gpu.txt`).
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Top bar stays **Loading model** | Check the server console; run `python slm.py doctor`. |
+| CUDA out of memory | Close other GPU apps, or `SLM_CONTEXT_LENGTH=4096`, or `SLM_DEVICE=cpu`. |
+| `bitsandbytes`/`unsloth` failed to install | Fine — the loader falls back to float16 Transformers (needs ~8 GB VRAM). |
+| Preview shows "build failed" | The panel shows the error; fix the file in the Code tab or click *Rebuild preview*. |
+| Browser checks skipped | `python -m playwright install chromium` |
+| Blank workbench page | `cd frontend && npm ci && npm run build` |
 
 ---
 
@@ -156,9 +208,10 @@ reactagent-slm/
 
 ## 🧠 Model & LoRA Configuration
 
-**Adapter status:** no adapter has passed the promotion gate (`models/promoted_model.json` is `BLOCKED`), so the
-workbench runs the **base `Qwen/Qwen3-4B` model** by default — with the design kit it only writes section copy.
-Candidate adapters under `models/` are unpromoted; set `MODEL_PATH` to try one explicitly.
+**Default model:** the workbench runs the **base `Qwen/Qwen3-4B` model** (design kit mode). The native
+section adapter (`models/qwen3-siteagent-native-sections-r16-v2`, trained with
+`training/train_native_sections.py`) is loaded with `MODEL_PATH` / `scripts/run_web_ui.sh --native`.
+Older candidate adapters under `models/` are unpromoted experiments.
 `my-react-agent-lora/` holds the historical Qwen2.5 adapter and is not loaded by default.
 
 The QLoRA training profile used for Qwen3 candidates:
@@ -183,6 +236,9 @@ The root CLI provides a unified interface across all workflows:
 | Command | Description |
 |---|---|
 | `python slm.py pipeline` | Full end-to-end training pipeline (merge → validate → train SFT) |
+| `python slm.py setup` | Install everything for this machine (`--cpu`, `--skip-model`, `--adapter`) |
+| `python slm.py doctor` | Check hardware, dependencies and models; print fixes |
+| `python slm.py download` | Download Qwen3-4B (`--base`, `--adapter USER/REPO`) |
 | `python slm.py serve` | Launch web UI workbench on `http://127.0.0.1:5000` |
 | `python slm.py train` | Run QLoRA SFT training (`training/train_sft.py`) |
 | `python slm.py train-dpo` | Run Direct Preference Optimization (`training/train_dpo.py`) |
@@ -196,10 +252,8 @@ The root CLI provides a unified interface across all workflows:
 
 ## 💻 Hardware Requirements
 
-- **Inference**: NVIDIA GPU with >= 6GB VRAM (e.g., RTX 4050 Laptop GPU, RTX 3060, or better). Runs comfortably in 4-bit/8-bit QLoRA.
-- **Training**: 6GB VRAM (QLoRA with Unsloth gradient checkpointing, `max_seq_length=9216`, batch size 1 with gradient accumulation).
-- **RAM**: 16GB+ recommended.
-- **OS**: Windows 10/11 or Linux / macOS.
+See [Hardware](#hardware) above: NVIDIA (4-bit, 6 GB+), AMD ROCm, Apple Silicon and CPU-only machines
+are supported for inference. Training scripts need an NVIDIA GPU (6 GB is enough) with Unsloth.
 
 ---
 

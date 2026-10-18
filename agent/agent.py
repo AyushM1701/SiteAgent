@@ -379,44 +379,57 @@ class AgentModelRunner:
             base_fingerprint = verify_base_model_architecture(Path(self.model_path), strict=True)
             if not base_fingerprint["is_authentic_qwen3"]:
                 raise RuntimeError("Model weights do not match the Qwen3 architecture")
-        import torch
-        if not torch.cuda.is_available():
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                device_map="cpu",
-                torch_dtype=torch.float32,
-            )
-            self.model.eval()
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded CPU model with transformers float32.")
-            return
+        from agent.hardware import get_profile
+        from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
+        profile = get_profile()
+        for warning in profile.warnings:
+            print(f"  [Hardware] {warning}")
+        print(f"  [Hardware] {profile.device} | {profile.backend} | "
+              f"{'4-bit' if profile.load_in_4bit else profile.dtype}"
+              + (f" | {profile.gpu_name} ({profile.vram_gb} GB)" if profile.gpu_name else ""))
 
-        try:
-            from unsloth import FastLanguageModel
-            self.model, self.tokenizer = FastLanguageModel.from_pretrained(
-                model_name=self.model_path,
-                max_seq_length=self.max_seq_length,
-                load_in_4bit=True,
-            )
-            FastLanguageModel.for_inference(self.model)
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded successfully with Unsloth inference optimizations.")
-        except ImportError:
-            print("Unsloth unavailable, loading with standard transformers...")
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.model_path,
-                torch_dtype=torch.float16,
-                device_map="auto"
-            )
-            from agent.agent_protocol import set_default_tokenizer as _set_tokenizer  # one module (A3)
-            _set_tokenizer(self.tokenizer)
-            print("Loaded with transformers.")
+        if profile.backend == "unsloth":
+            try:
+                from unsloth import FastLanguageModel
+                self.model, self.tokenizer = FastLanguageModel.from_pretrained(
+                    model_name=self.model_path,
+                    max_seq_length=self.max_seq_length,
+                    load_in_4bit=profile.load_in_4bit,
+                )
+                FastLanguageModel.for_inference(self.model)
+                _set_tokenizer(self.tokenizer)
+                print("Loaded successfully with Unsloth inference optimizations.")
+                return
+            except ImportError:
+                print("  [Hardware] Unsloth is not importable; falling back to Transformers.")
+        self._load_with_transformers(profile)
+        _set_tokenizer(self.tokenizer)
+        print(f"Loaded with Transformers on {profile.device}.")
+
+    def _load_with_transformers(self, profile) -> None:
+        """Portable loader: NVIDIA/AMD (optionally 4-bit), Apple Metal, or CPU. LoRA adapter
+        directories are applied on top of the local base model with PEFT."""
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        dtype = {"float16": torch.float16, "bfloat16": torch.bfloat16, "float32": torch.float32}[profile.dtype]
+        adapter = (Path(self.model_path) / "adapter_config.json").exists()
+        base_path = Path(__file__).resolve().parent.parent / "base-model" if adapter else Path(self.model_path)
+        kwargs: Dict[str, Any] = {"torch_dtype": dtype}
+        if profile.device == "cuda":
+            kwargs["device_map"] = "auto"
+            if profile.load_in_4bit:
+                from transformers import BitsAndBytesConfig
+                kwargs["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=dtype)
+        self.tokenizer = AutoTokenizer.from_pretrained(str(self.model_path if adapter else base_path))
+        model = AutoModelForCausalLM.from_pretrained(str(base_path), **kwargs)
+        if profile.device in {"mps", "cpu"}:
+            model = model.to(profile.device)
+        if adapter:
+            from peft import PeftModel
+            model = PeftModel.from_pretrained(model, str(self.model_path))
+        model.eval()
+        self.model = model
 
     def generate_turn(
         self,

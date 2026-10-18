@@ -1,0 +1,55 @@
+name: CI
+
+# Runs without a GPU or model weights: installs the CPU build of PyTorch, builds the
+# workbench UI, and runs the Python and frontend tests. Tests that need the downloaded
+# Qwen3-4B weights skip themselves when ./base-model is absent.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Python dependencies (CPU PyTorch)
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Node dependencies
+        run: |
+          npm ci
+          npm --prefix frontend ci
+
+      - name: Workbench UI typecheck, tests and build
+        run: |
+          npm --prefix frontend run typecheck
+          npm --prefix frontend test
+          npm --prefix frontend run build
+
+      - name: Chromium for browser checks
+        run: python -m playwright install --with-deps chromium
+
+      - name: Python tests
+        run: python -m pytest -q --ignore=tests/e2e
+
+      - name: Doctor (reports the missing model, does not fail the build)
+        run: python scripts/doctor.py || true
