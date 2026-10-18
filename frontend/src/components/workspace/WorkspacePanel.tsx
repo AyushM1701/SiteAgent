@@ -13,6 +13,7 @@ import { useWorkspaceStore, WorkspaceTab } from '../../state/workspace-store';
 import { useProjectStore } from '../../state/project-store';
 import { useAgentStore } from '../../state/agent-store';
 import { PreviewTab } from './PreviewTab';
+import { useViewportWidth, maxWorkspaceWidth } from '../../hooks/useViewportWidth';
 import { LogsTab } from './LogsTab';
 const CodeTab = React.lazy(() => import('./CodeTab').then(module => ({ default: module.CodeTab })));
 const DiffTab = React.lazy(() => import('./DiffTab').then(module => ({ default: module.DiffTab })));
@@ -26,12 +27,18 @@ export const WorkspacePanel: React.FC = () => {
     setWorkspaceOpen, 
     workspaceOpen, 
     workspaceWidth, 
-    isResizing 
+    isResizing,
+    sidebarOpen,
+    inspectorOpen,
   } = useWorkspaceStore();
+  const viewport = useViewportWidth();
   const { currentProjectId } = useProjectStore();
   const { status } = useAgentStore();
 
   if (!workspaceOpen) return null;
+
+  // The stored width is a preference; never let it crowd out the chat.
+  const width = viewport < 768 ? undefined : Math.min(workspaceWidth, maxWorkspaceWidth(viewport, sidebarOpen, inspectorOpen));
 
   const isWorking = status === 'generating' || status === 'planning' || status === 'typechecking' || status === 'repairing';
   const fileCount = Object.keys(files).length;
@@ -46,11 +53,12 @@ export const WorkspacePanel: React.FC = () => {
 
   return (
     <div
-      style={{ width: `${workspaceWidth}px` }}
-      className="fixed inset-0 md:relative md:inset-auto h-full bg-[#141414] border-l border-white/[0.06] flex flex-col overflow-hidden select-none z-50 md:z-20 shrink-0 max-w-full"
+      id="workspace-panel"
+      style={width ? { width: `${width}px` } : undefined}
+      className="fixed inset-0 md:relative md:inset-auto h-full bg-[#141414] border-l border-white/[0.06] flex flex-col overflow-hidden z-50 md:z-20 shrink-0 max-w-full"
     >
       {/* Workspace Tabs Header */}
-      <div className="h-11 border-b border-white/[0.06] px-3 flex items-center justify-between bg-[#141414] shrink-0">
+      <div className="h-11 border-b border-white/[0.06] px-3 flex items-center justify-between bg-[#141414] shrink-0 select-none">
         {/* Mobile back button */}
         <button
           id="workspace-mobile-back-btn"

@@ -6,6 +6,12 @@ export interface SelectedDOMElement {
   componentHint?: string;
   textContent?: string;
   selector: string;
+  href?: string;
+  src?: string;
+  alt?: string;
+  ariaLabel?: string;
+  size?: { width: number; height: number };
+  styles?: Partial<Record<'color' | 'backgroundColor' | 'fontFamily' | 'fontSize' | 'fontWeight' | 'padding' | 'margin' | 'borderRadius' | 'display', string>>;
 }
 
 export interface Selected3DObject {

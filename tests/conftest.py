@@ -1,3 +1,11 @@
+import os
+import tempfile
+
+# Sessions created by tests must never appear in the user's workbench project list.
+os.environ.setdefault("SLM_SESSIONS_DIR", tempfile.mkdtemp(prefix="slm_test_sessions_"))
+# Importing server.app must not load the 4B model onto the GPU during tests.
+os.environ.setdefault("NO_AUTO_LOAD_MODEL", "1")
+
 import pytest
 from agent.agent_protocol import get_default_tokenizer, set_default_tokenizer
 

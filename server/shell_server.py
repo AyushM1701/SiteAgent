@@ -20,6 +20,20 @@ import urllib.parse
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.resolve()
+REPO_ROOT = BASE_DIR.parent
+PROJECTS_ROOT = (REPO_ROOT / "generated_components").resolve()
+
+
+def _shell_cwd(requested: str) -> Path:
+    """Open the shell in the requested project folder, if it is a generated project."""
+    if requested:
+        try:
+            candidate = Path(requested).resolve()
+            if candidate.is_dir() and PROJECTS_ROOT in candidate.parents:
+                return candidate
+        except (OSError, ValueError):
+            pass
+    return REPO_ROOT
 DEBUG = os.environ.get("SHELL_DEBUG", "").lower() in ("1", "true", "yes")
 HOST = os.environ.get("SHELL_HOST", "127.0.0.1")
 AUTH_TOKEN = os.environ.get("SHELL_AUTH_TOKEN", "").strip()
@@ -123,6 +137,7 @@ def process_request(connection, request):
         if not _verify_shell_token(token):
             return connection.respond(401, "Unauthorized: Invalid shell token\n")
         connection._shell_authenticated = True
+    connection._shell_cwd = _shell_cwd(qs.get("cwd", [""])[0])
     return None
 
 
@@ -166,7 +181,7 @@ async def shell_handler(ws):
                     "Remove-Module PSReadLine -ErrorAction SilentlyContinue",
                 ],
                 dimensions=(rows, cols),
-                cwd=str(BASE_DIR),
+                cwd=str(getattr(ws, "_shell_cwd", REPO_ROOT)),
                 backend=Backend.WinPTY,
             )
             try:
@@ -179,7 +194,7 @@ async def shell_handler(ws):
             pty = PtyProcess.spawn(
                 [shell_bin, "-i"],
                 dimensions=(rows, cols),
-                cwd=str(BASE_DIR),
+                cwd=str(getattr(ws, "_shell_cwd", REPO_ROOT)),
             )
     except Exception as exc:
         if DEBUG:

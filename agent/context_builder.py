@@ -465,10 +465,11 @@ class ContextBuilder:
 
             target_hint = comp_name or selector or three_node
             if target_hint:
-                clean_hint = re.sub(r'^[.#]', '', str(target_hint)).lower()
+                # Section ids are kebab-case ("visit-us"); component files are PascalCase (VisitUs.tsx).
+                clean_hint = re.sub(r'[^a-z0-9]', '', re.sub(r'^[.#]', '', str(target_hint)).lower())
                 for path in all_files.keys():
-                    stem = Path(path).stem.lower()
-                    if clean_hint in stem or stem in clean_hint:
+                    stem = re.sub(r'[^a-z0-9]', '', Path(path).stem.lower())
+                    if clean_hint and stem and (clean_hint in stem or stem in clean_hint):
                         selected_paths.add(path)
                         priority_notes.append(f"Priority 1: Selected element '{target_hint}' matched '{path}'")
 

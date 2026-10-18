@@ -38,6 +38,7 @@ export const ProjectSidebar: React.FC = () => {
         filePath: item.file_path || item.filePath,
         folderName: item.folder_name || item.folderName || (item.file_path ? item.file_path.replace(/^generated_components\//, '').replace(/\/$/, '') : ''),
         fullPath: item.full_path || item.fullPath || item.workspace_dir,
+        uses3D: Boolean(item.uses_3d ?? item.uses3D),
       }));
       setProjects(mapped);
     } catch (err) {

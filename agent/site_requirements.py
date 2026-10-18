@@ -70,7 +70,8 @@ def build_requirement_manifest(prompt: str, brief: dict[str, Any]) -> Requiremen
                (item.get("type") == "text_reveal" and re.search(r"\bscroll(?:ing)?\b.{0,35}\btext reveals?\b", lower)) else item.get("trigger", "viewport")}
               for item in motion if isinstance(item, dict)]
     three_d = []
-    if re.search(r"\b(?:3d|three[- ]dimensional|webgl|three\.js|r3f)\b", lower):
+    from evaluation.three_d_performance_validator import is_three_d_requested
+    if is_three_d_requested(prompt):  # "WebGL gradient background" is an effect, not a scene
         engines = []
         if re.search(r"\bcss[- ]?3d\b|\bcss\b.{0,20}\b(?:composition|perspective|scene)\b", lower):
             engines.append("css")

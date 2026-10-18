@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
 import {
-  FileCode,
   FolderCode,
+  PanelLeftClose,
+  PanelLeftOpen,
   Copy,
   Check,
   Download,
-  Folder,
   FileText,
   Save,
   Undo2,
   AlertCircle,
-  Trash2,
 } from 'lucide-react';
 import { useWorkspaceStore } from '../../state/workspace-store';
 import { useProjectStore } from '../../state/project-store';
 import { useConfirm } from '../../state/confirm-store';
 import { toast } from '../../state/toast-store';
 import { api } from '../../services/api';
+import { FileTree } from './FileTree';
 
 export const CodeTab: React.FC = () => {
   const {
@@ -39,6 +39,24 @@ export const CodeTab: React.FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [explorerOpen, setExplorerOpen] = useState(true);
+  const [narrow, setNarrow] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Collapse labels (and start with the explorer hidden) in a narrow workspace.
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    let first = true;
+    const observer = new ResizeObserver(() => {
+      const isNarrow = node.clientWidth < 640;
+      setNarrow(isNarrow);
+      if (first && node.clientWidth < 480) setExplorerOpen(false);
+      first = false;
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const fileList = Object.keys(files);
 
@@ -275,6 +293,20 @@ export const CodeTab: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const handleEditorWillMount = (monaco: any) => {
+    const ts = monaco.languages?.typescript || monaco.typescript;
+    if (!ts) return;
+    for (const defaults of [ts.typescriptDefaults, ts.javascriptDefaults]) {
+      defaults?.setDiagnosticsOptions?.({ noSemanticValidation: true, noSyntaxValidation: false });
+      defaults?.setCompilerOptions?.({
+        jsx: ts.JsxEmit?.ReactJSX ?? 4,
+        target: ts.ScriptTarget?.ES2020 ?? 7,
+        allowNonTsExtensions: true,
+        esModuleInterop: true,
+      });
+    }
+  };
+
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       saveRef.current();
@@ -284,91 +316,47 @@ export const CodeTab: React.FC = () => {
   return (
     <div
       id="code-tab-container"
-      className="flex-1 flex h-full bg-[#0a0c10] overflow-hidden select-none"
+      ref={containerRef}
+      className="flex-1 flex h-full bg-[#0a0c10] overflow-hidden"
     >
       {/* Left File Explorer */}
-      <div
-        id="code-file-explorer"
-        className="w-56 min-w-[200px] border-r border-white/[0.08] bg-[#141619] flex flex-col h-full"
-      >
-        <div className="p-3 border-b border-white/[0.06] text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <FolderCode size={14} className="text-emerald-400" />
-            <span>Project Files</span>
-          </div>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/[0.06] text-slate-400 font-mono">
-            {fileList.length}
-          </span>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5 font-mono text-xs">
-          {fileList.length === 0 ? (
-            <div className="p-4 text-center text-slate-500 text-xs">
-              No files generated yet
+      {explorerOpen && (
+        <div
+          id="code-file-explorer"
+          className="w-52 shrink-0 border-r border-white/[0.08] bg-[#141619] flex flex-col h-full"
+        >
+          <div className="h-11 px-3 border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <FolderCode size={14} className="text-emerald-400" />
+              <span>Files</span>
             </div>
-          ) : (
-            fileList.map((file) => {
-              const isSelected = file === activeFile;
-              const isDirty = isFileDirty(file);
-
-              return (
-                <div
-                  key={file}
-                  id={`code-file-item-${file.replace(/[^a-zA-Z0-9_-]/g, '_')}`}
-                  onClick={() => handleFileSelect(file)}
-                  className={`group w-full flex items-center justify-between px-2.5 py-1.5 rounded text-left transition-all truncate cursor-pointer ${
-                    isSelected
-                      ? 'bg-emerald-500/10 text-emerald-300 font-medium border border-emerald-500/25 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
-                  }`}
-                  title={file}
-                >
-                  <div className="flex items-center gap-2 truncate min-w-0">
-                    <FileCode
-                      size={13}
-                      className={isSelected ? 'text-emerald-400' : 'text-slate-500'}
-                    />
-                    <span className="truncate">{file}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
-                    {/* Dirty bullet */}
-                    {isDirty && (
-                      <span
-                        className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]"
-                        title="Unsaved changes"
-                      />
-                    )}
-
-                    {/* Delete file button */}
-                    <button
-                      type="button"
-                      id={`code-delete-file-btn-${file.replace(/[^a-zA-Z0-9_-]/g, '_')}`}
-                      onClick={(e) => handleDeleteFile(file, e)}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-rose-500/20 hover:text-rose-300 text-slate-500 transition-opacity cursor-pointer"
-                      title={`Delete ${file}`}
-                      aria-label={`Delete ${file}`}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+            <span className="text-[10px] px-1.5 rounded-full bg-white/[0.06] text-slate-400 font-mono">{fileList.length}</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-1 font-mono text-xs">
+            <FileTree files={fileList} activeFile={activeFile} isDirty={isFileDirty} onSelect={handleFileSelect} onDelete={handleDeleteFile} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right Monaco Editor Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Editor Toolbar */}
         <div
           id="code-editor-toolbar"
-          className="h-11 border-b border-white/[0.08] bg-[#141619] px-4 flex items-center justify-between text-xs"
+          className="h-11 border-b border-white/[0.08] bg-[#141619] px-2 flex items-center justify-between gap-2 text-xs"
         >
-          <div className="flex items-center gap-2.5 font-mono text-slate-300">
-            <FileText size={14} className="text-emerald-400" />
-            <span className="font-medium">{activeFile || 'No file selected'}</span>
+          <div className="flex items-center gap-2 font-mono text-slate-300 min-w-0">
+            <button
+              id="code-explorer-toggle-btn"
+              onClick={() => setExplorerOpen(!explorerOpen)}
+              className="p-1 rounded hover:bg-white/[0.06] text-slate-400 hover:text-slate-200 cursor-pointer shrink-0"
+              title={explorerOpen ? 'Hide file explorer' : 'Show file explorer'}
+              aria-label={explorerOpen ? 'Hide file explorer' : 'Show file explorer'}
+            >
+              {explorerOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
+            </button>
+            <FileText size={14} className="text-emerald-400 shrink-0" />
+            <span className="font-medium truncate" title={activeFile}>{activeFile || 'No file selected'}</span>
 
             {/* Unsaved changes indicator badge */}
             {isCurrentDirty && (
@@ -378,7 +366,7 @@ export const CodeTab: React.FC = () => {
                 title="File has unsaved modifications (Ctrl+S to save)"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span>Unsaved changes</span>
+                <span className={narrow ? 'sr-only' : ''}>Unsaved</span>
               </span>
             )}
 
@@ -390,7 +378,7 @@ export const CodeTab: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Discard changes button */}
             {isCurrentDirty && (
               <button
@@ -401,7 +389,7 @@ export const CodeTab: React.FC = () => {
                 title="Discard unsaved changes and revert to disk version"
               >
                 <Undo2 size={12} />
-                <span>Discard</span>
+                <span className={narrow ? 'sr-only' : ''}>Discard</span>
               </button>
             )}
 
@@ -423,7 +411,7 @@ export const CodeTab: React.FC = () => {
                   <>
                     <Save size={12} className={isSaving ? 'animate-spin' : ''} />
                     <span>{isSaving ? 'Saving...' : 'Save'}</span>
-                    <span className="text-[10px] text-emerald-400/60 font-mono">Ctrl+S</span>
+                    {!narrow && <span className="text-[10px] text-emerald-400/60 font-mono">Ctrl+S</span>}
                   </>
                 )}
               </button>
@@ -444,7 +432,7 @@ export const CodeTab: React.FC = () => {
               ) : (
                 <>
                   <Copy size={12} />
-                  <span>Copy</span>
+                  <span className={narrow ? 'sr-only' : ''}>Copy</span>
                 </>
               )}
             </button>
@@ -458,7 +446,7 @@ export const CodeTab: React.FC = () => {
               title={currentProjectId ? "Download complete runnable project as ZIP" : "Select or generate a project to download ZIP"}
             >
               <Download size={12} className={`text-emerald-400 ${isExporting ? 'animate-bounce' : ''}`} />
-              <span>{isExporting ? 'Exporting...' : 'Download ZIP'}</span>
+              <span className={narrow ? 'sr-only' : ''}>{isExporting ? 'Exporting...' : 'ZIP'}</span>
             </button>
           </div>
         </div>
@@ -471,11 +459,12 @@ export const CodeTab: React.FC = () => {
             language={getLanguage(activeFile)}
             value={activeContent}
             onChange={handleEditorChange}
+            beforeMount={handleEditorWillMount}
             onMount={handleEditorDidMount}
             theme={theme === 'dark' ? 'vs-dark' : 'light'}
             options={{
               readOnly: !activeFile || !currentProjectId,
-              minimap: { enabled: true },
+              minimap: { enabled: !narrow },
               fontSize: 13,
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
               scrollBeyondLastLine: false,

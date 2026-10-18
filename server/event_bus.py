@@ -254,6 +254,8 @@ class EventBus:
         self._project_history: Dict[str, List[Dict[str, Any]]] = {}
         self._task_to_project: Dict[str, str] = {}
         self.MAX_PROJECT_HISTORY: int = 1000
+        # Optional callable(project_id, payload) that persists log lines (set by the server).
+        self.log_sink = None
 
     def bind_task_to_project(self, task_id: str, project_id: str) -> None:
         """Associates a task_id with a project_id for automatic project-channel routing."""
@@ -351,6 +353,16 @@ class EventBus:
         else:
             raise TypeError(f"Expected AgentEvent or dict, got {type(event)}")
 
+        payload = self._publish_locked(task_id, event_obj, pid)
+        sink = self.log_sink
+        if sink and pid and payload.get("log"):
+            try:
+                sink(pid, payload)
+            except Exception:
+                pass
+        return payload
+
+    def _publish_locked(self, task_id: str, event_obj: "AgentEvent", pid: Optional[str]) -> Dict[str, Any]:
         with self._lock:
             # If bound to a project, stamp monotonic sequence number
             if pid:

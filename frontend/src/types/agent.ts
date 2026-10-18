@@ -91,6 +91,7 @@ export interface ValidationGate {
 export interface MotionPlanItem {
   type: string;
   section?: string;
+  target_section?: string;
   intensity?: 'subtle' | 'medium' | 'cinematic' | string;
   axis?: 'x' | 'y' | 'both' | 'none' | string;
   trigger?: 'viewport' | 'scroll-progress' | 'interaction' | string;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import {
   RotateCcw,
@@ -61,8 +61,20 @@ export const DiffTab: React.FC = () => {
   const [reverting, setReverting] = useState(false);
   const [revertSuccess, setRevertSuccess] = useState(false);
   const confirm = useConfirm();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setNarrow(node.clientWidth < 680));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   const turnCount = currentProject?.turnCount || 1;
+  // Reverting to the latest turn would change nothing.
+  const isLatestTurn = selectedTurn >= turnCount;
 
   // Derive file entries map and list
   const filesMap: Record<string, FileDiffEntry> = useMemo(() => {
@@ -175,18 +187,21 @@ export const DiffTab: React.FC = () => {
   return (
     <div
       id="diff-tab-container"
-      className="flex-1 flex flex-col h-full bg-[#0a0c10] overflow-hidden select-none"
+      ref={containerRef}
+      className="flex-1 flex flex-col h-full bg-[#0a0c10] overflow-hidden"
     >
       {/* Diff Toolbar */}
       <div
         id="diff-toolbar"
-        className="h-11 border-b border-white/[0.08] bg-[#141619] px-3 sm:px-4 flex items-center justify-between text-xs gap-2"
+        className="h-11 border-b border-white/[0.08] bg-[#141619] px-3 flex items-center justify-between text-xs gap-2 select-none"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-            <FileDiff size={15} className="text-emerald-400" />
-            <span className="tracking-wide">Diff Viewer</span>
-          </div>
+        <div className="flex items-center gap-3 min-w-0">
+          {!narrow && (
+            <div className="flex items-center gap-1.5 font-semibold text-slate-200 whitespace-nowrap">
+              <FileDiff size={15} className="text-emerald-400" />
+              <span className="tracking-wide">Diff</span>
+            </div>
+          )}
 
           {/* Turn selector */}
           <div className="flex items-center gap-1.5 font-mono text-slate-400">
@@ -201,14 +216,14 @@ export const DiffTab: React.FC = () => {
             >
               {Array.from({ length: turnCount }, (_, i) => i + 1).map((t) => (
                 <option key={t} value={t}>
-                  Turn {t} {t === 1 ? '(Baseline)' : `vs Turn ${t - 1}`}
+                  Turn {t}{t === 1 ? ' (first)' : ` vs ${t - 1}`}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* View Mode Toggle (Split Diff vs Unified Patch) */}
           <div
             id="diff-view-mode-toggle"
@@ -225,7 +240,7 @@ export const DiffTab: React.FC = () => {
               title="Side-by-side Monaco diff comparison"
             >
               <Columns size={12} />
-              <span>Split Diff</span>
+              <span className={narrow ? 'sr-only' : 'whitespace-nowrap'}>Split</span>
             </button>
             <button
               id="diff-patch-view-btn"
@@ -238,7 +253,7 @@ export const DiffTab: React.FC = () => {
               title="Unified patch syntax view"
             >
               <FileText size={12} />
-              <span>Unified Patch</span>
+              <span className={narrow ? 'sr-only' : 'whitespace-nowrap'}>Patch</span>
             </button>
           </div>
 
@@ -246,9 +261,9 @@ export const DiffTab: React.FC = () => {
           <button
             id="diff-revert-btn"
             onClick={handleRevert}
-            disabled={reverting}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all cursor-pointer disabled:opacity-50"
-            title={`Revert workspace to Turn ${selectedTurn}`}
+            disabled={reverting || isLatestTurn}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+            title={isLatestTurn ? 'This is the current version; pick an earlier turn to revert to it' : `Revert workspace to Turn ${selectedTurn}`}
           >
             {revertSuccess ? (
               <>
@@ -258,7 +273,7 @@ export const DiffTab: React.FC = () => {
             ) : (
               <>
                 <RotateCcw size={12} className={reverting ? 'animate-spin' : ''} />
-                <span>Revert to Turn {selectedTurn}</span>
+                <span>{narrow ? 'Revert' : `Revert to turn ${selectedTurn}`}</span>
               </>
             )}
           </button>
@@ -302,7 +317,7 @@ export const DiffTab: React.FC = () => {
                   title={file}
                 >
                   <File size={12} className={isSelected ? 'text-emerald-400' : 'text-slate-500'} />
-                  <span className="truncate max-w-[200px]">{file}</span>
+                  <span className="truncate max-w-[200px]">{file.split('/').pop()}</span>
                   {isNew ? (
                     <span className="text-[10px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-400 font-sans font-semibold">
                       +
@@ -356,6 +371,11 @@ export const DiffTab: React.FC = () => {
         ) : viewMode === 'split' ? (
           <div id="monaco-diff-viewer" className="w-full h-full">
             <DiffEditor
+              key={`${selectedTurn}:${selectedFile}`}
+              keepCurrentOriginalModel
+              keepCurrentModifiedModel
+              originalModelPath={`diff-original/${selectedTurn}/${selectedFile}`}
+              modifiedModelPath={`diff-modified/${selectedTurn}/${selectedFile}`}
               height="100%"
               original={currentFileEntry?.before ?? ''}
               modified={currentFileEntry?.after ?? ''}

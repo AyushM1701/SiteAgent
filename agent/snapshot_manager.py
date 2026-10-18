@@ -202,7 +202,8 @@ class SnapshotManager:
             return files
 
         for p in self.workspace_dir.rglob("*"):
-            if p.is_file() and not any(part in p.parts for part in ["node_modules", ".git", "dist", ".vite", ".snapshots"]):
+            if p.is_file() and not any(part in p.parts for part in ["node_modules", ".git", "dist", ".vite", ".snapshots",
+                                                                     ".workbench-preview", "raw_generation"]):
                 rel_path = p.relative_to(self.workspace_dir).as_posix()
                 try:
                     files[rel_path] = p.read_text(encoding="utf-8")

@@ -4,12 +4,17 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { Terminal, RefreshCw, Trash2 } from 'lucide-react';
 import { shellClient } from '../../services/shell';
+import { useProjectStore } from '../../state/project-store';
 
 export const ShellTab: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermInstance = useRef<XTerm | null>(null);
   const fitAddonInstance = useRef<FitAddon | null>(null);
   const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  // Open the shell in the current project's folder.
+  const projectDir = useProjectStore((state) => state.currentProject?.fullPath);
+  const projectDirRef = useRef(projectDir);
+  projectDirRef.current = projectDir;
 
   useEffect(() => {
     if (!terminalRef.current) return;
@@ -34,8 +39,15 @@ export const ShellTab: React.FC = () => {
     xtermInstance.current = term;
     fitAddonInstance.current = fitAddon;
 
-    const handleResize = () => fitAddon.fit();
-    window.addEventListener('resize', handleResize);
+    // Refit when the workspace panel is resized, not only the window, and tell the PTY.
+    const handleResize = () => {
+      try {
+        fitAddon.fit();
+        shellClient.resize(term.cols, term.rows);
+      } catch (_) {}
+    };
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(terminalRef.current);
 
     // Wire up terminal data to shellClient
     term.onData((data) => {
@@ -46,11 +58,24 @@ export const ShellTab: React.FC = () => {
     connectShell(term);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
       shellClient.disconnect();
       term.dispose();
     };
   }, []);
+
+  // Reconnect in the new folder when the user switches project.
+  const firstDir = useRef(true);
+  useEffect(() => {
+    if (firstDir.current) {
+      firstDir.current = false;
+      return;
+    }
+    if (xtermInstance.current) {
+      xtermInstance.current.clear();
+      connectShell(xtermInstance.current);
+    }
+  }, [projectDir]);
 
   const connectShell = (term: XTerm) => {
     setStatus('connecting');
@@ -59,7 +84,12 @@ export const ShellTab: React.FC = () => {
     shellClient.connect({
       onOpen: () => {
         setStatus('connected');
-        term.writeln('\x1b[32m✔ Connected to isolated shell session.\x1b[0m\r\n');
+        term.writeln('\x1b[32m✔ Connected.\x1b[0m\r\n');
+        const fit = fitAddonInstance.current;
+        if (fit) {
+          fit.fit();
+          shellClient.resize(term.cols, term.rows);
+        }
       },
       onData: (data) => {
         term.write(data);
@@ -72,7 +102,7 @@ export const ShellTab: React.FC = () => {
         setStatus('disconnected');
         term.writeln('\r\n\x1b[31mTerminal error occurred.\x1b[0m\r\n');
       },
-    });
+    }, projectDirRef.current);
   };
 
   const handleReconnect = () => {

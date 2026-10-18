@@ -28,10 +28,43 @@ from typing import Any, Dict, Optional, Union
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+BRIDGE_PATH = Path(__file__).resolve().with_name("preview_bridge.js")
+BRIDGE_URL = "/__workbench/bridge.js"
+BRIDGE_TAG = f'<script src="{BRIDGE_URL}"></script>'.encode()
+# Previews are separate processes; keep only the most recently used ones alive.
+MAX_RUNNING_PREVIEWS = 4
+
+
+def inject_bridge(html: bytes) -> bytes:
+    """Add the workbench bridge (inspect, scroll restore, error reporting) to a page."""
+    if BRIDGE_TAG in html:
+        return html
+    marker = b"</head>" if b"</head>" in html else b"<body"
+    if marker not in html:
+        return BRIDGE_TAG + html
+    return html.replace(marker, BRIDGE_TAG + marker, 1)
 
 
 class IsolatedPreviewHandler(SimpleHTTPRequestHandler):
     """Serve only compiled public assets to the opaque sandbox origin."""
+
+    def do_GET(self):
+        path = self.path.split("?", 1)[0].split("#", 1)[0]
+        if path == BRIDGE_URL:
+            return self._send_bytes(BRIDGE_PATH.read_bytes(), "application/javascript; charset=utf-8")
+        target = Path(self.translate_path(self.path))
+        if target.is_dir():
+            target = target / "index.html"
+        if target.suffix == ".html" and target.is_file():
+            return self._send_bytes(inject_bridge(target.read_bytes()), "text/html; charset=utf-8")
+        return super().do_GET()
+
+    def _send_bytes(self, body: bytes, content_type: str):
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', 'null')
@@ -147,6 +180,13 @@ class PreviewManager:
         self._project_dirs: Dict[str, Path] = {}
         self._stderr: Dict[str, deque] = {}
         self._source_signatures: Dict[str, str] = {}
+        self._last_used: Dict[str, float] = {}
+
+    def _evict_idle(self, keep: str) -> None:
+        """Stop the least recently used previews beyond MAX_RUNNING_PREVIEWS."""
+        running = sorted((pid for pid in self._processes if pid != keep), key=lambda pid: self._last_used.get(pid, 0.0))
+        while len(running) + 1 > MAX_RUNNING_PREVIEWS:
+            self.stop(running.pop(0))
 
     def _start_stderr_reader(self, project_id: str, proc: subprocess.Popen) -> None:
         ring = deque(maxlen=200)
@@ -251,6 +291,7 @@ class PreviewManager:
             if workspace_dir is None:
                 workspace_dir = self._project_dirs.get(projectId)
             # 1. If already running and healthy, return URL immediately
+            self._last_used[projectId] = time.time()
             if projectId in self._processes:
                 signature = _source_signature(Path(workspace_dir)) if workspace_dir else None
                 if self.healthCheck(projectId) and signature == self._source_signatures.get(projectId):
@@ -293,6 +334,8 @@ class PreviewManager:
             )
             if build.returncode != 0:
                 raise RuntimeError(f"Preview production build failed: {(build.stderr or build.stdout).strip()[-6000:]}")
+
+            self._evict_idle(keep=projectId)
 
             # 4. Allocate port (reuse project's port if available, otherwise allocate fresh)
             port = self._project_ports.get(projectId)

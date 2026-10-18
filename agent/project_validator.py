@@ -2019,6 +2019,13 @@ def _run_runtime_accessibility_eval(
             }
             return checks;
         }""".replace("__VISIBLE_INTERACTIVE__", VISIBLE_INTERACTIVE_JS)
+        # WCAG 2.4.7 is about keyboard focus. After earlier mouse checks a scripted
+        # el.focus() would not match :focus-visible (the ring keyboard users see), so
+        # put the page in keyboard modality first.
+        try:
+            page.keyboard.press("Shift")
+        except Exception:
+            pass
         focus_checks = page.evaluate(focus_js)
         evidence["focus_checks"] = focus_checks
         for fc in focus_checks:

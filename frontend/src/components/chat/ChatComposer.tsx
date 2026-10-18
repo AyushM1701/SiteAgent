@@ -22,6 +22,7 @@ import { useSelectionStore } from '../../state/selection-store';
 import { api } from '../../services/api';
 import { projectWsClient } from '../../services/project-ws';
 import { QueuedPrompt } from '../../types/chat';
+import { logEntryFromEvent } from '../../types/logs';
 
 export interface StylePresetOption {
   id: string;
@@ -74,6 +75,18 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
   const [showStyleMenu, setShowStyleMenu] = useState(false);
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // Who writes a site's code: the design kit (fast) or the model itself (native).
+  const [siteWriter, setSiteWriter] = useState<'kit' | 'native'>(() => {
+    try {
+      return localStorage.getItem('slm_site_writer') === 'native' ? 'native' : 'kit';
+    } catch (_) {
+      return 'kit';
+    }
+  });
+  const chooseSiteWriter = (value: 'kit' | 'native') => {
+    setSiteWriter(value);
+    try { localStorage.setItem('slm_site_writer', value); } catch (_) {}
+  };
   const [maxTurns, setMaxTurns] = useState(6);
   const [isCustomTurns, setIsCustomTurns] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -105,6 +118,13 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
       }
     }
   }, [initialPrompt]);
+
+  // "Edit with AI" in the inspector hands focus to the composer.
+  useEffect(() => {
+    const focus = () => textareaRef.current?.focus();
+    window.addEventListener('workbench:focus-composer', focus);
+    return () => window.removeEventListener('workbench:focus-composer', focus);
+  }, []);
 
   // Dynamically resize chat box height as text lines are entered (scroll line appears ONLY after 6-7 lines)
   useEffect(() => {
@@ -162,17 +182,8 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
               setActiveTaskId(realTaskId);
             }
           }
-          if (event.log) {
-            addLog(
-              {
-                timestamp: event.timestamp || Date.now(),
-                level: event.type.includes('error') ? 'error' : event.type.includes('warn') ? 'warn' : 'info',
-                category: event.type.startsWith('command') ? 'shell' : 'agent',
-                message: event.log,
-              },
-              targetProjectId || currentProjectId || undefined
-            );
-          }
+          const logEntry = logEntryFromEvent(event as any);
+          if (logEntry) addLog(logEntry, targetProjectId || currentProjectId || undefined);
 
           // Authoritative backend queue state synchronization
           if (event.type === 'task.queued' || event.type === 'prompt.queued') {
@@ -242,6 +253,9 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
               sectionCompletion: result.section_completion,
               finalPassed: result.final_passed,
               generationScorecards: result.generation_scorecards,
+              strategy: result.strategy,
+              nativeCodeSections: result.native_code_sections,
+              nativeCodeFallbacks: result.native_code_fallbacks,
               filesModified: result.files_modified || [],
               filePath,
               folderName,
@@ -292,7 +306,9 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
 
     // Attach explicit selection context if available
     if (selectedElement) {
-      text = `[Context: <${selectedElement.tagName.toLowerCase()}> ${selectedElement.componentHint || selectedElement.selector}]\n${text}`;
+      const where = selectedElement.componentHint ? ` in section #${selectedElement.componentHint}` : ` at ${selectedElement.selector}`;
+      const quote = selectedElement.textContent ? ` with text "${selectedElement.textContent.slice(0, 120)}"` : '';
+      text = `[Context: <${selectedElement.tagName.toLowerCase()}>${where}${quote}]\n${text}`;
       clearSelection();
     } else if (selected3DObject) {
       text = `[Context 3D: ${selected3DObject.name} (${selected3DObject.uuid})]\n${text}`;
@@ -326,6 +342,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
             max_turns: maxTurns,
             stylePreset: stylePayload,
             style_preset: stylePayload,
+            ...(generationMode === 'site' ? { strategy: siteWriter } : {}),
           });
           if (!sent) {
             throw new Error('WebSocket failed to send prompt.queue');
@@ -338,6 +355,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
             max_turns: maxTurns,
             stylePreset: stylePayload,
             style_preset: stylePayload,
+            ...(generationMode === 'site' ? { strategy: siteWriter } : {}),
           });
 
           updateQueuedPrompt(promptId, {
@@ -379,6 +397,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
             max_turns: maxTurns,
             stylePreset: stylePayload,
             style_preset: stylePayload,
+            ...(generationMode === 'site' ? { strategy: siteWriter } : {}),
           });
           if (!sent) {
             throw new Error('Failed to dispatch task.start over WebSocket');
@@ -391,6 +410,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
             max_turns: maxTurns,
             stylePreset: stylePayload,
             style_preset: stylePayload,
+            ...(generationMode === 'site' ? { strategy: siteWriter } : {}),
           });
 
           if (!currentProjectId && res.session_id) {
@@ -519,6 +539,19 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
               )}
             </div>
             <div className="col-span-2 sm:col-span-1">
+              <span className="text-slate-500 block mb-1">Site code written by:</span>
+              <select
+                id="composer-site-writer-select"
+                value={siteWriter}
+                onChange={(e) => chooseSiteWriter(e.target.value === 'native' ? 'native' : 'kit')}
+                className="w-full bg-[#141414] text-slate-200 px-2 py-1 rounded-lg border border-white/[0.04] focus:outline-none cursor-pointer"
+                title="Design kit: the model writes the copy and the kit writes the code (fast). Model: the model writes each section's code too (slower; uses the fine-tuned adapter when loaded)."
+              >
+                <option value="kit">Design kit (fast)</option>
+                <option value="native">The model (native)</option>
+              </select>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
               <span className="text-slate-500 block mb-1">Style Preset:</span>
               <select
                 id="composer-advanced-style-select"
@@ -568,9 +601,9 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
         />
 
         {/* Bottom toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-3 pt-1">
-          {/* Quick options */}
-          <div className="flex items-center justify-between sm:justify-start gap-1 text-slate-400 min-w-0 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-1">
+          {/* Quick options (wrap instead of overlapping the send controls in a narrow chat column) */}
+          <div className="flex flex-wrap items-center gap-1 text-slate-400 min-w-0">
             <div role="group" aria-label="Generation mode" className="flex gap-1 bg-[#141414] p-1 rounded-lg border border-white/[0.04]">
               <button id="composer-mode-site-btn" type="button" aria-pressed={generationMode === 'site'} onClick={() => setGenerationMode('site')}
                 className={`px-1.5 sm:px-2 py-1 rounded text-[11px] sm:text-xs whitespace-nowrap cursor-pointer ${generationMode === 'site' ? 'bg-white/[0.12] text-white' : 'text-slate-400'}`}>Full Site</button>
@@ -694,7 +727,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
           </div>
 
           {/* Send / Queue button */}
-          <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+          <div className="flex items-center justify-end gap-2 ml-auto">
             {isWorking ? (
               <button
                 id="composer-queue-btn"

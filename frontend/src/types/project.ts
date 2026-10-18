@@ -31,4 +31,5 @@ export interface Project {
   filePath?: string;
   folderName?: string;
   fullPath?: string;
+  uses3D?: boolean;
 }

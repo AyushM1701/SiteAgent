@@ -31,8 +31,11 @@ MAYA = ("Portfolio for Maya Chen, a brand designer. Minimal, lots of white space
 THREADLEAF = ("Threadleaf stationery shop. Products: Notebook $12, Pencil set $8, Desk planner $24. "
               "Add to cart with a cart count. FAQ and contact.")
 IRONWORKS = "Ironworks — a strength gym in Pune. Classes, coaches, membership pricing, FAQ, contact."
+CRUMB = ("Crumb & Co — an artisan bakery and coffee shop in Bristol. Sections: menu (Breads, Pastries, Coffee), "
+         "shop, our process, the team, FAQ, visit us. Products: Sourdough loaf £6, Cardamom bun £3.50. "
+         "Add to cart with a cart count. Email orders@crumbandco.co.uk.")
 PROMPTS = {"aster": ASTER, "northwind": NORTHWIND, "saffron": SAFFRON, "maya": MAYA,
-           "threadleaf": THREADLEAF, "ironworks": IRONWORKS}
+           "threadleaf": THREADLEAF, "ironworks": IRONWORKS, "crumb": CRUMB}
 
 
 def make_kit(prompt: str) -> KitSite:
@@ -381,3 +384,37 @@ def test_kit_keeps_design_words_that_describe_the_business():
     assert integrity.clean_text("Warm ivory palette with editorial typography.") == ""
     foundry = Integrity("Northtype — an independent type foundry.")
     assert foundry.clean_text("Fonts licensed for print, web and packaging.") == "Fonts licensed for print, web and packaging."
+
+
+MENU_PROMPT = "Crumb & Co — a bakery in Bristol. Sections: menu (Breads, Pastries, Coffee), shop, FAQ, visit us."
+
+
+def test_supplied_menu_items_become_the_menu_categories():
+    kit = make_kit(MENU_PROMPT)
+    assert "menu categories" in kit.messages("menu")[-1]["content"]
+    content, _ = kit.accept("menu", json.dumps({"title": "Menu", "intro": "Baked each morning.", "categories": [
+        {"name": "Coffee", "items": [{"name": "Flat white", "description": "Double shot, steamed milk."}]},
+        {"name": "Breads", "items": [{"name": "Sourdough", "description": "Long, slow ferment."}]},
+    ]}))
+    assert [c["name"] for c in content["categories"]] == ["Breads", "Pastries", "Coffee"]
+    assert content["categories"][0]["items"][0]["name"] == "Sourdough"
+    assert content["categories"][1]["items"] == []  # no dishes are invented
+    menu_tsx = dict(kit.render("menu"))["src/components/Menu.tsx"]
+    assert 'role="tablist"' in menu_tsx and "DATA.categories[active].items.length" in menu_tsx
+
+
+def test_supplied_menu_categories_render_without_model_output():
+    kit = make_kit(MENU_PROMPT)
+    content, _ = kit.accept("menu", "")
+    assert [c["name"] for c in content["categories"]] == ["Breads", "Pastries", "Coffee"]
+
+
+def test_excluded_opening_hours_are_dropped_from_model_copy():
+    prompt = "Crumb & Co — a bakery in Bristol. Sections: FAQ, visit us. Do not show testimonials or opening hours."
+    kit = make_kit(prompt)
+    content, _ = kit.accept("faq", json.dumps({"title": "Questions", "items": [
+        {"q": "What are your opening hours?", "a": "Ask us for this week's times."},
+        {"q": "Do you bake to order?", "a": "Yes, write to us a few days ahead."},
+        {"q": "Can I visit?", "a": "Of course, any time we are open."}]}))
+    assert all("hours" not in item["q"].lower() for item in content["items"])
+    assert any(item["q"] == "Do you bake to order?" for item in content["items"])

@@ -22,6 +22,10 @@ export interface ChangeSummaryData {
   blockedSections?: Array<string | { section?: string; name?: string; reason?: string; error?: string; errors?: string[] }>;
   sectionCompletion?: string;
   finalPassed?: boolean;
+  /** Site writer used ('kit' or 'native') and, for native, the sections whose code the model wrote. */
+  strategy?: string;
+  nativeCodeSections?: string[];
+  nativeCodeFallbacks?: Record<string, string[]>;
   generationScorecards?: { provenance: { mode?: string }; stages: Array<{ id: string; label: string; status: string; first_attempt_sections?: number; required_sections?: number; section_retries?: number; project_attempts?: number; files?: string[]; note?: string }> };
   filesCreated: string[];
   filesModified: string[];

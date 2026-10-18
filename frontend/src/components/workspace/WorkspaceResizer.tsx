@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { useWorkspaceStore } from '../../state/workspace-store';
+import { maxWorkspaceWidth, MIN_WORKSPACE_WIDTH } from '../../hooks/useViewportWidth';
 
 export const WorkspaceResizer: React.FC = () => {
   const { workspaceWidth, setWorkspaceWidth, isResizing, setIsResizing, workspaceOpen } =
@@ -10,11 +11,11 @@ export const WorkspaceResizer: React.FC = () => {
   const resizerRef = useRef<HTMLDivElement>(null);
 
   // Bounds
-  const minWidth = 360;
+  const minWidth = MIN_WORKSPACE_WIDTH;
   const getBounds = useCallback(() => {
     const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1280;
-    const maxWidth = Math.max(minWidth, windowWidth - 360);
-    return { minWidth, maxWidth };
+    const { sidebarOpen, inspectorOpen } = useWorkspaceStore.getState();
+    return { minWidth, maxWidth: maxWorkspaceWidth(windowWidth, sidebarOpen, inspectorOpen) };
   }, []);
 
   // Clamp correctly on window resize
@@ -57,11 +58,12 @@ export const WorkspaceResizer: React.FC = () => {
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     try {
-      resizerRef.current?.setPointerCapture(e.pointerId);
+      e.currentTarget.setPointerCapture(e.pointerId);
     } catch (_) {}
 
     startXRef.current = e.clientX;
-    startWidthRef.current = workspaceWidth;
+    // Start from the rendered width, which may be clamped below the saved preference.
+    startWidthRef.current = Math.min(workspaceWidth, getBounds().maxWidth);
     setIsResizing(true);
   };
 
@@ -79,8 +81,8 @@ export const WorkspaceResizer: React.FC = () => {
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isResizing) return;
     try {
-      if (resizerRef.current?.hasPointerCapture(e.pointerId)) {
-        resizerRef.current.releasePointerCapture(e.pointerId);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
       }
     } catch (_) {}
     setIsResizing(false);
@@ -88,8 +90,8 @@ export const WorkspaceResizer: React.FC = () => {
 
   const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
     try {
-      if (resizerRef.current?.hasPointerCapture(e.pointerId)) {
-        resizerRef.current.releasePointerCapture(e.pointerId);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
       }
     } catch (_) {}
     setIsResizing(false);
@@ -156,7 +158,7 @@ export const WorkspaceResizer: React.FC = () => {
         onDoubleClick={handleDoubleClick}
         onKeyDown={handleKeyDown}
         style={{ touchAction: 'none' }}
-        className={`relative w-2 hover:w-2 -mx-1 cursor-col-resize select-none flex items-center justify-center group z-40 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 ${
+        className={`relative w-2 hover:w-2 -mx-1 cursor-col-resize select-none hidden md:flex items-center justify-center group z-40 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400 ${
           isResizing ? 'bg-emerald-500/20' : 'hover:bg-white/[0.04]'
         }`}
         title="Drag to resize workspace (double-click to reset 50%, arrow keys to adjust)"

@@ -126,12 +126,13 @@ const SHADER_FS = 'precision mediump float;uniform vec2 r;uniform float t;unifor
 
 function ShaderBackdrop() {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl', { antialias: false, alpha: false, preserveDrawingBuffer: false });
     if (!gl) {
-      canvas.classList.add('is-fallback');
+      setFailed(true);
       return;
     }
     const compile = (type: number, source: string) => {
@@ -145,14 +146,14 @@ function ShaderBackdrop() {
     const fs = compile(gl.FRAGMENT_SHADER, SHADER_FS.replace('MIX_A', SHADER_MIX[0]).replace('MIX_B', SHADER_MIX[1]));
     const program = gl.createProgram();
     if (!vs || !fs || !program) {
-      canvas.classList.add('is-fallback');
+      setFailed(true);
       return;
     }
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      canvas.classList.add('is-fallback');
+      setFailed(true);
       return;
     }
     gl.useProgram(program);
@@ -170,6 +171,7 @@ function ShaderBackdrop() {
     const start = performance.now();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let visible = true;
+    let lost = false;
     let timer = 0;
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -190,7 +192,7 @@ function ShaderBackdrop() {
     };
     const loop = () => {
       timer = 0;
-      if (!visible || document.hidden || reduce) return;
+      if (lost || !visible || document.hidden || reduce) return;
       draw();
       timer = window.setTimeout(loop, 33);
     };
@@ -203,7 +205,17 @@ function ShaderBackdrop() {
       pointer.x = (event.clientX - box.left) / box.width;
       pointer.y = 1 - (event.clientY - box.top) / box.height;
     };
-    const resizeObserver = new ResizeObserver(() => draw());
+    const onLost = (event: Event) => {
+      event.preventDefault();
+      lost = true;
+      if (timer) window.clearTimeout(timer);
+      timer = 0;
+      setFailed(true);
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    const resizeObserver = new ResizeObserver(() => {
+      if (!lost) draw();
+    });
     resizeObserver.observe(canvas);
     const io = new IntersectionObserver((entries) => {
       visible = entries.some((entry) => entry.isIntersecting);
@@ -220,11 +232,17 @@ function ShaderBackdrop() {
       io.disconnect();
       document.removeEventListener('visibilitychange', wake);
       if (host) host.removeEventListener('pointermove', onPointer);
+      canvas.removeEventListener('webglcontextlost', onLost);
       const lose = gl.getExtension('WEBGL_lose_context');
-      if (lose) lose.loseContext();
+      if (lose && !lost) lose.loseContext();
     };
   }, []);
-  return <canvas ref={ref} className="k-shader" aria-hidden="true" />;
+  return (
+    <>
+      <canvas ref={ref} className={'k-shader' + (failed ? ' is-hidden' : '')} aria-hidden="true" />
+      {failed ? <div className="k-shader-fallback" data-webgl-fallback="true" aria-hidden="true" /> : null}
+    </>
+  );
 }
 """
 
@@ -410,6 +428,7 @@ export function __NAME__() {
   const toggleRef = useRef<HTMLButtonElement | null>(null);
   const cartButtonRef = useRef<HTMLButtonElement | null>(null);
   const firstLinkRef = useRef<HTMLAnchorElement | null>(null);
+  const navigatedAt = useRef(0);
   const cart = useCart();
   const count = cart.lines.reduce((sum: number, line: any) => sum + line.qty, 0);
 
@@ -420,6 +439,12 @@ export function __NAME__() {
     const settle = () => {
       pending = 0;
       const y = window.scrollY;
+      if (Date.now() - navigatedAt.current < 1500) {
+        // An in-page link is scrolling the page; keep the navigation in view.
+        setTucked(false);
+        last = y;
+        return;
+      }
       if (y > last + 4 && y > 120 && !reduce.matches) setTucked(true);
       else if (y < last - 4 || y <= 120) setTucked(false);
       last = y;
@@ -427,9 +452,20 @@ export function __NAME__() {
     const onScroll = () => {
       if (!pending) pending = window.setTimeout(settle, 80);
     };
+    const onAnchor = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (target && target.closest && target.closest('a[href^="#"]')) navigatedAt.current = Date.now();
+    };
+    const onHash = () => {
+      navigatedAt.current = Date.now();
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('click', onAnchor, true);
+    window.addEventListener('hashchange', onHash);
     return () => {
       window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('click', onAnchor, true);
+      window.removeEventListener('hashchange', onHash);
       if (pending) window.clearTimeout(pending);
     };
   }, []);
@@ -781,7 +817,8 @@ export function __NAME__() {{
 .k-hero .k-hero__fact { font-size: 0.9375rem; color: var(--k-muted); }
 .k-hero .k-hero__fact::before { content: ""; display: inline-block; width: 24px; height: 1px; margin-right: 10px; vertical-align: middle; background-color: currentColor; }
 .k-hero .k-shader { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
-.k-hero .k-shader.is-fallback { background-image: radial-gradient(70% 60% at 70% 30%, var(--k-accent-soft), transparent 70%), radial-gradient(50% 50% at 20% 80%, var(--k-surface-2), transparent 70%); }
+.k-hero .k-shader.is-hidden { visibility: hidden; }
+.k-hero .k-shader-fallback { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: radial-gradient(70% 60% at 70% 30%, var(--k-accent-soft), transparent 70%), radial-gradient(50% 50% at 20% 80%, var(--k-surface-2), transparent 70%); }
 
 .k-hero--split .k-hero__inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(32px, 6vw, 88px); align-items: center; min-height: min(78vh, 760px); }
 .k-hero--split .k-hero__media { aspect-ratio: 4 / 5; width: 100%; }
@@ -790,7 +827,7 @@ export function __NAME__() {{
   .k-hero--split .k-hero__media { aspect-ratio: 4 / 3; }
 }
 
-.k-hero--fullbleed { display: flex; align-items: flex-end; min-height: min(calc(100svh - var(--k-header-h)), 900px); padding-block: clamp(120px, 18vh, 200px) clamp(48px, 8vh, 96px); background-color: #121212; color: #FFFFFF; }
+.k-section.k-hero--fullbleed { display: flex; align-items: flex-end; min-height: min(calc(100svh - var(--k-header-h)), 900px); padding-block: clamp(120px, 18vh, 200px) clamp(48px, 8vh, 96px); background-color: #121212; color: #FFFFFF; isolation: isolate; }
 .k-hero--fullbleed .k-hero__inner { width: 100%; }
 .k-hero--fullbleed .k-hero__bg { position: absolute; inset: 0; z-index: -2; }
 .k-hero--fullbleed .k-hero__bgmedia { position: absolute; inset: 0; border-radius: 0; }
@@ -1034,8 +1071,10 @@ export function __NAME__() {{
         {_head(slug)}
         <ul className="__SC__-grid k-stagger">
           {{DATA.items.map((item: any, i: number) => (
-            <li className="__SC__-card" key={{i}} data-product={{item.name}}{_ra(reveal)}>
-              <Media img={{item.img}} variant={{(i % 3) + 1}} mark={{item.name.charAt(0)}} className="__SC__-media k-settle" />
+            <li className="__SC__-card" key={{i}} data-product={{item.name}}>
+              <div className="__SC__-reveal"{_ra(reveal)}>
+                <Media img={{item.img}} variant={{(i % 3) + 1}} mark={{item.name.charAt(0)}} className="__SC__-media k-settle" />
+              </div>
               <div className="__SC__-body">
                 <div className="__SC__-row">
                   <h3 className="k-h3">{{item.name}}</h3>
@@ -1129,6 +1168,7 @@ def render_menu(site, slug: str, content: dict) -> tuple[str, str]:
             ))}}
           </div>
           <div id="{slug}-panel" role="tabpanel" aria-labelledby={{'{slug}-tab-' + active}} className="__SC__-panel" tabIndex={{0}}>
+            {{DATA.categories[active].items.length ? (
             <ul className="__SC__-dishes">
               {{DATA.categories[active].items.map((dish: any, i: number) => (
                 <li className="__SC__-dish" key={{i}}>
@@ -1141,6 +1181,9 @@ def render_menu(site, slug: str, content: dict) -> tuple[str, str]:
                 </li>
               ))}}
             </ul>
+            ) : (
+              <p className="k-lede __SC__-empty">{{DATA.askToday}}</p>
+            )}}
           </div>"""
         state = """  const [active, setActive] = useState(0);
   const tabsRef = useRef<Array<HTMLButtonElement | null>>([]);
@@ -1455,28 +1498,29 @@ export function __NAME__() {{
   return (
     {_section_open(slug, scope, site.tints.get(slug, False), False)}
       <div className="k-container">
+        {{/* One heading for both states: ids must be unique in the source, not only at runtime. */}}
+        <div className={{DATA.quotes.length ? 'k-head' : '__SC__-invite'}}>
+          <h2 id="{slug}-title" className="k-h2">{{DATA.title}}</h2>
+          {{DATA.quotes.length ? null : (
+            <>
+              {{DATA.intro ? <p className="k-lede">{{DATA.intro}}</p> : null}}
+              <p className="k-text">{{DATA.invite}}</p>
+              <a className="k-btn k-btn--ghost" href={{DATA.feedbackHref}}>Share your experience</a>
+            </>
+          )}}
+        </div>
         {{DATA.quotes.length ? (
-          <>
-            <div className="k-head"><h2 id="{slug}-title" className="k-h2">{{DATA.title}}</h2></div>
-            <ul className="__SC__-grid">
-              {{DATA.quotes.map((q: any, i: number) => (
-                <li key={{i}}>
-                  <figure className="__SC__-quote">
-                    <blockquote><p>{{q.quote}}</p></blockquote>
-                    {{q.author ? <figcaption>{{q.author}}</figcaption> : null}}
-                  </figure>
-                </li>
-              ))}}
-            </ul>
-          </>
-        ) : (
-          <div className="__SC__-invite">
-            <h2 id="{slug}-title" className="k-h2">{{DATA.title}}</h2>
-            {{DATA.intro ? <p className="k-lede">{{DATA.intro}}</p> : null}}
-            <p className="k-text">{{DATA.invite}}</p>
-            <a className="k-btn k-btn--ghost" href={{DATA.feedbackHref}}>Share your experience</a>
-          </div>
-        )}}
+          <ul className="__SC__-grid">
+            {{DATA.quotes.map((q: any, i: number) => (
+              <li key={{i}}>
+                <figure className="__SC__-quote">
+                  <blockquote><p>{{q.quote}}</p></blockquote>
+                  {{q.author ? <figcaption>{{q.author}}</figcaption> : null}}
+                </figure>
+              </li>
+            ))}}
+          </ul>
+        ) : null}}
       </div>
     </section>
   );

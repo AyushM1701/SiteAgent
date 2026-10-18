@@ -1437,18 +1437,27 @@ def extract_explicit_sections(prompt: str) -> Optional[List[Tuple[str, str]]]:
             inline_matches: List[Tuple[str, str]] = []
             for chunk in chunks:
                 chunk = re.sub(r"^and\s+", "", chunk.strip(), flags=re.I)
-                label, desc = _parse_section_line(chunk)
+                # "menu (Breads, Pastries, Coffee)": the list belongs to the section,
+                # not its name; parse_section_spec reads the items from the prompt.
+                label, desc = _parse_section_line(re.sub(r"\s*\([^)]*\)", "", chunk).strip())
+                desc = chunk if desc and desc != chunk else desc
                 if label and label.lower().split()[0] not in NON_SECTION_PREFIXES:
                     inline_matches.append((label, desc or chunk))
-            if include_list and any(len(_LEADING_DETERMINERS_RE.sub("", re.sub(r"^and\s+", "", c.strip(), flags=re.I)).split()) > 3
+            # A parenthesised item list ("projects (Shop rebuild, Open-source CLI)") belongs to
+            # its section and does not make the item descriptive.
+            if include_list and any(len(_LEADING_DETERMINERS_RE.sub("", re.sub(r"^and\s+", "", re.sub(r"\s*\([^)]*\)", "", c).strip(), flags=re.I)).split()) > 3
                                     for c in chunks if c.strip()):
                 # Descriptive items ("a sticky nav with a CTA") are left to the
                 # heuristic planner, which maps them onto canonical sections.
                 inline_matches = []
             if include_list:
+                from agent.site_kit.content import section_kind
+                # A label is a known section if either planner recognises it ("shop", "about",
+                # "studio", "process", "packages" are site sections, "dark mode" is not).
                 known = [label for label, _ in inline_matches
                          if re.fullmatch(r"(?:header|nav|navbar|navigation|hero|footer|banner)", label.lower())
-                         or any(re.search(pattern, label.lower()) for pattern in _SECTION_KEYWORD_PATTERNS.values())]
+                         or any(re.search(pattern, label.lower()) for pattern in _SECTION_KEYWORD_PATTERNS.values())
+                         or section_kind(re.sub(r"[^a-z0-9]+", "-", label.lower())) != "split"]
                 if len(known) * 2 < max(1, len(inline_matches)):
                     inline_matches = []
             if len(inline_matches) >= 2:

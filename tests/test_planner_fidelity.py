@@ -214,3 +214,41 @@ def test_stray_capitalised_words_are_not_names(prompt):
 ])
 def test_labels_and_greetings_are_never_names(prompt, wrong):
     assert extract_business_name(prompt) != wrong
+
+
+def test_item_lists_inside_the_sections_line_stay_with_their_section():
+    prompt = "Crumb & Co — a bakery in Bristol. Sections: menu (Breads, Pastries, Coffee), shop, FAQ, visit us."
+    sections = extract_sections_from_prompt(prompt, detect_business_type(prompt))
+    assert "menu" in sections and not any(s.startswith("menu-") for s in sections)
+    assert parse_section_spec("menu", prompt)["parsed_items"] == ["Breads", "Pastries", "Coffee"]
+    brief = generate_content_brief(prompt)
+    assert brief["section_plans"]["menu"]["parsed_items"] == ["Breads", "Pastries", "Coffee"]
+
+
+def test_item_lists_work_for_any_section_in_the_sections_line():
+    prompt = "Maya Chen, a designer. Sections: projects (Fern Studio rebrand, Halo app identity), about, contact."
+    sections = extract_sections_from_prompt(prompt, detect_business_type(prompt))
+    assert sections[2:5] == ["projects", "about", "contact"]
+    assert parse_section_spec("projects", prompt)["parsed_items"] == ["Fern Studio rebrand", "Halo app identity"]
+
+
+def test_include_list_with_business_sections_is_explicit():
+    from agent.site_kit import KitSite
+    from agent.site_brief import generate_content_brief
+    cases = {
+        "Build a website for Silver Frame, a product photography studio based in Seattle. Include: packages, FAQ, "
+        "portfolio, about. Bright and friendly feel, soft blush and ink. Contact email: hello@silverframe.studio.":
+            ["packages", "faq", "portfolio", "about"],
+        "Build a website for Alex Rivera, a freelance web developer's portfolio based in Porto. Include: process, skills, "
+        "about, contact, projects (Shop rebuild, Open-source CLI, Booking platform). Contact email: a@b.co.":
+            ["process", "skills", "about", "contact", "projects"],
+    }
+    for prompt, wanted in cases.items():
+        kit = KitSite(prompt, generate_content_brief(prompt), None)
+        assert sorted(kit.sections[2:-1]) == sorted(wanted), kit.sections
+
+
+def test_areas_we_cover_is_not_mistaken_for_the_hero():
+    from agent.site_kit.content import section_kind
+    assert section_kind("areas-we-cover") != "hero"
+    assert section_kind("cover") == "hero" and section_kind("hero-banner") == "hero"

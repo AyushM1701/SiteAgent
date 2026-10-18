@@ -11,7 +11,8 @@ export class ShellClient {
   private socket: WebSocket | null = null;
   private callbacks: ShellSessionCallbacks | null = null;
 
-  public async connect(callbacks: ShellSessionCallbacks) {
+  /** `cwd` is the project folder to open the shell in (the server only allows generated projects). */
+  public async connect(callbacks: ShellSessionCallbacks, cwd?: string) {
     this.disconnect();
     this.callbacks = callbacks;
 
@@ -19,8 +20,8 @@ export class ShellClient {
       const { ticket, host, port } = await api.getShellToken();
       // If we are in dev with Vite proxy or direct host:
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      // If port is 5001 or through Vite proxy
-      const wsUrl = `${protocol}//${host || window.location.hostname}:${port || 5001}/?ticket=${encodeURIComponent(ticket)}`;
+      // shell_server.py authenticates the handshake from the `token` query parameter.
+      const wsUrl = `${protocol}//${host || window.location.hostname}:${port || 5001}/?token=${encodeURIComponent(ticket)}${cwd ? `&cwd=${encodeURIComponent(cwd)}` : ''}`;
 
       this.socket = new WebSocket(wsUrl);
 

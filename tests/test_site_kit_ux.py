@@ -123,3 +123,47 @@ def test_footer_wordmark_is_a_44px_target():
     rule = css[css.index(".k-footer .k-footer__wordmark {"):]
     rule = rule[:rule.index("}")]
     assert "min-height: var(--k-tap)" in rule
+
+
+CRUMB = ("Crumb & Co — an artisan bakery and coffee shop in Bristol. Sections: menu (Breads, Pastries, Coffee), shop, "
+         "our process, the team, FAQ, visit us. Products: Sourdough loaf £6, Cardamom bun £3.50. Add to cart with a cart "
+         "count. Use an animated hero text reveal, scroll reveals and a subtle WebGL gradient behind the hero.")
+
+
+def test_reveal_never_hides_shop_actions():
+    kit, files = site(CRUMB)
+    assert kit.reveal_section == "the-team"  # sections without buttons are preferred
+    brief = generate_content_brief(THREADLEAF := "Threadleaf stationery shop. Products: Notebook $12, Pencil set $8. Add to cart.")
+    store = KitSite(THREADLEAF, brief, brief["sections"])
+    for slug in store.sections:
+        store.accept(slug, "")
+    products = next(s for s in store.sections if store.kinds[s] == "products")
+    assert store.reveal_section == products
+    tsx = dict(store.render(products))[f"src/components/{store.component(products)}.tsx"]
+    card = tsx[tsx.index("<li"):tsx.index("</li>")]
+    assert 'data-motion="scroll-reveal"' in card
+    assert "data-motion" not in card[:card.index(">")]  # the card itself (and its button) stays visible
+    reveal_wrapper = card[card.index('data-motion="scroll-reveal"') - 120:card.index('data-motion="scroll-reveal"')]
+    assert "<button" not in reveal_wrapper
+
+
+def test_header_stays_put_during_in_page_navigation():
+    _, files = site(CRUMB)
+    header = files["src/components/Header.tsx"]
+    assert "closest('a[href^=\"#\"]')" in header and "navigatedAt" in header
+
+
+def test_shader_has_a_visible_fallback_for_missing_or_lost_webgl():
+    _, files = site(CRUMB)
+    hero = files["src/components/Hero.tsx"]
+    assert "data-webgl-fallback" in hero and "webglcontextlost" in hero
+    css = files["src/components/Hero.css"]
+    assert ".k-shader-fallback" in css
+
+
+def test_webgl_background_effects_are_not_3d_scene_requests():
+    from evaluation.three_d_performance_validator import is_three_d_requested
+    assert not is_three_d_requested("a subtle WebGL gradient behind the hero")
+    assert not is_three_d_requested("Use a WebGL shader background and scroll reveals.")
+    assert is_three_d_requested("an interactive WebGL product viewer")
+    assert is_three_d_requested("a 3D rotating model of the speaker")

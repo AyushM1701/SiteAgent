@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover - script context
 KIND_PATTERNS: list[tuple[str, str]] = [
     ("header", r"^(?:header|nav|navbar|navigation|masthead|top-bar)$"),
     ("footer", r"\bfooter\b"),
-    ("hero", r"\b(?:hero|banner|cover)\b"),
+    ("hero", r"\b(?:hero|banner)\b|^cover$"),
     ("cart", r"\b(?:cart|checkout|basket|bag)\b"),
     ("menu", r"\bmenus?\b"),
     ("faq", r"\b(?:faqs?|questions)\b"),
@@ -642,8 +642,12 @@ def normalise(ctx: SectionContext, data: Optional[dict], integrity: Integrity) -
                     dishes.append({"name": dname, "description": _cap_sentences(clean(dish.get("description")), 1, 16), "price": ""})
             if name and dishes:
                 categories.append({"name": name, "items": dishes})
-        if supplied and not categories:
-            categories = [{"name": "Menu", "items": [{"name": n, "description": "", "price": ""} for n in supplied]}]
+        if supplied:
+            # Supplied menu items are the categories, in the user's order; the
+            # model's dishes attach by name and no dish is invented for the rest.
+            matched = _match_supplied(supplied, categories, "name") if categories else [None] * len(supplied)
+            categories = [{"name": name, "items": list((src or {}).get("items") or [])}
+                          for name, src in zip(supplied, matched)]
         out["categories"] = categories
     elif kind == "preview":
         labels = [short(l, 2).rstrip(".") for l in _as_list(data.get("labels"))]
@@ -670,6 +674,9 @@ def build_messages(ctx: SectionContext, prompt: str, item_count: int, voice: lis
     ]
     if ctx.kind == "products" and ctx.products:
         lines.append("Use exactly these items from the request, in this order: " + ", ".join(p["name"] for p in ctx.products) + ".")
+    elif ctx.kind == "menu" and ctx.supplied_items:
+        lines.append("Use exactly these menu categories from the request, in this order, with 2-4 dishes each: "
+                     + ", ".join(ctx.supplied_items) + ".")
     elif ctx.supplied_items:
         lines.append("Use exactly these items from the request, in this order: " + ", ".join(ctx.supplied_items) + ".")
     elif ctx.kind in COUNTS:

@@ -12,6 +12,8 @@ export interface GenerateParams {
   stylePreset?: string;
   style_preset?: string;
   max_tokens?: number;
+  /** Site writer: 'kit' (model writes copy, kit writes code) or 'native' (model writes code too). */
+  strategy?: 'kit' | 'native';
 }
 
 export interface StylePresetItem {
@@ -33,6 +35,13 @@ export interface GenerateResponse {
   queue_position: number;
   stream_url: string;
   deduplicated?: boolean;
+}
+
+export interface PreviewStatus {
+  status: 'ready' | 'error' | 'empty';
+  url?: string;
+  error?: string;
+  message?: string;
 }
 
 export interface TaskStatusResponse {
@@ -168,6 +177,20 @@ export const api = {
       host: data.host || (typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1') || '127.0.0.1',
       port: data.port || 5001,
     };
+  },
+
+  /** Build (or reuse) the isolated preview. `rebuild` forces a fresh production build. */
+  async getPreview(projectId: string, rebuild = false): Promise<PreviewStatus> {
+    const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/preview`, { method: rebuild ? 'POST' : 'GET' });
+    if (!res.ok) throw new Error(`Preview request failed (HTTP ${res.status})`);
+    return res.json();
+  },
+
+  async getProjectLogs(projectId: string): Promise<{ timestamp?: number; type?: string; log?: string; task_id?: string }[]> {
+    const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/logs`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.logs) ? data.logs : [];
   },
 
   getProjectExportUrl(projectId: string): string {

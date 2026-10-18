@@ -38,6 +38,15 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [sidebarOpen, setSidebarOpen]);
 
+  // On a laptop-width screen the sidebar, chat and workspace cannot all fit; give the
+  // workspace the sidebar's room when it opens (without changing the saved preference).
+  const workspaceOpen = useWorkspaceStore((s) => s.workspaceOpen);
+  useEffect(() => {
+    if (workspaceOpen && window.innerWidth >= 768 && window.innerWidth < 1280 && useWorkspaceStore.getState().sidebarOpen) {
+      useWorkspaceStore.setState({ sidebarOpen: false });
+    }
+  }, [workspaceOpen]);
+
   // Generation timer ticker
   useEffect(() => {
     if (!startTime) return;

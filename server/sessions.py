@@ -66,9 +66,10 @@ try:
 except ImportError:
     from project_validator import ValidationResult
 
-SESSIONS_DIR = BASE_DIR / "sessions"
+# SLM_SESSIONS_DIR lets the test suite keep its sessions out of the user's project list.
+SESSIONS_DIR = Path(os.environ["SLM_SESSIONS_DIR"]) if os.environ.get("SLM_SESSIONS_DIR") else BASE_DIR / "sessions"
 
-SESSIONS_DIR.mkdir(exist_ok=True)
+SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 PROJECTS_DIR = BASE_DIR / "generated_components"
 PROJECTS_DIR.mkdir(exist_ok=True)
 EXPORT_DIR = PROJECTS_DIR
@@ -134,6 +135,15 @@ def resolve_project_path(project_root: Path, rel_path: str, allow_package_json: 
             f"Path traversal blocked: '{rel_path}' resolves outside project root '{root}'"
         )
     return candidate
+
+# Pipeline evidence and the static fallback page are not project source.
+_HIDDEN_PROJECT_FILES = re.compile(r"(^|/)(static-preview\.html|content_brief\.json|[\w-]+_evidence\.json)$")
+
+
+def editable_files(files: Dict[str, str]) -> Dict[str, str]:
+    """Files shown in the workbench Code tab: project source, not pipeline artifacts."""
+    return {path: text for path, text in files.items() if not _HIDDEN_PROJECT_FILES.search(path)}
+
 
 # ── Unified Diff Generator ───────────────────────────────────────────────────
 
@@ -452,7 +462,7 @@ class Session:
             "full_path": str(self.workspace_dir) if self.workspace_dir else "",
             "fullPath": str(self.workspace_dir) if self.workspace_dir else "",
             "history": self.history,
-            "files": self.get_current_files(),
+            "files": editable_files(self.get_current_files()),
             "checkpoints": [
                 {
                     "turn_num": c.get("turn_num", c.get("id")),
@@ -715,6 +725,8 @@ class SessionManager:
                     "created_at": s.created_at,
                     "updated_at": s.updated_at,
                     "checkpoints_count": len(s.checkpoints),
+                    "turn_count": sum(1 for h in s.history if h.get("role") == "assistant") or len(s.checkpoints) or 1,
+                    "uses_3d": s.uses_3d,
                     "history_count": len(s.history),
                     "build_state": s.build_state,
                     "preview": s.preview,

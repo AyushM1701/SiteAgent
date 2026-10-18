@@ -1947,7 +1947,9 @@ def _build_section_synonyms(sections: List[str]) -> Dict[str, List[str]]:
     return syns_map
 
 
-SITE_STRATEGIES = ("kit", "freeform")
+# kit: the model writes copy, the kit renders code. native: the model writes copy
+# and then each section's code itself (kit renderer only as a per-section fallback).
+SITE_STRATEGIES = ("kit", "native", "freeform")
 
 
 def resolve_site_strategy(strategy: Optional[str]) -> str:
@@ -1970,10 +1972,16 @@ def _run_kit_site(
     stop_check: Optional[Any],
     business_type: str,
     diagnostics_dir: Optional[Path],
+    native: bool = False,
 ) -> Dict[str, Any]:
     """Design-kit generation: the model writes compact JSON copy per section and
     the kit renders token-driven, accessible TSX/CSS. Same events and result shape
-    as the freeform loop; a section is never blocked (fallback copy instead)."""
+    as the freeform loop; a section is never blocked (fallback copy instead).
+
+    native=True: after the copy, the model also writes the section's TSX and CSS
+    (agent/site_kit/native.py). Its files are used when they parse, pass the parser
+    preflight and keep every piece of approved copy; otherwise the kit renders that
+    section and it is reported in native_code_fallbacks."""
     from agent.site_kit import KitSite
 
     case_dir = workspace_root / f"site_{orig_idx:03d}"
@@ -2011,6 +2019,8 @@ def _run_kit_site(
     turn_logs: List[Dict[str, Any]] = []
     generation_metrics: List[Dict[str, Any]] = []
     fallback_sections: List[str] = []
+    native_code_sections: List[str] = []
+    native_code_fallbacks: Dict[str, List[str]] = {}
     cancelled = False
     completed = 0
 
@@ -2067,6 +2077,19 @@ def _run_kit_site(
         content, notes = kit.accept(slug, text)
         used_fallback = kit.needs_model(slug) and not kit.is_usable(slug, text)
         files = kit.render(slug)
+        if native and not cancelled:
+            native_files, native_problems = _native_section_code(
+                kit, slug, runner, orig_idx, project_name, stop_check, emit, generation_metrics, turn_num)
+            if native_files is None and native_problems == ["cancelled"]:
+                cancelled = True
+                break
+            if native_files:
+                files = native_files
+                native_code_sections.append(slug)
+                notes.append("section code written by the model")
+            else:
+                native_code_fallbacks[slug] = native_problems
+                notes.append("model code rejected (" + "; ".join(native_problems[:2]) + "); kit rendered this section")
         parser_errors = preflight_section_files(files)
         if parser_errors and not any("unavailable" in e for e in parser_errors):
             print(f"  --> [Kit]: {slug} failed parser preflight; re-rendering with fallback copy: {parser_errors[:2]}")
@@ -2083,7 +2106,8 @@ def _run_kit_site(
             all_written_files.append((path, source))
         completed += 1
         section_states[slug] = "completed"
-        turn_logs.append({"turn": turn_num, "action": "write_site_ok", "section": slug, "strategy": "kit",
+        turn_logs.append({"turn": turn_num, "action": "write_site_ok", "section": slug,
+                          "strategy": "native" if slug in native_code_sections else "kit",
                           "files": [p for p, _ in files], "attempts": attempts, "fallback_copy": used_fallback,
                           "notes": notes, "seconds": round(seconds, 2)})
         print(f"  --> [Kit]: {slug} written ({kit.kinds[slug]}){' with fallback copy' if used_fallback else ''}.")
@@ -2099,7 +2123,9 @@ def _run_kit_site(
         "index": orig_idx,
         "project_name": project_name,
         "mode": "site",
-        "strategy": "kit",
+        "strategy": "native" if native else "kit",
+        "native_code_sections": native_code_sections,
+        "native_code_fallbacks": native_code_fallbacks,
         "prompt": prompt,
         "sections_planned": planned,
         "sections_completed": completed,
@@ -2134,6 +2160,55 @@ def _run_kit_site(
     }
 
 
+# Native section code: room for the longest section (header) plus its prompt.
+NATIVE_CODE_MAX_TOKENS = 6144
+
+
+def _native_section_code(kit, slug, runner, orig_idx, project_name, stop_check, emit, metrics, turn_num):
+    """Ask the model for this section's TSX and CSS. Returns (files, []) when usable,
+    (None, problems) when the kit should render the section instead."""
+    from agent.site_kit.native import native_messages, parse_native_files, missing_copy, typecheck_sections, structural_gaps
+
+    name = kit.component(slug)
+    messages = native_messages(kit, slug)
+    problems: List[str] = []
+    for attempt, temperature in enumerate((0.2, 0.4), start=1):
+        emit({"type": "status", "phase": "generating", "status": f"Writing {name}.tsx and {name}.css (attempt {attempt})"})
+        started = time.perf_counter()
+        try:
+            reply = runner.generate_turn(
+                example_idx=orig_idx, history=messages, primary_symbol=project_name,
+                max_new_tokens=NATIVE_CODE_MAX_TOKENS, temperature=temperature, top_p=0.9, top_k=40,
+                repetition_penalty=1.0, stop_check=stop_check,
+            )
+        except InterruptedError:
+            return None, ["cancelled"]
+        elapsed = max(0.001, time.perf_counter() - started)
+        generated = getattr(runner, "last_generation_tokens", None)
+        metrics.append({"turn": turn_num, "section": slug, "attempt": attempt, "stage": "native_code",
+                        "seconds": round(elapsed, 2), "generated_tokens": generated if isinstance(generated, int) else None})
+        files, problems = parse_native_files(reply, name)
+        if files:
+            problems = preflight_section_files(files)
+        if files and not problems:
+            lost = missing_copy(files[0][1], kit.final_content(slug))
+            if lost:
+                problems = [f"changed or dropped approved copy: {lost[0][:60]!r}" + (f" (+{len(lost) - 1} more)" if len(lost) > 1 else "")]
+        if files and not problems:
+            gaps = structural_gaps(files[0][1], kit.render(slug)[0][1])
+            if gaps:
+                problems = ["missing behaviour the design system requires: " + ", ".join(gaps[:4])]
+        if files and not problems:
+            try:
+                problems = typecheck_sections({"section": files}).get("section", [])[:3]
+            except Exception as error:  # tsc unavailable: the project gate still typechecks
+                print(f"  --> [Native]: section typecheck skipped: {error}")
+        if not problems:
+            return files, []
+        print(f"  --> [Native]: {slug} attempt {attempt} rejected: {problems[:2]}")
+    return None, problems
+
+
 def run_site_agent_on_example(
     orig_idx: int,
     prompt: str,
@@ -2165,9 +2240,10 @@ def run_site_agent_on_example(
     strategy="kit" (the default, see resolve_site_strategy) delegates to the
     design kit: the model writes JSON copy and the kit renders the code.
     """
-    if resolve_site_strategy(strategy) == "kit":
+    if resolve_site_strategy(strategy) in ("kit", "native"):
         return _run_kit_site(orig_idx, prompt, project_name, sections, runner, workspace_root, brief,
-                             event_callback, stop_check, business_type, diagnostics_dir)
+                             event_callback, stop_check, business_type, diagnostics_dir,
+                             native=resolve_site_strategy(strategy) == "native")
 
     case_dir = workspace_root / f"site_{orig_idx:03d}"
     if case_dir.exists():

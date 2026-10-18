@@ -70,6 +70,7 @@ interface WorkspaceStoreState {
 
   setDiff: (original: string, modified: string, turn: number, filename?: string) => void;
   addLog: (entry: Omit<LogEntry, 'id' | 'timeStr'>, projectId?: string) => void;
+  hydrateLogs: (projectId: string, entries: Omit<LogEntry, 'id' | 'timeStr'>[]) => void;
   setLogsForProject: (projectId: string) => void;
   setLogFilterLevel: (lvl: LogLevel | 'all') => void;
   setLogFilterCategory: (cat: LogCategory | 'all') => void;
@@ -219,7 +220,12 @@ export const useWorkspaceStore = create<WorkspaceStoreState>((set) => ({
 
   addLog: (entry, projectId) =>
     set((state) => {
-      const now = new Date(entry.timestamp);
+      const targetProject = projectId || (entry as any).projectId;
+      if (entry.seq !== undefined && targetProject && (state.logsByProject[targetProject] || []).some((l) => l.seq === entry.seq)) {
+        return {};
+      }
+      // Server timestamps are seconds; Date expects milliseconds.
+      const now = new Date(entry.timestamp < 1e12 ? entry.timestamp * 1000 : entry.timestamp);
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now
         .getMinutes()
         .toString()
@@ -244,6 +250,24 @@ export const useWorkspaceStore = create<WorkspaceStoreState>((set) => ({
       return {
         logs: nextLogs,
         logsByProject: nextLogsByProject,
+      };
+    }),
+
+  hydrateLogs: (projectId, entries) =>
+    set((state) => {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const restored: LogEntry[] = entries.map((entry, index) => {
+        const ms = entry.timestamp < 1e12 ? entry.timestamp * 1000 : entry.timestamp;
+        const d = new Date(ms);
+        return { ...entry, timestamp: ms, id: `h-${ms}-${index}`, timeStr: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` };
+      });
+      // Keep anything that arrived live while the history was loading.
+      const live = (state.logsByProject[projectId] || []).filter((l) => !l.id.startsWith('h-'));
+      const merged = [...restored, ...live].slice(-2000);
+      const current = useProjectStore.getState().currentProjectId;
+      return {
+        logsByProject: { ...state.logsByProject, [projectId]: merged },
+        logs: current === projectId ? merged : state.logs,
       };
     }),
 

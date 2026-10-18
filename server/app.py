@@ -639,6 +639,7 @@ def _dispatch_task_start(
             task_data["style_tokens"] = style_tokens
             task_data["style_preset"] = style_preset
             task_data["stylePreset"] = style_preset
+            task_data["strategy"] = options.get("strategy")
         else:
             test_code = (options.get("test_code") or "").strip()
             task_data["test_code"] = test_code or _auto_test(title, title.startswith("use"))
@@ -2251,6 +2252,27 @@ def verify_and_repair_project(
                         q.put({"type": "log", "text": f"[Repair] Rejected marker-only fallback rewrite: {superficial}"})
                     continue
 
+            # A repair fixes existing sections. A new component file (e.g. a duplicate
+            # "Home" hero written to dodge a contrast error) changes the site's structure
+            # and leaves the original error in place.
+            if isinstance(turn.action, WriteSiteAction) and turn.action.files:
+                planned = {re.sub(r"[^a-z0-9]", "", str(name).lower()) for name in active_sections}
+                invented = sorted({
+                    fpath for fpath, _ in turn.action.files
+                    if fpath.replace("\\", "/").startswith("src/components/")
+                    and not (workspace / fpath).is_file()
+                    and re.sub(r"[^a-z0-9]", "", Path(fpath).stem.lower()) not in planned
+                })
+                if invented and component_stems:
+                    active_history.append({"role": "assistant", "content": turn.raw_text or reply})
+                    active_history.append({"role": "user", "content": (
+                        "[REPAIR REJECTED]: Do not add new component files (" + ", ".join(invented) + "). "
+                        "Fix the existing file that the error names."
+                    )})
+                    if q:
+                        q.put({"type": "log", "text": f"[Repair] Rejected new component files: {invented}"})
+                    continue
+
             repaired_any = False
             prior_validation = validation
             modified_before = set(files_modified)
@@ -3823,6 +3845,9 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "project_validation": project_validation,
         "generation_quality": generation_quality,
         "generation_scorecards": scorecards,
+        "strategy": strategy,
+        "native_code_sections": result.get("native_code_sections", []),
+        "native_code_fallbacks": result.get("native_code_fallbacks", {}),
         "final_passed": final_passed,
         "blocked_sections": blocked_sections,
         "blocked_diagnostics": blocked_diagnostics,
@@ -3847,6 +3872,9 @@ def _run_site_generation(task: dict, q: queue.Queue):
         "project_validation":   project_validation,
         "generation_quality":   generation_quality,
         "generation_scorecards": scorecards,
+        "strategy":             strategy,
+        "native_code_sections": result.get("native_code_sections", []),
+        "native_code_fallbacks": result.get("native_code_fallbacks", {}),
         "self_corrected":       result.get("self_corrected", False) or verify_res.self_corrected,
         "turns_used":           len(result.get("turn_logs", [])),
         "sections_completed":   sections_completed,
@@ -4720,6 +4748,78 @@ def preview_session_page(session_id, filename="index.html"):
     if filename == "index.html" and (s.workspace_dir / "static-preview.html").exists():
         filename = "static-preview.html"
     return send_from_directory(str(s.workspace_dir), filename)
+
+
+def _preview_has_source(workspace: Path) -> bool:
+    src = workspace / "src"
+    return src.exists() and any(src.rglob("*.tsx"))
+
+
+@app.route("/api/projects/<session_id>/preview", methods=["GET", "POST"])
+@app.route("/api/sessions/<session_id>/preview", methods=["GET", "POST"])
+def preview_status(session_id):
+    """Build (or reuse) the isolated preview and report its URL or the build error.
+
+    GET reuses an unchanged build; POST forces a fresh build. The workbench calls
+    this instead of loading /preview/<id> blind, so it can show progress and errors."""
+    s = session_manager.get_session(session_id)
+    if not s or not s.workspace_dir or not s.workspace_dir.exists() or not _preview_has_source(s.workspace_dir):
+        return jsonify({"status": "empty", "message": "No site files yet. The preview appears once the first files are written."})
+    if not (s.workspace_dir / "index.html").exists():
+        repair_missing_critical_files(s.workspace_dir, s.title, s.mode)
+    try:
+        if request.method == "POST":
+            preview_manager.stop(session_id)
+        url = preview_manager.start(session_id, workspace_dir=s.workspace_dir)
+    except Exception as error:
+        return jsonify({"status": "error", "error": str(error)[-6000:]})
+    if not url:
+        return jsonify({"status": "error", "error": "The preview server did not start."})
+    return jsonify({"status": "ready", "url": url.rstrip("/") + "/"})
+
+
+_project_log_lock = threading.Lock()
+_PROJECT_LOG_LIMIT = 2_000_000  # bytes kept per project log file
+
+
+def _project_log_path(project_id: str) -> Optional[Path]:
+    from server.sessions import SESSIONS_DIR
+    if not re.fullmatch(r"[A-Za-z0-9_\-]+", project_id or ""):
+        return None
+    return SESSIONS_DIR / f"{project_id}_logs.jsonl"
+
+
+def _persist_project_log(project_id: str, payload: Dict[str, Any]) -> None:
+    """Append one event log line so the Logs tab can be restored after a reload."""
+    path = _project_log_path(project_id)
+    if path is None:
+        return
+    entry = {"timestamp": payload.get("timestamp"), "type": payload.get("type"),
+             "log": payload.get("log"), "task_id": payload.get("task_id")}
+    with _project_log_lock:
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        if path.stat().st_size > _PROJECT_LOG_LIMIT:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            path.write_text("\n".join(lines[len(lines) // 2:]) + "\n", encoding="utf-8")
+
+
+event_bus.log_sink = _persist_project_log
+
+
+@app.route("/api/projects/<session_id>/logs", methods=["GET"])
+@app.route("/api/sessions/<session_id>/logs", methods=["GET"])
+def project_logs(session_id):
+    """Persisted event log lines for a project, oldest first (last 2000)."""
+    path = _project_log_path(session_id)
+    entries = []
+    if path and path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines()[-2000:]:
+            try:
+                entries.append(json.loads(line))
+            except ValueError:
+                continue
+    return jsonify({"logs": entries})
 
 
 # ── Project WebSocket Endpoint (/ws/projects/:projectId) ─────────────────────

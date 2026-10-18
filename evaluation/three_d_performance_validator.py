@@ -25,8 +25,17 @@ THREE_D_PERFORMANCE_CHECK_NAMES = [
 ]
 
 
+_WEBGL_BACKGROUND_RE = re.compile(
+    r"\s*(?:[\w-]+\s+){0,2}(?:gradients?|backgrounds?|backdrops?|shaders?|noise|glow|aurora|textures?|effects?)\b", re.I)
+
+
 def is_three_d_requested(brief: str) -> bool:
-    return bool(re.search(r"\b(?:3d|webgl|three\.js|react three fiber|r3f|three-dimensional)\b", brief, re.I))
+    """A 3D scene was asked for. "WebGL gradient/shader background" is a background
+    effect, not a scene, so it alone does not trigger the 3D scene contract."""
+    if re.search(r"\b(?:3d|three\.js|react three fiber|r3f|three-dimensional)\b", brief, re.I):
+        return True
+    return any(not _WEBGL_BACKGROUND_RE.match(brief[m.end():m.end() + 60])
+               for m in re.finditer(r"\bwebgl\b", brief, re.I))
 
 
 def validate_scene_contract(files: Dict[str, str]) -> Tuple[bool, str, Dict[str, Any]]:

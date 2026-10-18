@@ -29,7 +29,8 @@ _LOCATION_REJECT = {
     "wednesday", "thursday", "friday", "saturday", "sunday", "sections", "style", "minimal", "modern",
 }
 _STORE_RE = r"\b(?:cart|add to cart|online store|online shop|e-?commerce|shopping bag|basket)\b"
-_REVEAL_KINDS = ("features", "products", "articles", "story", "work")
+# Sections whose reveal never hides an action; products (Add to cart) only as a last resort.
+_REVEAL_KINDS = ("features", "team", "story", "split", "articles", "work")
 _TINT_KINDS = {"contact", "cart", "quotes"}
 _CLOSING_KINDS = {"contact", "cta"}
 
@@ -109,7 +110,8 @@ class KitSite:
         self.integrity = Integrity(self.prompt, extra_facts=[p.get("price", "") for p in self.products])
         self._forbidden = self._forbidden_topics(lower)
         self.labels = {slug: nav_label(slug) for slug in self.sections}
-        self.reveal_section = next((s for s in self.sections if self.kinds[s] in _REVEAL_KINDS), "")
+        self.reveal_section = next((s for s in self.sections if self.kinds[s] in _REVEAL_KINDS),
+                                   next((s for s in self.sections if self.kinds[s] == "products"), ""))
         self.tints = self._tints()
         self.contents: dict[str, dict] = {}
         self.voice: list[str] = []
@@ -165,6 +167,7 @@ class KitSite:
             r"\bpric\w*": r"\b(?:pric\w*|cost|costs|fee|fees|per month|/mo)\b",
             r"\bcheckout\b": r"\b(?:checkout|check out|buy online|order online)\b",
             r"\bdeliver\w*": r"\bdeliver\w*\b",
+            r"\bopening\s+hours|\bopening\s+times": r"\b(?:opening\s+(?:hours|times)|hours|open\s+(?:daily|from|until|till)|closing\s+time)\b",
         }
         return [deny for probe, deny in topics.items() if _explicitly_excluded(lower, probe)]
 
@@ -370,6 +373,8 @@ class KitSite:
             content["img"] = self._img(photos[0], 1000, 1250) if photos else None
             if kind == "menu":
                 content["empty"] = f"Ask {self.brand} for today's menu."
+                content["askToday"] = (f"Ask us what's on today — write to {self.email}." if self.email
+                                       else "Ask us what's on today.")
         elif kind == "work":
             for i, item in enumerate(content.get("items", [])):
                 item["img"] = self._img(photos[i], 1000, 800) if i < len(photos) else None
@@ -424,13 +429,17 @@ class KitSite:
         return styles[digest % len(styles)]
 
     # ── Rendering ───────────────────────────────────────────────────────────
-    def render(self, slug: str) -> list[tuple[str, str]]:
+    def final_content(self, slug: str) -> dict:
+        """The content a section is rendered from (header/footer reflect the final site)."""
         if slug not in self.contents:
             self.accept(slug, "")
         if self.kinds[slug] in {"header", "footer"}:
             # Links and taglines depend on the final site; refresh them.
             self.contents[slug] = self._header_content() if self.kinds[slug] == "header" else self._footer_content()
-        tsx, css = render_section(self, slug, self.kinds[slug], self.contents[slug])
+        return self.contents[slug]
+
+    def render(self, slug: str) -> list[tuple[str, str]]:
+        tsx, css = render_section(self, slug, self.kinds[slug], self.final_content(slug))
         name = self.component(slug)
         return [(f"src/components/{name}.tsx", tsx), (f"src/components/{name}.css", css.strip() + "\n")]
 

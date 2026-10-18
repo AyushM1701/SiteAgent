@@ -56,7 +56,7 @@ export const LogsTab: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0a0c10] overflow-hidden select-none font-mono text-xs">
+    <div className="flex-1 flex flex-col h-full bg-[#0a0c10] overflow-hidden font-mono text-xs">
       {/* Logs Toolbar */}
       <div className="h-10 border-b border-white/[0.06] bg-[#141619] px-3 flex items-center justify-between gap-2">
         {/* Left: filters */}

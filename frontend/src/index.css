@@ -223,3 +223,73 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb {
 html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.28) !important;
 }
+
+/* Panels and status bars added after the original light theme. */
+html[data-theme="light"] .bg-\[\#101216\],
+html[data-theme="light"] .bg-\[\#111316\],
+html[data-theme="light"] .bg-\[\#181818\] {
+  background-color: #f1f5f9 !important;
+}
+
+html[data-theme="light"] .bg-\[\#181a1f\],
+html[data-theme="light"] .bg-\[\#1a1d22\],
+html[data-theme="light"] .bg-\[\#1c1c1f\],
+html[data-theme="light"] .bg-\[\#141b24\] {
+  background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .bg-\[\#161f1c\] {
+  background-color: #ecfdf5 !important;
+}
+
+html[data-theme="light"] .bg-\[\#221618\] {
+  background-color: #fff1f2 !important;
+}
+
+html[data-theme="light"] .bg-\[\#221c13\] {
+  background-color: #fffbeb !important;
+}
+
+html[data-theme="light"] .bg-slate-950\/60,
+html[data-theme="light"] .bg-black\/40,
+html[data-theme="light"] .bg-black\/50 {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Pastel accent text is unreadable on white; use the deeper shade. */
+html[data-theme="light"] .text-emerald-200,
+html[data-theme="light"] .text-emerald-300 {
+  color: #047857 !important;
+}
+
+html[data-theme="light"] .text-amber-200,
+html[data-theme="light"] .text-amber-300,
+html[data-theme="light"] .text-amber-400 {
+  color: #b45309 !important;
+}
+
+html[data-theme="light"] .text-rose-300,
+html[data-theme="light"] .text-rose-400 {
+  color: #be123c !important;
+}
+
+html[data-theme="light"] .text-indigo-300,
+html[data-theme="light"] .text-violet-300,
+html[data-theme="light"] .text-violet-400 {
+  color: #6d28d9 !important;
+}
+
+html[data-theme="light"] .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="light"] .bg-cyan-950\/30 {
+  background-color: #ecfeff !important;
+}
+
+html[data-theme="light"] .text-cyan-200,
+html[data-theme="light"] .text-cyan-300,
+html[data-theme="light"] .text-cyan-400,
+html[data-theme="light"] .text-sky-200 {
+  color: #0e7490 !important;
+}

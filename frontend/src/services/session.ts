@@ -5,6 +5,7 @@ import { useChatStore } from '../state/chat-store';
 import { useSelectionStore } from '../state/selection-store';
 import { projectWsClient } from './project-ws';
 import { api } from './api';
+import { logEntryFromEvent } from '../types/logs';
 
 /**
  * Safe entry point for requesting a new project.
@@ -72,12 +73,19 @@ export async function loadProject(id: string) {
   useWorkspaceStore.getState().setLogsForProject(id);
   useWorkspaceStore.getState().setDiff('', '', 0, '');
 
+  // Restore the persisted log history for this project (best effort).
+  api.getProjectLogs(id).then((entries) => {
+    const mapped = entries.map((e) => logEntryFromEvent(e)).filter((e): e is NonNullable<typeof e> => Boolean(e));
+    if (mapped.length) useWorkspaceStore.getState().hydrateLogs(id, mapped);
+  }).catch(() => {});
+
   try {
     const details = await api.getProject(id);
     const projData = details.project || details.session || details;
     if (projData.files) {
       useWorkspaceStore.getState().setFiles(projData.files);
     }
+    useProjectStore.getState().updateProject(id, { uses3D: Boolean(projData.uses_3d ?? projData.uses3D) });
     const turns = Array.isArray(projData.turns) ? projData.turns : (Array.isArray(projData.history) ? projData.history : []);
     if (turns.length) {
       const restored: any[] = [];
@@ -109,6 +117,9 @@ export async function loadProject(id: string) {
               sectionCompletion: turn.section_completion,
               finalPassed: turn.final_passed,
               generationScorecards: turn.generation_scorecards,
+              strategy: turn.strategy,
+              nativeCodeSections: turn.native_code_sections,
+              nativeCodeFallbacks: turn.native_code_fallbacks,
               filesModified: turn.files_modified || [],
               filePath: turn.file_path || projData.file_path,
               folderName: turn.folder_name || projData.folder_name || (turn.file_path || projData.file_path ? (turn.file_path || projData.file_path).replace(/^generated_components\//, '').replace(/\/$/, '') : undefined),
@@ -175,6 +186,8 @@ export async function loadProject(id: string) {
       {
         onEvent: (event) => {
           useAgentStore.getState().applyEvent(event);
+          const logEntry = logEntryFromEvent(event as any);
+          if (logEntry) useWorkspaceStore.getState().addLog(logEntry, id);
           if (event.type === 'task.queued' || event.type === 'prompt.queued') {
             const qTaskId = (event as any).task_id || event.data?.taskId || event.data?.task_id || (event as any).taskId;
             const qPos = event.data?.position ?? event.data?.queue_position;
@@ -211,7 +224,10 @@ export async function loadProject(id: string) {
         onResult: (result) => {
           if (result.validation) useAgentStore.getState().applyEvent({ type: 'build.result', timestamp: Date.now(), data: result.validation });
           if (result.files) {
-            useWorkspaceStore.getState().setFiles(result.files);
+            api.getProject(id).then((fresh) => {
+              const data = fresh.project || fresh.session || fresh;
+              useWorkspaceStore.getState().setFiles(data.files || result.files);
+            }).catch(() => useWorkspaceStore.getState().setFiles(result.files));
           }
           if (result.status === 'blocked' || result.blocked_sections?.length) {
             useAgentStore.getState().setStatus('failed');

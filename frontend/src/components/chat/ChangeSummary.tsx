@@ -29,7 +29,11 @@ export const ChangeSummary: React.FC<ChangeSummaryProps> = ({ summary }) => {
   const isUnchanged = !blocked && (summary.validationStatus === 'unchanged' || isNoFileChange);
 
   const validation = summary.validation;
-  const codeStatus: TriState = summary.codeStatus
+  // The "TypeScript" badge reports the typecheck gate, not the combined code verdict
+  // (which also folds in accessibility and runtime results).
+  const codeStatus: TriState = (validation as any)?.typecheck_status
+    ?? ((validation as any)?.typecheck_passed !== undefined ? toTriState((validation as any).typecheck_passed) : undefined)
+    ?? summary.codeStatus
     ?? validation?.code_status
     ?? (summary.code_passed !== undefined ? toTriState(summary.code_passed) : (validation?.code_passed !== undefined ? toTriState(validation.code_passed) : 'unknown'));
 
@@ -119,7 +123,7 @@ export const ChangeSummary: React.FC<ChangeSummaryProps> = ({ summary }) => {
                 ? `${summary.filesModified.length} file${summary.filesModified.length > 1 ? 's' : ''} modified`
                 : `${summary.filesCreated?.length || 0} files created`}
             </span>
-            {summary.visualScore !== undefined && (
+            {summary.visualScore !== undefined && summary.visualScore !== null && (
               <span className="text-amber-400/90 ml-1">
                 · Visual Score {summary.visualScore}/5
               </span>
@@ -175,6 +179,20 @@ export const ChangeSummary: React.FC<ChangeSummaryProps> = ({ summary }) => {
             </div>
           )}
         </div>
+
+        {summary.strategy === 'native' && (
+          <div id="summary-native-code" className="text-[11px] text-slate-400 space-y-1">
+            <div>
+              <span className="font-semibold text-slate-300">Section code: </span>
+              {(summary.nativeCodeSections || []).length} written by the model
+              {Object.keys(summary.nativeCodeFallbacks || {}).length > 0 &&
+                `, ${Object.keys(summary.nativeCodeFallbacks || {}).length} by the design kit (model code rejected)`}
+            </div>
+            {Object.entries(summary.nativeCodeFallbacks || {}).slice(0, 4).map(([section, reasons]) => (
+              <div key={section} className="text-slate-500 font-mono">{section}: {(reasons || [])[0]}</div>
+            ))}
+          </div>
+        )}
 
         {summary.generationScorecards && (
           <div className="space-y-2 text-[11px]">
