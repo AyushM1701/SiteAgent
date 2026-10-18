@@ -18,7 +18,8 @@ import { useConfirm } from '../../state/confirm-store';
 import { toast } from '../../state/toast-store';
 
 export const TopBar: React.FC = () => {
-  const { status, statusMessage, activeTaskId, elapsedSeconds, queueDepth, resetAgent, validationResult, metrics } = useAgentStore();
+  const { status, statusMessage, activeTaskId, elapsedSeconds, queueDepth, resetAgent, validationResult, metrics,
+          serverConnected, modelLoaded, modelStatus } = useAgentStore();
   const { 
     toggleSidebar, 
     sidebarOpen,
@@ -34,6 +35,16 @@ export const TopBar: React.FC = () => {
   const confirm = useConfirm();
 
   const isWorking = status === 'generating' || status === 'planning' || status === 'typechecking' || status === 'repairing';
+  // The dot reflects the real model state, not just that the page loaded.
+  const modelState = !serverConnected
+    ? { dot: 'bg-rose-500', label: 'Offline', title: 'The workbench server is not responding.' }
+    : modelStatus === 'error'
+    ? { dot: 'bg-rose-500', label: 'Model error', title: 'The model failed to load; check the server log.' }
+    : modelStatus === 'loading' || modelStatus === 'unknown' || !modelLoaded
+    ? { dot: 'bg-amber-400 animate-pulse', label: 'Loading model', title: 'The model is still loading onto the GPU.' }
+    : modelStatus === 'busy' || isWorking
+    ? { dot: 'bg-emerald-400 animate-pulse', label: 'Working', title: `${metrics.modelName} is generating.` }
+    : { dot: 'bg-emerald-400', label: 'Ready', title: `${metrics.modelName} is loaded and ready.` };
   const fileCount = Object.keys(files).length;
 
   const handleStop = async () => {
@@ -85,10 +96,16 @@ export const TopBar: React.FC = () => {
             </span>
           </span>
 
-          {/* Subtle Local dot */}
-          <span className="flex items-center gap-1.5 ml-2 text-[11px] text-slate-500 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
-            <span className="hidden sm:inline">Local</span>
+          {/* Model readiness */}
+          <span
+            id="topbar-model-status"
+            data-state={modelState.label.toLowerCase().replace(' ', '-')}
+            role="status"
+            title={modelState.title}
+            className="flex items-center gap-1.5 ml-2 text-[11px] text-slate-500 font-mono"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${modelState.dot}`} />
+            <span className="hidden sm:inline">{modelState.label}</span>
           </span>
 
           {/* Motion Capability Badge (Item 22) */}

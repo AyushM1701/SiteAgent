@@ -65,6 +65,7 @@ export const App: React.FC = () => {
         setQueueDepth(res.queue_depth || 0);
         setSystemStatus({
           serverConnected: true,
+          modelStatus: res.model_status || (res.model_loaded ? 'ready' : 'loading'),
           modelLoaded: res.model_loaded === true && res.adapter_compatible === true,
           gpuReady: res.gpu_ready === true,
           modelName: res.model_name || res.loaded_model_path || 'Unavailable',
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
       } catch (_) {
         setSystemStatus({
           serverConnected: false,
+          modelStatus: 'unknown',
         });
       }
     };

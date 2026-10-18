@@ -27,6 +27,8 @@ interface AgentStoreState {
   modelLoaded: boolean;
   gpuReady: boolean;
   serverConnected: boolean;
+  /** Server-reported model state: loading | ready | busy | error (unknown until the first poll). */
+  modelStatus: string;
 
   setActiveTaskId: (id: string | null) => void;
   setStatus: (status: AgentStatus, message?: string) => void;
@@ -34,6 +36,7 @@ interface AgentStoreState {
     modelLoaded?: boolean;
     gpuReady?: boolean;
     serverConnected?: boolean;
+    modelStatus?: string;
     maxContextTokens?: number;
     max_context_tokens?: number;
     contextTokens?: number;
@@ -81,6 +84,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   modelLoaded: false,
   gpuReady: false,
   serverConnected: false,
+  modelStatus: 'unknown',
 
   setActiveTaskId: (id) => set({ activeTaskId: id }),
   setSystemStatus: (status) => set((state) => ({
@@ -88,6 +92,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
     ...(status.modelLoaded !== undefined ? { modelLoaded: status.modelLoaded } : {}),
     ...(status.gpuReady !== undefined ? { gpuReady: status.gpuReady } : {}),
     ...(status.serverConnected !== undefined ? { serverConnected: status.serverConnected } : {}),
+    ...(status.modelStatus !== undefined ? { modelStatus: status.modelStatus } : {}),
     metrics: {
       ...state.metrics,
       ...(status.maxContextTokens ? { maxContextTokens: status.maxContextTokens } : {}),
