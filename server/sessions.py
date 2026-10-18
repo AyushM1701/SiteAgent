@@ -79,6 +79,12 @@ _SESSION_ID_RE = re.compile(r"^\d+_[0-9a-f]{6}$")
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_\-]+$")
 
 
+def portable_basename(path_text: str) -> str:
+    """Last path component for Windows or POSIX paths on any OS (Path(...).name does not
+    split backslashes on Linux/macOS, so sessions saved on Windows would break)."""
+    return str(path_text).replace("\\", "/").rstrip("/").split("/")[-1]
+
+
 def sanitize_project_id(raw_id: Optional[str], default_id: str = "") -> str:
     r"""Sanitizes a project identifier to ensure it contains only safe directory name characters.
 
@@ -89,7 +95,7 @@ def sanitize_project_id(raw_id: Optional[str], default_id: str = "") -> str:
         return default_id
     clean = raw_id.strip()
     # Strip any drive prefixes or path separators
-    clean = Path(clean).name
+    clean = portable_basename(clean)
     # Keep only alphanumeric characters, underscores, and hyphens
     clean = re.sub(r"[^A-Za-z0-9_\-]", "_", clean).strip("._")
     if not clean or clean in (".", ".."):
@@ -331,7 +337,7 @@ class Session:
         # Blueprint #13: Persist projectId and derive PROJECTS_DIR / projectId server-side.
         # Arbitrary workspace paths from JSON are never trusted.
         default_pid = f"session_{session_id}"
-        inferred_pid = project_id or (Path(workspace_dir).name if workspace_dir else None)
+        inferred_pid = project_id or (portable_basename(workspace_dir) if workspace_dir else None)
         self.project_id = sanitize_project_id(inferred_pid, default_id=default_pid)
 
         if workspace_dir:
@@ -610,7 +616,7 @@ class SessionManager:
                     # Persist/read projectId and strictly derive PROJECTS_DIR / projectId server-side.
                     raw_pid = data.get("projectId") or data.get("project_id")
                     if not raw_pid and data.get("workspace_dir"):
-                        candidate_name = Path(data["workspace_dir"]).name
+                        candidate_name = portable_basename(data["workspace_dir"])
                         if candidate_name and _SAFE_ID_RE.match(candidate_name):
                             raw_pid = candidate_name
                     safe_pid = sanitize_project_id(raw_pid, default_id=f"session_{sid}")
@@ -682,7 +688,7 @@ class SessionManager:
                     # Blueprint #13: Derive PROJECTS_DIR / projectId server-side
                     raw_pid = data.get("projectId") or data.get("project_id")
                     if not raw_pid and data.get("workspace_dir"):
-                        candidate_name = Path(data["workspace_dir"]).name
+                        candidate_name = portable_basename(data["workspace_dir"])
                         if candidate_name and _SAFE_ID_RE.match(candidate_name):
                             raw_pid = candidate_name
                     safe_pid = sanitize_project_id(raw_pid, default_id=f"session_{session_id}")
