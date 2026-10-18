@@ -40,6 +40,7 @@ jobs:
       - name: Run Core Module Smoke Imports
         env:
           PYTHONPATH: clean_reconstructed_tree
+          NO_AUTO_LOAD_MODEL: '1'
         run: |
           python -c "import agent.site_brief"
           python -c "import agent.agent"
