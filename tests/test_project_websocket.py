@@ -8,6 +8,7 @@ Comprehensive test suite for:
 - Bidirectional dispatch handlers (task.start, task.cancel, prompt.queue, preview.selection)
 - Live WebSocket endpoint (/ws/projects/:projectId) using flask_sock & websockets client
 """
+import os
 
 import asyncio
 import json
@@ -325,7 +326,7 @@ def test_frontend_websocket_suite():
         cwd=str(script_path.parent.parent),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend WebSocket test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL FRONTEND WEBSOCKET MIGRATION TESTS PASSED!" in res.stdout

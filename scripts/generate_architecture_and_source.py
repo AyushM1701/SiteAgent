@@ -149,7 +149,9 @@ def generate_architecture_and_source():
                 disk_path = ROOT_DIR / norm_link
 
         if disk_path.exists() and disk_path.is_file():
-            raw_bytes = disk_path.read_bytes()
+            # Canonical LF content: git checks text out as CRLF on Windows and LF elsewhere,
+            # so the export (and its SHA-256 metadata) must not depend on the OS it ran on.
+            raw_bytes = disk_path.read_bytes().replace(b"\r\n", b"\n")
             text_content = raw_bytes.decode("utf-8", errors="replace")
             sha256_hex = hashlib.sha256(raw_bytes).hexdigest()
             byte_size = len(raw_bytes)
@@ -260,7 +262,7 @@ def generate_architecture_and_source():
         # If file exists on disk, assert 100% byte equality with file on disk
         target_file = ROOT_DIR / rel_disk_path
         if target_file.exists() and target_file.is_file():
-            actual_disk_bytes = target_file.read_bytes()
+            actual_disk_bytes = target_file.read_bytes().replace(b"\r\n", b"\n")
             if reconstructed_bytes != actual_disk_bytes:
                 print(f"[SourceExport] ERROR: Reconstructed bytes differ from disk for {rel_disk_path}!", file=sys.stderr)
                 sys.exit(1)
@@ -273,7 +275,7 @@ def generate_architecture_and_source():
         print("[SourceExport] ERROR: server/app.py section was not found in export!", file=sys.stderr)
         sys.exit(1)
 
-    app_disk_bytes = (ROOT_DIR / "server" / "app.py").read_bytes()
+    app_disk_bytes = (ROOT_DIR / "server" / "app.py").read_bytes().replace(b"\r\n", b"\n")
     app_extracted = (app_matches[0].group(11) + "\n").encode("utf-8")
     if app_extracted != app_disk_bytes:
         print("[SourceExport] ERROR: server/app.py extracted bytes do not match server/app.py on disk!", file=sys.stderr)

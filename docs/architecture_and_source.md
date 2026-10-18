@@ -3463,7 +3463,7 @@ if __name__ == "__main__":
 #### `slm.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/slm.py`
-- **Lines**: 167 | **Size**: 6,600 bytes | **SHA-256**: `1fb53c4965fd90ac625e78a608dec150f6dd1be2e80c5379f54e7088c238558c` | **Newline**: `True`
+- **Lines**: 167 | **Size**: 6,433 bytes | **SHA-256**: `7ac3570d8d31a98d1b8b93903096c49485788ca22c16c78ca7f10c24438cb142` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Unified CLI entry point orchestrating training, evaluation, STaR generation, and web server execution.
 
@@ -3642,7 +3642,7 @@ if __name__ == "__main__":
 #### `agent/__init__.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/__init__.py`
-- **Lines**: 42 | **Size**: 1,290 bytes | **SHA-256**: `a2e8b49d6920314b96f3d96d592c039191df7cd25e4f375156d2f7d26b09fae0` | **Newline**: `True`
+- **Lines**: 42 | **Size**: 1,248 bytes | **SHA-256**: `3dbdcc61f44e3e6d2d871967a67bacd09c0e0d73cd7b527cbb4776c3c827bb48` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Agent package initialization module.
 
@@ -4713,7 +4713,7 @@ def get_model_fingerprint_info(model_path: str) -> Dict[str, Any]:
 #### `agent/output_budget.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/output_budget.py`
-- **Lines**: 460 | **Size**: 16,816 bytes | **SHA-256**: `97b809ce7335295a8d8ed4689c05e70865c28ec6c2b7ece5e0a314be8588cd1b` | **Newline**: `True`
+- **Lines**: 460 | **Size**: 16,360 bytes | **SHA-256**: `85804cf2ace18fa93f0b4d1131929780ec7d85ecc35f34f1467813a92c9039ba` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Dynamic output token budget calculator with physical GPU headroom clamping under 5.5 GiB VRAM ceiling.
 
@@ -5918,7 +5918,7 @@ safe_executor = SafeExecutor()
 #### `agent/site_acceptance.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_acceptance.py`
-- **Lines**: 222 | **Size**: 10,103 bytes | **SHA-256**: `c800b4e378d17a5b6c91ee6ae5785dbb1819ab6fd03190cceac7b68d8149381f` | **Newline**: `True`
+- **Lines**: 222 | **Size**: 9,881 bytes | **SHA-256**: `3df085a729b656a5905d24145707d1f59a667926ef0bdf6b455629745fe719f1` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated site acceptance criteria evaluator checking landmarks, skip-links, and headings.
 
@@ -6281,7 +6281,7 @@ def section_output_contract(symbol: str) -> str:
 #### `agent/site_quality.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_quality.py`
-- **Lines**: 245 | **Size**: 16,361 bytes | **SHA-256**: `ff0010695ecfd196f11c35efb58632242d90733dd9d870e7f5f293841e07633a` | **Newline**: `True`
+- **Lines**: 245 | **Size**: 16,116 bytes | **SHA-256**: `9a4320ff5c3b37df85f81d51d510e90b0f9f0177092246c920fd465c29934fd8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Site visual and structural quality scoring engine with contrast inspection.
 
@@ -10038,7 +10038,7 @@ if __name__ == "__main__":
 #### `agent/agent_protocol.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/agent_protocol.py`
-- **Lines**: 1,412 | **Size**: 66,828 bytes | **SHA-256**: `1a608303e8fa98cf513f3e8a90d9d898a232eb06f0185892c9a5a3132afd3fb3` | **Newline**: `True`
+- **Lines**: 1,412 | **Size**: 65,416 bytes | **SHA-256**: `fe2a49e0055c586c6c8d9c0d3d320ab165f2e2baec7d65163e20c2c53f3f6d80` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Action-first protocol, tool schemas, system prompts, regex formats, and JSON action parser with statusMessage.
 
@@ -11546,7 +11546,7 @@ export default function PremiumScene({ label = 'Interactive dimensional product 
 #### `agent/site_brief.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/site_brief.py`
-- **Lines**: 2,794 | **Size**: 144,735 bytes | **SHA-256**: `b106ddd99503a677420f09fa2aa93b36a627066cc9086fe30730141b82f8e4fd` | **Newline**: `True`
+- **Lines**: 2,794 | **Size**: 141,941 bytes | **SHA-256**: `d03b5db86a4208ce5070bab2237dad4aa9bf27aeee138440bdd3645d904f9515` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Content brief generator with 15+ domains, 3 curated palette variants per domain, explicit section extractor, deterministic theme hashing, and stock-photo catalog resolution.
 
@@ -17703,7 +17703,7 @@ def auto_fix_structural_violations(
 #### `agent/visual_judge.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/visual_judge.py`
-- **Lines**: 1,036 | **Size**: 46,622 bytes | **SHA-256**: `31e072d22fe4cf5add9e427b34574850536e752f512b6738421e680fc5d52190` | **Newline**: `True`
+- **Lines**: 1,036 | **Size**: 45,586 bytes | **SHA-256**: `32901c6c4f3ee85dbbb1f7c014611be45d014fb8aaeae1114debb9935391e2f1` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Playwright-based screenshot visual evaluator, contrast checker, typographic hierarchy inspector, and DOM defect analyzer.
 
@@ -22035,7 +22035,7 @@ def render_hero_archetype(
 #### `agent/context_builder.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/context_builder.py`
-- **Lines**: 993 | **Size**: 45,188 bytes | **SHA-256**: `05b54525fa844d0cd389f163df0d47a37a849fabdfbbe95728002f5564f325b5` | **Newline**: `True`
+- **Lines**: 993 | **Size**: 44,195 bytes | **SHA-256**: `088b3210e681975a10b5c2f0c85c27d1a1cf9eae5c8f5a9604192987febe03d8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Hierarchical token budget builder with dynamic turn compaction, priority ordering, and sequence length safeguards.
 
@@ -23040,7 +23040,7 @@ context_builder = ContextBuilder()
 #### `agent/motion_patterns.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/motion_patterns.py`
-- **Lines**: 1,778 | **Size**: 71,018 bytes | **SHA-256**: `5ec5748801c21810456ca215c4bb142020fcb11e0733ac3aedff537c17cbe4a0` | **Newline**: `True`
+- **Lines**: 1,778 | **Size**: 69,240 bytes | **SHA-256**: `660daa82242c5b649d2de4c335f9be3fff976b3d3dd662cffc694d5b8035434d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Motion pattern architecture engine implementing 6 motion types, prompt extraction, XML serialization, and native implementation guidelines.
 
@@ -24830,7 +24830,7 @@ export function {pascal}() {{
 #### `agent/dependency_manager.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/dependency_manager.py`
-- **Lines**: 379 | **Size**: 15,158 bytes | **SHA-256**: `3be38d7afaa5eedd1b61cbed6dae5d644d1f0e52102ec57f5a7720520ee408bb` | **Newline**: `True`
+- **Lines**: 379 | **Size**: 14,779 bytes | **SHA-256**: `2c7311e8fe5a84cc92a6814c76354104e3bd8db3e0d318cc0e7cbff38ea5755d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Managed npm dependency installer and remover with injection protection, policy enforcement, and package.json isolation.
 
@@ -25221,7 +25221,7 @@ class DependencyManager:
 #### `agent/project_validator.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/project_validator.py`
-- **Lines**: 2,822 | **Size**: 139,086 bytes | **SHA-256**: `5bc3bb6e131726f6acc6a5f04e615b80a54be9ac428300ef83d7cf53579f4de3` | **Newline**: `True`
+- **Lines**: 2,822 | **Size**: 136,264 bytes | **SHA-256**: `be6699b9d99ddd47a086fa671a1e481cc766a4c9c8edd2b424f0a5393ffdacba` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: 4-Gate project verification engine executing TypeCheck, Build, Lint, and Preview/Runtime diagnostics.
 
@@ -28055,7 +28055,7 @@ def validate_project(
 #### `agent/snapshot_manager.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/snapshot_manager.py`
-- **Lines**: 391 | **Size**: 15,264 bytes | **SHA-256**: `b4954edc2a14ec5a6c475210850eb1bb14e10a56864d3c41eb0b5283d3c54f13` | **Newline**: `True`
+- **Lines**: 391 | **Size**: 14,873 bytes | **SHA-256**: `c828bfaa22a3539c7c1ca4fff00ba73ecbef7587757aed3109640884ef72412d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Pre-task Git commit and content-addressed blob snapshot manager enabling instantaneous rollback upon verification failure.
 
@@ -28480,7 +28480,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 #### `frontend/src/types/agent.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/types/agent.ts`
-- **Lines**: 204 | **Size**: 5,740 bytes | **SHA-256**: `172d51135c4a06fbe596683030a4d262e8724749367d370eb2a267d22c51b91d` | **Newline**: `True`
+- **Lines**: 204 | **Size**: 5,536 bytes | **SHA-256**: `abffbe016e7e5120ac055793f368f0e83e5c054091d2ca6504f631d25d4bd184` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: TypeScript type definitions for agent events, tools, and execution statuses.
 
@@ -28696,7 +28696,7 @@ export interface AgentMetrics {
 #### `frontend/src/types/chat.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/types/chat.ts`
-- **Lines**: 97 | **Size**: 2,800 bytes | **SHA-256**: `a6b0f7a8ca65a23eb7282702f8725b53f15b83b627b54a48faf5c8635bb1947a` | **Newline**: `True`
+- **Lines**: 97 | **Size**: 2,703 bytes | **SHA-256**: `d84db47c9ce48014bbea1a39137f2ef0445e00f834bbfa9e62f01ea0de5b0e12` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: TypeScript type definitions for chat messages, activities, and prompt queues.
 
@@ -28805,7 +28805,7 @@ export interface CanonicalTurnDiff {
 #### `frontend/src/types/logs.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/types/logs.ts`
-- **Lines**: 30 | **Size**: 1,400 bytes | **SHA-256**: `f4da952a5a81804ff662989c49af6d1757e3207a47750c466c8e8e54eac3ffd7` | **Newline**: `True`
+- **Lines**: 30 | **Size**: 1,370 bytes | **SHA-256**: `e9f41434ffcc93f9be4a710e85bd6eb29aff299cc17022ba0400e1953dd45adb` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: TypeScript type definitions for project-scoped logs and log filters.
 
@@ -28934,7 +28934,7 @@ export type WorkbenchSelection = SelectedDOMElement | Selected3DObject | null;
 #### `frontend/src/state/agent-store.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/state/agent-store.ts`
-- **Lines**: 335 | **Size**: 14,430 bytes | **SHA-256**: `e470b6ae03ba5634ee47f28f64dcbcd28ad830c12956cc7eae78f60b33edcc52` | **Newline**: `True`
+- **Lines**: 335 | **Size**: 14,095 bytes | **SHA-256**: `5fc2cf9a8680b12b9fd26febe749c340ac95038ee6318e852b609d5c9dd5c438` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Zustand store managing agent connection status and execution telemetry.
 
@@ -29477,7 +29477,7 @@ export const toast = {
 #### `frontend/src/services/api.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/services/api.ts`
-- **Lines**: 248 | **Size**: 8,332 bytes | **SHA-256**: `1b3cffdde7f52cf96fda98fdde39a481a3b8684e5ec20097109876bfce1b77e6` | **Newline**: `True`
+- **Lines**: 248 | **Size**: 8,084 bytes | **SHA-256**: `e2b61526087f05098571737d7554f91c4e4e1ad288ac6d81c63b0c5cbf611d6b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: REST API client communicating with Flask backend endpoints.
 
@@ -30137,7 +30137,7 @@ export const projectWsClient = new ProjectWebSocketClient();
 #### `frontend/src/services/shell.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/services/shell.ts`
-- **Lines**: 73 | **Size**: 2,313 bytes | **SHA-256**: `63845d02064465af738bf872bd39897358faf48461ff886325b9aa5b71c14720` | **Newline**: `True`
+- **Lines**: 73 | **Size**: 2,240 bytes | **SHA-256**: `2883e40d04a5bbe83f0ab5a575a113eccd622b62e4512138eb0728bec913df50` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: WebSocket client connecting xterm.js to isolated WinPTY shell server.
 
@@ -30908,7 +30908,7 @@ export const ActivityStep: React.FC<ActivityStepProps> = ({ step }) => {
 #### `frontend/src/components/chat/ChangeSummary.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/chat/ChangeSummary.tsx`
-- **Lines**: 250 | **Size**: 13,402 bytes | **SHA-256**: `2e0de9ef48bfe189fa18df58b7d336c42d2a100a7064a09e4e81e2a0ab10e025` | **Newline**: `True`
+- **Lines**: 250 | **Size**: 13,152 bytes | **SHA-256**: `a689d141e8e6885c857281d7cb60189f3521d7958bd288665171b248a5e63f9e` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Collapsible summary component itemizing files modified during a turn.
 
@@ -31170,7 +31170,7 @@ export const ChangeSummary: React.FC<ChangeSummaryProps> = ({ summary }) => {
 #### `frontend/src/components/workspace/PreviewTab.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/PreviewTab.tsx`
-- **Lines**: 367 | **Size**: 17,893 bytes | **SHA-256**: `3f705db8d9959d28adf2433ca94606ad15c11c43f41126162299fd48d1aa2283` | **Newline**: `True`
+- **Lines**: 367 | **Size**: 17,526 bytes | **SHA-256**: `783ad02e7bc295741513ec012f0b22cd957de4708af73c445a2e5886e8315faa` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Live iframe preview tab with strict-port Vite dev server and HMR connection.
 
@@ -31549,7 +31549,7 @@ export const PreviewTab: React.FC = () => {
 #### `frontend/src/components/workspace/LogsTab.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/LogsTab.tsx`
-- **Lines**: 159 | **Size**: 6,084 bytes | **SHA-256**: `d1920b6ec5018d13ec90ae9962c07cdc7d23ac1989c35389e98d3a1380d97794` | **Newline**: `True`
+- **Lines**: 159 | **Size**: 5,925 bytes | **SHA-256**: `88efe4a4bdf3044a00e525974c70c44ba914d32611f871b6be83eb38b4bb00b4` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Technical log viewer rendering structured project-scoped events and terminal logs.
 
@@ -31720,7 +31720,7 @@ export const LogsTab: React.FC = () => {
 #### `frontend/src/components/workspace/ShellTab.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/ShellTab.tsx`
-- **Lines**: 163 | **Size**: 5,300 bytes | **SHA-256**: `0ada3ca50627d7ad10c70853bc62747b7a4df82a4743618798e30a08b612baf1` | **Newline**: `True`
+- **Lines**: 163 | **Size**: 5,137 bytes | **SHA-256**: `80577f59b8843f290450c0d1da8dd664bc128fb2b8d7e59e23f3af89003602ba` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Interactive xterm.js terminal tab connected to the process-isolated WinPTY PowerShell session.
 
@@ -31895,7 +31895,7 @@ export const ShellTab: React.FC = () => {
 #### `frontend/src/components/inspector/InspectorDrawer.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/inspector/InspectorDrawer.tsx`
-- **Lines**: 364 | **Size**: 22,542 bytes | **SHA-256**: `2119429a9d07b05a19c2b0dcab8f9ce8e9f9c8f4d474dbef6025f7bcfe762de1` | **Newline**: `True`
+- **Lines**: 364 | **Size**: 22,178 bytes | **SHA-256**: `24bfd8a46055020b05ab27cef94473aff59e41e48ff2ee1b7ac584f581c499ba` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Engineering debug drawer for inspecting raw model prompts, tokens, and active project state.
 
@@ -33161,7 +33161,7 @@ export const ActiveGenerationModal: React.FC = () => {
 #### `server/app.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/app.py`
-- **Lines**: 5,489 | **Size**: 250,867 bytes | **SHA-256**: `252d67c0a41c0b4c9af128720fb72dd263ab41e3136a53c2a7e572e3e11ee785` | **Newline**: `True`
+- **Lines**: 5,489 | **Size**: 245,378 bytes | **SHA-256**: `040a7d774e74918df49bd32b31d6a2d811c912ec9b70978a5960d53c0bcf51ae` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Flask application server with 4-gate verification loop (max 3 repairs), resolve_project_path sandbox, /ws/projects WebSocket endpoint, and static esbuild previews.
 
@@ -38662,7 +38662,7 @@ if __name__ == "__main__":
 #### `server/sessions.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/sessions.py`
-- **Lines**: 841 | **Size**: 39,360 bytes | **SHA-256**: `7959a6219da6b3479f2e6a8a9ecc2dd20a15b35ba222e084dcfb06a0240ba4c2` | **Newline**: `True`
+- **Lines**: 841 | **Size**: 38,519 bytes | **SHA-256**: `93959450453e89230415b1798e87b54692aa62142ec72443da503053b2c8825f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Persistent multi-turn session manager, workspace checkpoints, file diff calculation, and post-generation summaries.
 
@@ -39515,7 +39515,7 @@ project_manager = session_manager
 #### `server/preview_manager.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/preview_manager.py`
-- **Lines**: 461 | **Size**: 19,093 bytes | **SHA-256**: `27393c21c1a4e17272ed394fb14055874d399d7e0280b8b95679f948fac467e9` | **Newline**: `True`
+- **Lines**: 461 | **Size**: 18,632 bytes | **SHA-256**: `ec21eb8aee72c1b062d956e5ec9a4b5f3b076410de5c691e173fb059accab1af` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Process-managed Vite dev server runner with dynamic strict-port allocation, health check polling, and Windows process tree termination.
 
@@ -39988,7 +39988,7 @@ if __name__ == '__main__':
 #### `server/event_bus.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/event_bus.py`
-- **Lines**: 596 | **Size**: 27,002 bytes | **SHA-256**: `2d7e2a7c6d4e39f0237ae8b5baaf20201e3a292d38fecb21d1bfa7fd12db93d0` | **Newline**: `True`
+- **Lines**: 596 | **Size**: 26,406 bytes | **SHA-256**: `a36518132a7bb97021245017a7394d4b9788ef6ab67d3eedc9d9c810d8ebb58f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Authoritative Qwen3 blueprint event bus with strongly-typed AgentEvent stream and dual presentation (Chat UI + Technical Logs).
 
@@ -40624,7 +40624,7 @@ event_bus = EventBus()
 #### `frontend/package.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/package.json`
-- **Lines**: 33 | **Size**: 954 bytes | **SHA-256**: `569427cfcb997ce2250c0d52a109cec236dd76bf79283a8c01df1f87ec0d12f2` | **Newline**: `True`
+- **Lines**: 33 | **Size**: 921 bytes | **SHA-256**: `64113c3093fd7adb5d465154f7d5edf2dfda3c9a5851d7ac903a6f0361af466a` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/package.json.
 
@@ -41026,7 +41026,7 @@ html[data-theme="light"] .text-sky-200 {
 #### `frontend/src/app/App.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/app/App.tsx`
-- **Lines**: 151 | **Size**: 6,054 bytes | **SHA-256**: `2950b3fc3731027871bf865f1f2b99c052aa2cbc19833798627907853e8fee87` | **Newline**: `True`
+- **Lines**: 151 | **Size**: 5,903 bytes | **SHA-256**: `06e389b26bf2365267054f490b4bd0b81333316efe2ec783369c73c034a4fd8e` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/app/App.tsx.
 
@@ -41189,7 +41189,7 @@ export const App: React.FC = () => {
 #### `frontend/src/state/workspace-store.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/state/workspace-store.ts`
-- **Lines**: 323 | **Size**: 11,532 bytes | **SHA-256**: `54f4fa081bcc4b180b10e547bf8b7e1d2fa325af87df8a5d45d6c782c86a5b99` | **Newline**: `True`
+- **Lines**: 323 | **Size**: 11,209 bytes | **SHA-256**: `f21539efa09e3d5469a2168c705dcbd5c505820c66ae66106ed99027d9143c12` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/state/workspace-store.ts.
 
@@ -41808,7 +41808,7 @@ export const useProjectStore = create<ProjectStoreState>((set, get) => ({
 #### `frontend/src/services/session.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/services/session.ts`
-- **Lines**: 278 | **Size**: 12,911 bytes | **SHA-256**: `6ffa69111a64d1996ae7d2a5527fa73631f0bfeb30658eb89ee348e61c00edf2` | **Newline**: `True`
+- **Lines**: 278 | **Size**: 12,633 bytes | **SHA-256**: `85ccf24808c641df464cdeec8622ab026f0a52f420949b701b75e463e2630a66` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/services/session.ts.
 
@@ -42098,7 +42098,7 @@ export async function closeProjectTabAndSwitch(id: string) {
 #### `frontend/src/components/topbar/TopBar.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/topbar/TopBar.tsx`
-- **Lines**: 216 | **Size**: 9,007 bytes | **SHA-256**: `84fc1c2106b7e4c361629292c309b35a2311b5e9566fd002d9a3f625253aa4c3` | **Newline**: `True`
+- **Lines**: 216 | **Size**: 8,791 bytes | **SHA-256**: `cc0dca9fcb9e08becb97a63e5eae3eddbf3abefcc6f1e57ec6380ed35da18bb0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/topbar/TopBar.tsx.
 
@@ -42326,7 +42326,7 @@ export const TopBar: React.FC = () => {
 #### `frontend/src/components/chat/ChatComposer.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/chat/ChatComposer.tsx`
-- **Lines**: 770 | **Size**: 36,750 bytes | **SHA-256**: `c3381fc68f76d93c0c73555a1db4f6e30b993cb6770fcdf09e2aea4dc5c8c22b` | **Newline**: `True`
+- **Lines**: 770 | **Size**: 35,980 bytes | **SHA-256**: `0cb44d4190f0ba1e04693b1b625ac4ba6137e4aa9c25c62850272712035766cd` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/chat/ChatComposer.tsx.
 
@@ -43108,7 +43108,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({ initialPrompt }) => 
 #### `frontend/src/components/workspace/WorkspaceResizer.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/WorkspaceResizer.tsx`
-- **Lines**: 174 | **Size**: 6,453 bytes | **SHA-256**: `cfc35a5f2427b3291a355e3c56b9204474fd7e77040c1e7c6339df05f179b8c7` | **Newline**: `True`
+- **Lines**: 174 | **Size**: 6,279 bytes | **SHA-256**: `4f7044e7adeac7183146233c6c1a8e3fb5ccc715f01a5fdcbbb645a9a5a36967` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/workspace/WorkspaceResizer.tsx.
 
@@ -43294,7 +43294,7 @@ export const WorkspaceResizer: React.FC = () => {
 #### `frontend/src/components/workspace/WorkspacePanel.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/WorkspacePanel.tsx`
-- **Lines**: 118 | **Size**: 4,935 bytes | **SHA-256**: `52149774f6f53d133112758faae7025499d696b6ff975cdb939a1bbfbcf1e3c1` | **Newline**: `True`
+- **Lines**: 118 | **Size**: 4,817 bytes | **SHA-256**: `196cb3a3484040c0150efd4a1c83cfc8b6b3ae0e11dd3625a4a9a43efcd3bce0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/workspace/WorkspacePanel.tsx.
 
@@ -43424,7 +43424,7 @@ export const WorkspacePanel: React.FC = () => {
 #### `frontend/src/components/workspace/CodeTab.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/CodeTab.tsx`
-- **Lines**: 481 | **Size**: 18,646 bytes | **SHA-256**: `f8c0d513b45257abaff0e9223d909a45ce1b808523e9ff66a2dfb30cb965b765` | **Newline**: `True`
+- **Lines**: 481 | **Size**: 18,165 bytes | **SHA-256**: `029c9120c9b48c7880775a1bb746af1ac4d9a3d48d92081c83fce745268ba989` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/workspace/CodeTab.tsx.
 
@@ -43917,7 +43917,7 @@ export const CodeTab: React.FC = () => {
 #### `frontend/src/components/workspace/DiffTab.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/frontend/src/components/workspace/DiffTab.tsx`
-- **Lines**: 418 | **Size**: 16,337 bytes | **SHA-256**: `e5db3de3f1b41fc91cbf479cbbfa7ccfb97eb6da834223eb49047bb1c5c0fde0` | **Newline**: `True`
+- **Lines**: 418 | **Size**: 15,919 bytes | **SHA-256**: `9c93446e634b8cf2f70ec1906dae73ff878c924e2140cecda6111dc0acfac72b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Source code implementation for frontend/src/components/workspace/DiffTab.tsx.
 
@@ -44347,7 +44347,7 @@ export const DiffTab: React.FC = () => {
 #### `server/shell_server.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/server/shell_server.py`
-- **Lines**: 353 | **Size**: 13,363 bytes | **SHA-256**: `aee58fcdf24cfaebc53c0c94b7203815cb9ac2ca3d90840bbcfb17d729724474` | **Newline**: `True`
+- **Lines**: 353 | **Size**: 13,010 bytes | **SHA-256**: `1a748198d1835943fefb43fe0fbad1e583ebc6920c54c99cfa8a0b6107de3927` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Process-isolated execution shell with WinPTY pseudo-terminal controller, timeout enforcement, and interactive command streaming.
 
@@ -47179,7 +47179,7 @@ def evaluate_site_batch_diversity(
 #### `evaluation/site_benchmark_scorer.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/evaluation/site_benchmark_scorer.py`
-- **Lines**: 1,423 | **Size**: 63,444 bytes | **SHA-256**: `64d514166f18f095d3dc9116e6fb33d27bcab546af017df2fa0822cd823c631c` | **Newline**: `True`
+- **Lines**: 1,423 | **Size**: 62,021 bytes | **SHA-256**: `ba0997436f085986fa1201e903d2fc602164487482f2dc0bd5ff3671205d7a30` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Multi-metric composite scoring engine computing build rate, visual score, and contract pass rates.
 
@@ -48614,7 +48614,7 @@ def aggregate_site_benchmark_scores(
 #### `evaluation/three_d_performance_validator.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/evaluation/three_d_performance_validator.py`
-- **Lines**: 254 | **Size**: 12,257 bytes | **SHA-256**: `bff8797aab5b541f8df8b4253b312ac979187efa3b3f1db607d54542359fd828` | **Newline**: `True`
+- **Lines**: 254 | **Size**: 12,003 bytes | **SHA-256**: `746e0ab2dac43c7dd7e4b450a62432a0ac2787df2220bd2043df295ef77b6022` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: 3D WebGL / WebGPU performance rule validator (RAF loops, context fallback, geometry cleanup).
 
@@ -51708,7 +51708,7 @@ if __name__ == "__main__":
 #### `training/train_sft.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/training/train_sft.py`
-- **Lines**: 788 | **Size**: 42,877 bytes | **SHA-256**: `a51677e27dbee98c3a092af1af71aba4116cb8f1daf7409a099510a220f3c2ba` | **Newline**: `True`
+- **Lines**: 788 | **Size**: 42,183 bytes | **SHA-256**: `02b4506a24be8c6efc5167bcdf1ff3deebed26a5993d250ed0e4661d21dcc156` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Unsloth QLoRA 4-bit SFT trainer with response-only loss masking and gradient checkpointing.
 
@@ -52791,7 +52791,7 @@ if __name__ == "__main__":
 #### `training/evaluate.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/training/evaluate.py`
-- **Lines**: 1,113 | **Size**: 47,613 bytes | **SHA-256**: `ebc9823c94ef0d71e13b66e34779c7d11f7cdf3d43f5dc305ec95046ce34b74a` | **Newline**: `True`
+- **Lines**: 1,113 | **Size**: 46,500 bytes | **SHA-256**: `1fc15db316c7b1320d71b1a72a87ebacda7c25d73c62ec13eab6b3f7ab9e0318` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Comprehensive test harness evaluating components across 7 categories with automated Vitest execution and cmdline-safe subprocess handling.
 
@@ -54404,7 +54404,7 @@ if __name__ == '__main__':
 #### `generate_star.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generate_star.py`
-- **Lines**: 305 | **Size**: 15,955 bytes | **SHA-256**: `84b6bb1930b5de7279a6210c72b1bd5d79686a40a04d27e73533eae8465f154e` | **Newline**: `True`
+- **Lines**: 305 | **Size**: 15,650 bytes | **SHA-256**: `35d17ab2e224416633ae9b7b07fcf03ffc09c780e70634ecb945452bd25255e4` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Self-Taught Reasoner (STaR) trajectory mining pipeline with rejection sampling and iterative self-correction.
 
@@ -61706,7 +61706,7 @@ pytest>=8.0.0
 #### `tests/conftest.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/conftest.py`
-- **Lines**: 88 | **Size**: 4,405 bytes | **SHA-256**: `c1dc97cf2b39d1277f3e56e3009a73a885e548cc09b0908c727731a8112f34aa` | **Newline**: `True`
+- **Lines**: 88 | **Size**: 4,317 bytes | **SHA-256**: `f4ce661eb2512f82726d76349a121a42ca12f46d368457de2b9d33dafd2b395f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Pytest shared fixtures, temporary directories, and test configuration.
 
@@ -62241,7 +62241,7 @@ def test_framework_config_api_endpoint(tmp_path):
 #### `tests/test_json_envelope_parser.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_json_envelope_parser.py`
-- **Lines**: 241 | **Size**: 10,503 bytes | **SHA-256**: `6019f0108c19815e1b5d4f9ca6a522a90aff93169edfbef98e562711984bdbca` | **Newline**: `True`
+- **Lines**: 241 | **Size**: 10,262 bytes | **SHA-256**: `4059cb2f8722bbf6053c86b995672b8fe8c016fb86a385d44b34009fe2ee0379` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests for JSON tool call parsing, envelope recovery, and status messages (16 tests).
 
@@ -64990,7 +64990,7 @@ if __name__ == "__main__":
 #### `tests/test_training_preflight.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_training_preflight.py`
-- **Lines**: 99 | **Size**: 4,829 bytes | **SHA-256**: `a5d52b843a0745d955e470c9a9328437a37028b11dbcde0e97932356a2c1ebb5` | **Newline**: `True`
+- **Lines**: 99 | **Size**: 4,730 bytes | **SHA-256**: `ca660d0a6cec2344099e5888f6bd7d6363f762abce9ee02dfab397e5e7a96b71` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests for dataset preflight validation and ChatML role boundary checks (6 tests).
 
@@ -65957,7 +65957,7 @@ test.describe('Workbench Button and Control Audit (Issue #30)', () => {
 #### `tests/test_execute_qwen3_migration.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_execute_qwen3_migration.py`
-- **Lines**: 156 | **Size**: 6,794 bytes | **SHA-256**: `47ffa1e8322977366d3f8b1255313772069a71ec6fbfb4b2e410501b2336243f` | **Newline**: `True`
+- **Lines**: 156 | **Size**: 6,638 bytes | **SHA-256**: `65c2cb115c7b2ace545326f7865c60de109cab78aeb7538607cf9b5bb79b0792` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying the 13-step Qwen3 migration orchestrator (10 tests).
 
@@ -66125,7 +66125,7 @@ def test_step_m_promotion_gate_allows_explicit_mock():
 #### `tests/test_training_methodology.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_training_methodology.py`
-- **Lines**: 185 | **Size**: 7,944 bytes | **SHA-256**: `63ef50708519ff5d265c58547c252c7fe3f8c2cf474b5d54d19458b8fb505d11` | **Newline**: `True`
+- **Lines**: 185 | **Size**: 7,759 bytes | **SHA-256**: `34d8400427b69aee5810b14d9e6ee354e3b5d5e9b29d152efe303f56dbffb5fb` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying strict training methodology, scratch LoRA rules, and DPO gating (12 tests).
 
@@ -66322,7 +66322,7 @@ def test_train_sft_preflight_enforces_methodology_guard(tmp_path, real_context_r
 #### `tests/test_full_website_benchmark.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_full_website_benchmark.py`
-- **Lines**: 435 | **Size**: 18,050 bytes | **SHA-256**: `acb901585e5353fef74927d99780849044e65b0c9f710f00b9ba4d16bf1af12c` | **Newline**: `True`
+- **Lines**: 435 | **Size**: 17,615 bytes | **SHA-256**: `0982d3d5ab517a8268fed3f475f721bb85ec68dbc358725a26509bfc737f58bc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying the 36-site held-out benchmark and 16 quality metrics (10 tests).
 
@@ -66975,7 +66975,7 @@ def test_quantify_sft_contribution(tmp_path):
 #### `tests/test_retrain_qwen3_scratch.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_retrain_qwen3_scratch.py`
-- **Lines**: 133 | **Size**: 5,895 bytes | **SHA-256**: `91236a5d99ba55267ebaf3599acca3060a835c714e5ca88a3a38afbc2e456782` | **Newline**: `True`
+- **Lines**: 133 | **Size**: 5,762 bytes | **SHA-256**: `b66cdc983d2f461c3e3770cd032c43f834c76fbc67cf6b8bf68c400a960d6e2d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying scratch adapter initialization and compatibility guards (9 tests).
 
@@ -68171,7 +68171,7 @@ def test_cleaned_row_passes_training_preflight(cpu_tokenizer):
 #### `tests/test_context_decision.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_context_decision.py`
-- **Lines**: 132 | **Size**: 5,280 bytes | **SHA-256**: `521c51e338b72627081906877408dba3bff9552cf3cd8a0bade1e1b609a358fe` | **Newline**: `True`
+- **Lines**: 132 | **Size**: 5,148 bytes | **SHA-256**: `9fe32e1ca09fcfaaad0b8b2399dab3a14fe32d608dbdc871f829f7aa882a7978` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying 6144 vs 8192 token context length decision.
 
@@ -68527,7 +68527,7 @@ def test_revert_uses_same_turn_identifier(client, mock_session):
 #### `tests/test_diversity_evaluator.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_diversity_evaluator.py`
-- **Lines**: 447 | **Size**: 17,746 bytes | **SHA-256**: `eaec37d5269522711dd0455e7272dfc307a0567d6a40ccedb8afa050d043713c` | **Newline**: `True`
+- **Lines**: 447 | **Size**: 17,299 bytes | **SHA-256**: `f53ce457043da8c3dec09acd7245cbe3ba4b93f121c808d262e863d156243567` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying structural layout entropy and anti-template collapse.
 
@@ -68986,7 +68986,7 @@ def test_flag_non_centered_hero_collapse():
 #### `tests/test_dynamic_output_budget.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_dynamic_output_budget.py`
-- **Lines**: 311 | **Size**: 13,243 bytes | **SHA-256**: `e8b53a8230769dd47f6394dd2f54170ae6da10d9a42e44263e4d578af94b045b` | **Newline**: `True`
+- **Lines**: 311 | **Size**: 12,932 bytes | **SHA-256**: `6f6bd12102e18178aa57fe454920a95480d8b5da6c940cc4f82484805c7e6341` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying output budget calculation under VRAM constraints.
 
@@ -69309,7 +69309,7 @@ def _freeform_site_strategy(monkeypatch):
 #### `tests/test_interactive_curriculum.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_interactive_curriculum.py`
-- **Lines**: 223 | **Size**: 8,575 bytes | **SHA-256**: `e7c512823f464052ac2729a15181574871fb7dff6cc66d80fe402bcf1ca438ea` | **Newline**: `True`
+- **Lines**: 223 | **Size**: 8,352 bytes | **SHA-256**: `67b1b7d1f820652fc765d84dd6686a85c5702c3380a4c27d585bf9b09155d72c` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying multi-turn interaction curriculum dataset balance.
 
@@ -70201,7 +70201,7 @@ def test_export_project_not_found(client):
 #### `tests/test_project_state_isolation.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_project_state_isolation.py`
-- **Lines**: 92 | **Size**: 3,523 bytes | **SHA-256**: `a7119c3c51dbb8daa4a5d6a2b013e7e943e469183e19253686694741a1ef7a27` | **Newline**: `True`
+- **Lines**: 93 | **Size**: 3,575 bytes | **SHA-256**: `a3f766804cf8b03bf517c92583d505291ba428adecd592ae3b8ef1247737f340` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying project state isolation and sandbox path containment.
 
@@ -70223,6 +70223,7 @@ Verifies:
    - Global system state preserved (model loaded, GPU readiness, server connection, theme preference)
 2. Backend session state isolation between distinct sessions.
 """
+import os
 
 import sys
 import subprocess
@@ -70246,7 +70247,7 @@ def test_frontend_start_new_project_state_isolation():
         cwd=str(BASE_DIR),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend state isolation test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL ACCEPTANCE CRITERIA VERIFIED SUCCESSFULLY!" in res.stdout
@@ -71339,7 +71340,7 @@ def test_chat_composer_bias_strings_eliminated():
 #### `tests/test_task_cancellation.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_task_cancellation.py`
-- **Lines**: 129 | **Size**: 5,005 bytes | **SHA-256**: `ff0013d0113e6bc5b02ee129aa1d3f24e6786a19ad0883b919c835eb4ca3e2c3` | **Newline**: `True`
+- **Lines**: 130 | **Size**: 5,057 bytes | **SHA-256**: `3795010d46d733c9767890311f782a930c252e10abf55363601a888fe4792ebc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying task cancellation and StopCheckCriteria autoregression interrupt.
 
@@ -71355,6 +71356,7 @@ Verifies:
 5. /api/generation/<task_id>/status and UI agree on "cancelled" status.
 6. Frontend active task modal and 3 user options (Cancel & Start New, Keep Running in Background, Stay Here).
 """
+import os
 
 import sys
 import queue
@@ -71380,7 +71382,7 @@ def test_frontend_active_generation_modal_flow():
         cwd=str(BASE_DIR),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend active task modal test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL FRONTEND MODAL & CONFLICT WORKFLOW TESTS PASSED!" in res.stdout
@@ -74051,7 +74053,7 @@ if __name__ == "__main__":
 #### `tests/test_motion_training_data.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_motion_training_data.py`
-- **Lines**: 400 | **Size**: 15,848 bytes | **SHA-256**: `567d27388d1b017cd7f722d5da707a46a65487a62e2a03e1a2f3a3aefca395a7` | **Newline**: `True`
+- **Lines**: 401 | **Size**: 15,970 bytes | **SHA-256**: `8bb2213cb6eae466b27c2b2fded296ea38139571d741834a201abb588bc560bc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying motion SFT/eval dataset integrity, tool contracts, and family coverage.
 
@@ -74103,12 +74105,13 @@ MOTION_FAMILIES = [
 ]
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """File content with CRLF normalised to LF: git checks text out differently per OS."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def compute_sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        while chunk := f.read(65536):
-            h.update(chunk)
-    return h.hexdigest()
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
 
 
 def tokenize(text: str) -> set[str]:
@@ -74155,9 +74158,9 @@ def test_manifest_cryptographic_integrity():
         manifest = json.load(f)
 
     actual_sft_sha = compute_sha256(SFT_PATH_DATA)
-    actual_sft_size = SFT_PATH_DATA.stat().st_size
+    actual_sft_size = len(canonical_bytes(SFT_PATH_DATA))
     actual_eval_sha = compute_sha256(EVAL_PATH_DATA)
-    actual_eval_size = EVAL_PATH_DATA.stat().st_size
+    actual_eval_size = len(canonical_bytes(EVAL_PATH_DATA))
 
     assert manifest["dataset_name"] == "siteagent_motion_v1"
     assert manifest["version"] in ("1.0.0", 1)
@@ -74177,7 +74180,7 @@ def test_manifest_cryptographic_integrity():
     # Check Eval file hash and size
     eval_meta = files_meta["siteagent_motion_eval_v1.jsonl"]
     actual_eval_sha = compute_sha256(EVAL_PATH_DATA)
-    actual_eval_size = EVAL_PATH_DATA.stat().st_size
+    actual_eval_size = len(canonical_bytes(EVAL_PATH_DATA))
 
     assert actual_eval_sha == eval_meta["sha256"], f"Eval SHA mismatch: {actual_eval_sha} vs {eval_meta['sha256']}"
     assert actual_eval_size == eval_meta["size_bytes"], f"Eval size mismatch: {actual_eval_size} vs {eval_meta['size_bytes']}"
@@ -74463,7 +74466,7 @@ def test_training_guide_completeness():
 #### `tests/test_doc_export_integrity.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_doc_export_integrity.py`
-- **Lines**: 217 | **Size**: 9,695 bytes | **SHA-256**: `9ed82dc100549610bf5c8bc19765b5c3916b227e4091f06516619e4016615244` | **Newline**: `True`
+- **Lines**: 217 | **Size**: 9,479 bytes | **SHA-256**: `f8d75df601529a0fd2370bb22f8ec90da9259aef8a61812a4de20d51aff1269d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying byte-exact round-trip reconstruction and doc export integrity.
 
@@ -75117,7 +75120,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 #### `generated_components/latest/Component.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/latest/Component.tsx`
-- **Lines**: 123 | **Size**: 4,422 bytes | **SHA-256**: `123bb93e3757a6caf5de20b078ec11a8a3b7cbaa4229942ec1e40aa538666fb5` | **Newline**: `False`
+- **Lines**: 123 | **Size**: 4,300 bytes | **SHA-256**: `ba81d4609f8faff59277027f1ddbdfe8179e5d9935c2e2e9a783ceee5c5811d4` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Standardized latest component export alias.
 
@@ -77393,7 +77396,7 @@ def test_session_manager_integration():
 #### `tests/test_project_websocket.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_project_websocket.py`
-- **Lines**: 331 | **Size**: 11,940 bytes | **SHA-256**: `e0de587b420a0f8f66a74a05a3aef494b286e8eb0be7264dc1b7e06fbdc72fbc` | **Newline**: `True`
+- **Lines**: 332 | **Size**: 11,992 bytes | **SHA-256**: `f5872fd8efb1aa0bc5beed4b45d16dbf7266aca118d4b8c46567a57d6a161a22` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated test suite verifying bidirectional WebSocket routing, monotonic sequence numbers, and prompt queueing (9 tests).
 
@@ -77408,6 +77411,7 @@ Comprehensive test suite for:
 - Bidirectional dispatch handlers (task.start, task.cancel, prompt.queue, preview.selection)
 - Live WebSocket endpoint (/ws/projects/:projectId) using flask_sock & websockets client
 """
+import os
 
 import asyncio
 import json
@@ -77725,7 +77729,7 @@ def test_frontend_websocket_suite():
         cwd=str(script_path.parent.parent),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend WebSocket test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL FRONTEND WEBSOCKET MIGRATION TESTS PASSED!" in res.stdout
@@ -77736,7 +77740,7 @@ def test_frontend_websocket_suite():
 #### `generated_components/Bakery_Site_20260912_231439/src/App.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/App.css`
-- **Lines**: 29 | **Size**: 1,259 bytes | **SHA-256**: `5703d4ac0688aa97898b288bd76cb26cfbdaeffbeb4965d98b5c66a1fc4d227a` | **Newline**: `True`
+- **Lines**: 29 | **Size**: 1,230 bytes | **SHA-256**: `e318c904900d658051e85e2cdd5216ef11bb5286eb91df3d721fc8a240d5d5c4` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Luminance-aware light theme stylesheet with warm terracotta accents and dark text tokens.
 
@@ -77834,7 +77838,7 @@ export default Header;
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Header.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Header.css`
-- **Lines**: 167 | **Size**: 3,374 bytes | **SHA-256**: `fe23c36661bc5ae868400544eae9c50eab9cbaf7e3b183eeca78814453b13e20` | **Newline**: `True`
+- **Lines**: 167 | **Size**: 3,207 bytes | **SHA-256**: `3e66c9a125c9445d1af92d0ca00722aaa77529162c25be098edb5121e234a19e` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast sticky navigation header styles.
 
@@ -78085,7 +78089,7 @@ export default Hero;
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Hero.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Hero.css`
-- **Lines**: 177 | **Size**: 3,782 bytes | **SHA-256**: `aafeb2e358f8966783d831c3e77e917b98f945b34066188b468b65c2b8134215` | **Newline**: `True`
+- **Lines**: 177 | **Size**: 3,605 bytes | **SHA-256**: `f687308e6319fe629e959dc68044cc20dc0a7e95c3fc68c271c344652667337a` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Warm hero styling with gradient parchment warmth.
 
@@ -78435,7 +78439,7 @@ export default Menu;
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Menu.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Menu.css`
-- **Lines**: 194 | **Size**: 4,140 bytes | **SHA-256**: `573ca9f1853ea3d96712b8066f3ed70af04ec26e7cc76085b122fd346222ceff` | **Newline**: `True`
+- **Lines**: 194 | **Size**: 3,946 bytes | **SHA-256**: `9d17bdb7e4b5a3513cbe9c2d12df512923873ee3e75c2907abba9088f6806779` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast responsive grid menu styling.
 
@@ -78734,7 +78738,7 @@ export default function About() {
 #### `generated_components/Bakery_Site_20260912_231439/src/components/About.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/About.css`
-- **Lines**: 180 | **Size**: 3,775 bytes | **SHA-256**: `284110160eeba9c1ac827bc7ce7c13f744c9ca3a5e1da3122366b8e12f5fb015` | **Newline**: `True`
+- **Lines**: 180 | **Size**: 3,595 bytes | **SHA-256**: `bbac4d7b7106a93f0bdf5a8dcb3e3c3efa4d7734b4b0267343b58cb0dc8ecc5b` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Craftsmanship story stylesheet with stats grid.
 
@@ -79020,7 +79024,7 @@ export default function Testimonials() {
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Testimonials.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Testimonials.css`
-- **Lines**: 140 | **Size**: 3,029 bytes | **SHA-256**: `feaff07749588921e77b9265c0c7704bce9f1786b545e63ba9058952485d48bc` | **Newline**: `True`
+- **Lines**: 140 | **Size**: 2,889 bytes | **SHA-256**: `9b5611f183077340eca7288b8715a69c5a8416c73ddb29f20088e84340536a67` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Testimonial cards with clean shadows and warm borders.
 
@@ -79308,7 +79312,7 @@ export default function Contact() {
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Contact.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Contact.css`
-- **Lines**: 235 | **Size**: 4,914 bytes | **SHA-256**: `fd0ed47d4e8433f6ca5205d7e1059b78fef512a14ac39e953d00913f26ed96c2` | **Newline**: `True`
+- **Lines**: 235 | **Size**: 4,679 bytes | **SHA-256**: `911ac217cb9d23d282e2d8c35341a39a9c98a3b770b131fa45d1015531ab2234` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Two-column responsive schedule and inquiry styling.
 
@@ -79683,7 +79687,7 @@ export default function Footer() {
 #### `generated_components/Bakery_Site_20260912_231439/src/components/Footer.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Bakery_Site_20260912_231439/src/components/Footer.css`
-- **Lines**: 258 | **Size**: 5,221 bytes | **SHA-256**: `d5a1ae82241c6f3007fe75c2768ad9193fa717df36214ce2d29bd080557589d2` | **Newline**: `True`
+- **Lines**: 258 | **Size**: 4,963 bytes | **SHA-256**: `c5e68c19e57151e7cade57e126f4c619242cb7cd698b17d9003f3336f0579e12` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Dark rich slate footer styling with high-contrast cream text.
 
@@ -79953,7 +79957,7 @@ export default function Footer() {
 #### `generated_components/Coffee_Site_20260913_143646/App.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/App.tsx`
-- **Lines**: 24 | **Size**: 2,387 bytes | **SHA-256**: `7267628ea00356f518e241babcb32667064f4c13bf15c7032c0cf718667e6126` | **Newline**: `True`
+- **Lines**: 24 | **Size**: 2,363 bytes | **SHA-256**: `2d0be3773c3aca40806cc3c0979689e6e9db328a05728c26e0068d994b2beed7` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Master application component mounting all 5 verified coffee roastery sections (Header, Hero, Features, Contact, Footer).
 
@@ -79989,7 +79993,7 @@ export default function App() {
 #### `generated_components/Coffee_Site_20260913_143646/src/App.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/App.css`
-- **Lines**: 16 | **Size**: 867 bytes | **SHA-256**: `d6a206b8dfaa59bffcb399d4e513003ef482448de72436260c6f8a617b64c702` | **Newline**: `True`
+- **Lines**: 16 | **Size**: 851 bytes | **SHA-256**: `045e8f6fadfe63c00eec762e20c0adbcaeb97f43b3900ba7cfe4a8ac5b514788` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Artisanal coffee roastery palette with warm cream background, Playfair Display heading font, and Source Sans 3 body font.
 
@@ -80017,7 +80021,7 @@ body { margin: 0; font-family: var(--font-body, system-ui, sans-serif); backgrou
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Header.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Header.tsx`
-- **Lines**: 67 | **Size**: 2,347 bytes | **SHA-256**: `172c06a4ad551e992a584f037abd670123207c40227db0c2fbb353b01b1b55b9` | **Newline**: `False`
+- **Lines**: 67 | **Size**: 2,281 bytes | **SHA-256**: `50f5c6f80248107ccf26f00dea49fbc06318e3d64a1bf3e3317cbb3cc335875f` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Sticky navigation header with brand logomark, navigation links, Say Hi CTA, and responsive mobile drawer toggle.
 
@@ -80096,7 +80100,7 @@ export function Header() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Header.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Header.css`
-- **Lines**: 182 | **Size**: 3,305 bytes | **SHA-256**: `23b541d58eeb81059620996c327ab187f35f47b4a39217366092ca797ac148cb` | **Newline**: `True`
+- **Lines**: 182 | **Size**: 3,123 bytes | **SHA-256**: `30552a64f119136aa1b6e944535fd6ddc07c9b830ca2ae85b6a18e2bb5079db8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Sticky header styling with blur backdrop, responsive drawer transition, and reduced motion guards.
 
@@ -80290,7 +80294,7 @@ export function Header() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Hero.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Hero.tsx`
-- **Lines**: 19 | **Size**: 816 bytes | **SHA-256**: `d82d1884e8b2b7e15e25045e41a4ef07ecf820ac5d8b58c9abe4244e9b647d9c` | **Newline**: `False`
+- **Lines**: 19 | **Size**: 798 bytes | **SHA-256**: `e8d4ca3b0054c044359bfdd1146c2c9bc0863685b552b63a4fc43ba44a6e3404` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Evocative hero section highlighting washed Ethiopian high-elevation roast profile with primary and secondary CTAs.
 
@@ -80321,7 +80325,7 @@ export function Hero() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Hero.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Hero.css`
-- **Lines**: 128 | **Size**: 2,376 bytes | **SHA-256**: `32914ec367c1b5e8b5b3d97b5c51b4eb3e6d7466daa1bf46e9b764d1b01108c5` | **Newline**: `True`
+- **Lines**: 128 | **Size**: 2,248 bytes | **SHA-256**: `e881cd6e942755b19d31b0e58cd50aadb01b6ab4ffcd88873cdebf9405eeeb76` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Two-column responsive hero banner styles with fluid typography and accent button transitions.
 
@@ -80461,7 +80465,7 @@ export function Hero() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Features.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Features.tsx`
-- **Lines**: 47 | **Size**: 3,178 bytes | **SHA-256**: `95bb2030b9a40867cad80f846b5e39670e11c56809ff0fffe982c9ab78a85f97` | **Newline**: `False`
+- **Lines**: 47 | **Size**: 3,132 bytes | **SHA-256**: `c5e7f00f61e13d2d1df27c092b187b7ce66a78d43302f816af562c0653129cc6` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Three-pillar craftsmanship and innovation section (Direct Trade, Precision Loring Roasting, Peak Freshness Delivery).
 
@@ -80520,7 +80524,7 @@ export function Features() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Features.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Features.css`
-- **Lines**: 128 | **Size**: 2,329 bytes | **SHA-256**: `a9a30d6c29413ef43f0064044a23230c3b658b321d7b44f381dcc736de13129e` | **Newline**: `True`
+- **Lines**: 128 | **Size**: 2,201 bytes | **SHA-256**: `f063edc5f323416ae80914514f8e0aa9a3fad06e9f0800d8f0f2ca9ca9e63caf` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast 3-column feature card grid with circular SVG icons, badge metrics, and elevation shadow tokens.
 
@@ -80660,7 +80664,7 @@ export function Features() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Contact.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Contact.tsx`
-- **Lines**: 59 | **Size**: 3,354 bytes | **SHA-256**: `2dc9d05468f78243b64f3e99a16e5cb5a9220d42b23b3a9900d446deea429ffc` | **Newline**: `False`
+- **Lines**: 59 | **Size**: 3,296 bytes | **SHA-256**: `305061e96a316214aa6646159eb42fc93a9ef704fc1765adaabcbd783a3a067e` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Contact channels grid (Email, Phone, Roastery Address) with interactive message dispatch form.
 
@@ -80731,7 +80735,7 @@ export function Contact() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Contact.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Contact.css`
-- **Lines**: 95 | **Size**: 1,650 bytes | **SHA-256**: `b519b456c00ea92099e2a2c6d0365d7bdcaeef81b6b18fe609bf9ddf14633ba2` | **Newline**: `True`
+- **Lines**: 95 | **Size**: 1,555 bytes | **SHA-256**: `e3211cb667852fc4decf452d4dc9c47407e693e0e80c8ff9eedd9f87ead34c5e` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Two-column contact section styling with clean field borders and responsive schedule cards.
 
@@ -80838,7 +80842,7 @@ export function Contact() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Footer.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Footer.tsx`
-- **Lines**: 48 | **Size**: 2,027 bytes | **SHA-256**: `eaa6b6bcb2420453bd680c67131b5da26801e2b44f6b43ce4ebbb35417e31785` | **Newline**: `False`
+- **Lines**: 48 | **Size**: 1,980 bytes | **SHA-256**: `725b23ad775244b0c7f11afb970ad06b9a535d4d00f7d5ba0379dc4a4f7b7d96` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Rich 4-column roastery footer with navigation links, operating hours, social connections, and newsletter signup form.
 
@@ -80898,7 +80902,7 @@ export function Footer() {
 #### `generated_components/Coffee_Site_20260913_143646/src/components/Footer.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/src/components/Footer.css`
-- **Lines**: 141 | **Size**: 2,659 bytes | **SHA-256**: `660b1bbd16e612272213e723340e5dee1188f463de26e0fa80e0aa14c13f1215` | **Newline**: `True`
+- **Lines**: 141 | **Size**: 2,518 bytes | **SHA-256**: `6c0bec4971fe4b8ba39cad710f5c31c1356741bf138df2f83e8cbbe4caf40c1e` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: 4-column responsive footer layout with newsletter input and copyright sub-bar.
 
@@ -81051,7 +81055,7 @@ export function Footer() {
 #### `generated_components/Coffee_Site_20260913_143646/index.html`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/index.html`
-- **Lines**: 17 | **Size**: 1,219 bytes | **SHA-256**: `1d02f174affb86af9de8c85ffa387192f477ddfb6f6b178e5572251b707deffa` | **Newline**: `True`
+- **Lines**: 17 | **Size**: 1,202 bytes | **SHA-256**: `75755bd992ad90d995d4747d1b4fdb1ce16516487219bef73dca1c17dc68b1d5` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Turnkey HTML mount with Google Fonts pre-connects and FontAwesome icons.
 
@@ -81080,7 +81084,7 @@ export function Footer() {
 #### `generated_components/Coffee_Site_20260913_143646/main.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/main.tsx`
-- **Lines**: 9 | **Size**: 223 bytes | **SHA-256**: `a0ae2c3c002c97bfef3ba9da7c37c36854f51cca35d47ae897d77c8196e1d79e` | **Newline**: `True`
+- **Lines**: 9 | **Size**: 214 bytes | **SHA-256**: `c11dd148006abf9261b5ba214d89d726e3febf6144eddd13adf2d4e78c8de1d0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: React 19 mount point rendering the master App component.
 
@@ -81101,7 +81105,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 #### `generated_components/Coffee_Site_20260913_143646/package.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/package.json`
-- **Lines**: 22 | **Size**: 468 bytes | **SHA-256**: `c1db0137b14d0087f680aedaa19aa0b7546fd6c61d74a197a2743a916c44233e` | **Newline**: `False`
+- **Lines**: 22 | **Size**: 447 bytes | **SHA-256**: `3a4325f521e20885ea2c921eb82d8795bbadfe3784cc6e6e5c84e2722b21009d` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Vite + React 19 project configuration for turnkey local dev and preview.
 
@@ -81135,7 +81139,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 #### `generated_components/Coffee_Site_20260913_143646/tsconfig.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/tsconfig.json`
-- **Lines**: 19 | **Size**: 327 bytes | **SHA-256**: `6017bff5937834eed03bed7c19ff7a78ce2768326e381a8687e441300dfde875` | **Newline**: `False`
+- **Lines**: 19 | **Size**: 309 bytes | **SHA-256**: `7cd62287e1ea10e203b36bd779ca274546db9c8e69c56bffa6b5d791f696d0c0` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: TypeScript compiler options configuring JSX, ESNext targets, and path aliases.
 
@@ -81166,7 +81170,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 #### `generated_components/Coffee_Site_20260913_143646/vite.config.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Coffee_Site_20260913_143646/vite.config.ts`
-- **Lines**: 10 | **Size**: 224 bytes | **SHA-256**: `bbd6954039e510c760155d9b8044fe18ef80aa33c909d60407952c2c1b8a5e7a` | **Newline**: `True`
+- **Lines**: 10 | **Size**: 214 bytes | **SHA-256**: `266000dec494d81b4652ebb9d169d9960cbde77e131058800bca89d35a14f99f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Vite build configuration with React plugin and dev server on port 5173.
 
@@ -81188,7 +81192,7 @@ export default defineConfig({
 #### `generated_components/Apexcloud_20260914_031949/App.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/App.tsx`
-- **Lines**: 24 | **Size**: 2,387 bytes | **SHA-256**: `7267628ea00356f518e241babcb32667064f4c13bf15c7032c0cf718667e6126` | **Newline**: `True`
+- **Lines**: 24 | **Size**: 2,363 bytes | **SHA-256**: `2d0be3773c3aca40806cc3c0979689e6e9db328a05728c26e0068d994b2beed7` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Master application component mounting all 5 verified ApexCloud infrastructure sections.
 
@@ -81224,7 +81228,7 @@ export default function App() {
 #### `generated_components/Apexcloud_20260914_031949/App.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/App.css`
-- **Lines**: 63 | **Size**: 2,290 bytes | **SHA-256**: `d38116ab05c4f5e8755106c0d082991613dfd568557bd673ea4f9f0bcd367d5c` | **Newline**: `False`
+- **Lines**: 63 | **Size**: 2,228 bytes | **SHA-256**: `020c842ec208927607110426ec3bcf8a97fc637046c49d29ede7fd00905b771e` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Modern dark infrastructure theme stylesheet with cyan/violet accents and token definitions.
 
@@ -81299,7 +81303,7 @@ body { margin: 0; font-family: var(--font-body); background-color: var(--bg-colo
 #### `generated_components/Apexcloud_20260914_031949/src/components/Header.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Header.tsx`
-- **Lines**: 25 | **Size**: 899 bytes | **SHA-256**: `28892cb47ca88b4b6e3c7bc202c7b7b7d6302f02f048715b6a89133551d902a2` | **Newline**: `True`
+- **Lines**: 25 | **Size**: 874 bytes | **SHA-256**: `8451bd52e513dd436dbacc07a0dc3c77eeb06f7fa853b46315f180a7360741f0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Sticky navigation header with brand logomark, navigation links, and CTA button.
 
@@ -81336,7 +81340,7 @@ export default Header;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Header.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Header.css`
-- **Lines**: 63 | **Size**: 1,403 bytes | **SHA-256**: `077e045a20a5b32646819c3bdfcd1dc46bf02dc7ba19606be8d46311d0f8ad32` | **Newline**: `True`
+- **Lines**: 63 | **Size**: 1,340 bytes | **SHA-256**: `34ee66fddae920c01f536f3fa8f21c2eefce01d16292b40ec9530d4eb7d6318f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast sticky navigation header styles with flex gap alignment.
 
@@ -81411,7 +81415,7 @@ export default Header;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Hero.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Hero.tsx`
-- **Lines**: 22 | **Size**: 982 bytes | **SHA-256**: `9f2e4fb845b0e9227665dcd8eb8eb9616bf5d98456f5e4370de59fe28e071c7d` | **Newline**: `True`
+- **Lines**: 22 | **Size**: 960 bytes | **SHA-256**: `5b900fa12bb2a407964eadb11f805f66c15fe38323aa75cd76cc40512fd288bc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Modern enterprise hero section with bold headline, descriptive sub-headline, and CTAs.
 
@@ -81445,7 +81449,7 @@ export default Hero;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Hero.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Hero.css`
-- **Lines**: 77 | **Size**: 1,760 bytes | **SHA-256**: `9a5212f806c8dbc792eeafdc40358330ae99be6b589239f25fe105817a156fe6` | **Newline**: `True`
+- **Lines**: 77 | **Size**: 1,683 bytes | **SHA-256**: `c011e47f8ab522ddfed7ac5d00c785c6eff203b1113eda7b7f9adff393c6c315` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast hero styles with responsive layout and button styles.
 
@@ -81534,7 +81538,7 @@ export default Hero;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Features.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Features.tsx`
-- **Lines**: 59 | **Size**: 3,835 bytes | **SHA-256**: `64aca39c9dcb7c6851fabbf40dbfdca25d6a958f3c2ee380b69df2fcb055be02` | **Newline**: `True`
+- **Lines**: 59 | **Size**: 3,776 bytes | **SHA-256**: `7b6963ecc2ae785bbf01abe8bc59d886365b25b933a01405b6d293a9075b9330` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Clean enterprise core features grid with 3 prompt-verified capabilities (Automated Tracing, Real-time Alerts, Distributed Scaling), authentic Feather SVGs, and live telemetry metrics.
 
@@ -81605,7 +81609,7 @@ export default Features;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Features.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Features.css`
-- **Lines**: 74 | **Size**: 2,817 bytes | **SHA-256**: `18f09711f6668fdce452c160b886a0ccbedc2cb855a450506a01f553d9b49ec4` | **Newline**: `True`
+- **Lines**: 74 | **Size**: 2,743 bytes | **SHA-256**: `ad03b7c552f9082930c388176772bcc270539c5b7903710e1ebbc7d1c9265706` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Responsive CSS grid feature card stylesheet with repeated item gap spacing.
 
@@ -81691,7 +81695,7 @@ export default Features;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Contact.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Contact.tsx`
-- **Lines**: 138 | **Size**: 6,834 bytes | **SHA-256**: `e6446be334cdb996414bf6edac2f0a8d825fa31e5282057a9fa676026aa27cca` | **Newline**: `True`
+- **Lines**: 138 | **Size**: 6,696 bytes | **SHA-256**: `5f789de8791e8fe17dbfe38212599f486420a56354f86f6226da0493268d6431` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Comprehensive contact section with interactive inquiry form, React validation state, and verified Feather SVG communication cards.
 
@@ -81841,7 +81845,7 @@ export default Contact;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Contact.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Contact.css`
-- **Lines**: 179 | **Size**: 4,169 bytes | **SHA-256**: `4796f7ba69b7aa3e56f8fafb5764815dc0413284a4a65c162a17dbfc23b7d190` | **Newline**: `True`
+- **Lines**: 179 | **Size**: 3,990 bytes | **SHA-256**: `d2a47d210b768b5bc367118fb1d1346ce8732e1f05b11a95745812c17612a0a6` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast interactive contact section stylesheet with card hover micro-animations and form input styling.
 
@@ -82032,7 +82036,7 @@ export default Contact;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Footer.tsx`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Footer.tsx`
-- **Lines**: 36 | **Size**: 1,547 bytes | **SHA-256**: `2b9b7249378b5b0d2994f0a327841fdb367e65138fe1dc6cb401c93edbaffd5f` | **Newline**: `True`
+- **Lines**: 36 | **Size**: 1,511 bytes | **SHA-256**: `2fcc29f2a60528bc92094a6ed4a7d22abacb6499254e3fe1675464125589ae0c` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Multi-column brand footer with structured navigation, details, and copyright notice.
 
@@ -82080,7 +82084,7 @@ export default Footer;
 #### `generated_components/Apexcloud_20260914_031949/src/components/Footer.css`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/src/components/Footer.css`
-- **Lines**: 74 | **Size**: 1,569 bytes | **SHA-256**: `e6e713a12541643daa2ce79d7708965174ae21e3fca6a9518fecc6527ecfec35` | **Newline**: `True`
+- **Lines**: 74 | **Size**: 1,495 bytes | **SHA-256**: `04474648565aa901c284944b821f61bc6cc694567c1b8638ea4ab0fe525fb313` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: High-contrast dark footer styling with link columns and responsive layout.
 
@@ -82166,7 +82170,7 @@ export default Footer;
 #### `generated_components/Apexcloud_20260914_031949/package.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/package.json`
-- **Lines**: 22 | **Size**: 466 bytes | **SHA-256**: `212d036fbf9ad29bc56ed0856369c27650de742d34aff7fee2478a34c8602df0` | **Newline**: `False`
+- **Lines**: 22 | **Size**: 445 bytes | **SHA-256**: `0b066082766a5c385c82ab1a42ca8edc0c4fab15febf14f09e19e26178b5cb85` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Turnkey Vite package manifest for the ApexCloud application.
 
@@ -82200,7 +82204,7 @@ export default Footer;
 #### `generated_components/Apexcloud_20260914_031949/vite.config.ts`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/vite.config.ts`
-- **Lines**: 10 | **Size**: 224 bytes | **SHA-256**: `bbd6954039e510c760155d9b8044fe18ef80aa33c909d60407952c2c1b8a5e7a` | **Newline**: `True`
+- **Lines**: 10 | **Size**: 214 bytes | **SHA-256**: `266000dec494d81b4652ebb9d169d9960cbde77e131058800bca89d35a14f99f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Vite build and dev server configuration for ApexCloud.
 
@@ -82222,7 +82226,7 @@ export default defineConfig({
 #### `generated_components/Apexcloud_20260914_031949/index.html`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generated_components/Apexcloud_20260914_031949/index.html`
-- **Lines**: 19 | **Size**: 1,309 bytes | **SHA-256**: `db346084d64d2323c5b6e3571bf7084d7c5381036ceae463b0f3d4c448c29e2b` | **Newline**: `True`
+- **Lines**: 19 | **Size**: 1,290 bytes | **SHA-256**: `c8ca3fd422af6460a9c4c22f8ebd0475abfffd9b0403fdf1d7eb8c507a03a102` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Single-page HTML root template mounting the ApexCloud application.
 
@@ -82253,7 +82257,7 @@ export default defineConfig({
 #### `my-react-agent-lora/adapter_config.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/my-react-agent-lora/adapter_config.json`
-- **Lines**: 54 | **Size**: 1,334 bytes | **SHA-256**: `90cbdfd9299b9f5d7ae31ae4c3d3223d703afa30251bb070288416f2209934d2` | **Newline**: `False`
+- **Lines**: 54 | **Size**: 1,281 bytes | **SHA-256**: `8dbd7359faf85cbdcff99ad5ea558ef45097af905533e80673ba90298397fecd` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Peft/LoRA configuration defining shipped adapter rank=16, alpha=16, target modules, and base model architecture.
 
@@ -82319,7 +82323,7 @@ export default defineConfig({
 #### `my-react-agent-lora/chat_template.jinja`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/my-react-agent-lora/chat_template.jinja`
-- **Lines**: 54 | **Size**: 2,561 bytes | **SHA-256**: `8aa40ce145adb73cb3a75194dc0224702a95850ec5275cabb728496bbd749fc6` | **Newline**: `True`
+- **Lines**: 54 | **Size**: 2,507 bytes | **SHA-256**: `cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Jinja2 chat template for Qwen2.5-Coder formatting system instructions, user prompts, tool calls, and observations.
 
@@ -82385,7 +82389,7 @@ export default defineConfig({
 #### `my-react-agent-lora/tokenizer_config.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/my-react-agent-lora/tokenizer_config.json`
-- **Lines**: 216 | **Size**: 5,093 bytes | **SHA-256**: `344ded7e1dc28d3781b6de817fb57c7a3a9812bf6db7bb84e8f830affd45b31f` | **Newline**: `True`
+- **Lines**: 216 | **Size**: 4,877 bytes | **SHA-256**: `37aa93c40909035749ac2c120bcb740b36d76a3d657829c65f0d0a7b35df573c` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: LoRA tokenizer configuration settings, special token mappings, and padding specifications.
 
@@ -82613,7 +82617,7 @@ export default defineConfig({
 #### `my-react-agent-lora/README.md`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/my-react-agent-lora/README.md`
-- **Lines**: 56 | **Size**: 3,603 bytes | **SHA-256**: `bb7a024e3257d3eeab49f2e44d28f4143e999b0422ed44312505ef402cc86996` | **Newline**: `True`
+- **Lines**: 56 | **Size**: 3,602 bytes | **SHA-256**: `4f6cf5d36f5477066cce5bd7a6558995877dcee6fe508bf11a912253f519a547` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Model card documenting fine-tuning details and base model lineage.
 
@@ -84634,7 +84638,7 @@ if __name__ == "__main__":
 #### `scripts/check_site_context.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/check_site_context.py`
-- **Lines**: 49 | **Size**: 2,017 bytes | **SHA-256**: `afef09271e6094644a903ef071dd334b2c7ecb4f66c44ee01be03e3b3bbf3815` | **Newline**: `True`
+- **Lines**: 49 | **Size**: 1,968 bytes | **SHA-256**: `211432278de67cfde82f91a087554dd0ca51040976299e48d8db51eb2dd92085` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Diagnostic tool for inspecting site context budgets and token lengths.
 
@@ -85531,7 +85535,7 @@ console.log('\n=== ALL 5 TEST SUITES PASSED SUCCESSFULLY ===');
 #### `scripts/test_project_websocket_frontend.mjs`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/test_project_websocket_frontend.mjs`
-- **Lines**: 189 | **Size**: 6,776 bytes | **SHA-256**: `2abc89464a79ee04a96a184d3ba7fc2acfcfb121e15e0a2c6411902a6ad47bb8` | **Newline**: `True`
+- **Lines**: 189 | **Size**: 6,587 bytes | **SHA-256**: `1ae554c256db8ef63ef4a4ff06a762392b89decf24b7aafe62487e035824bacb` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Headless script testing frontend project WebSocket transport.
 
@@ -86223,7 +86227,7 @@ echo "Training complete! Model saved to ./my-react-agent-lora"
 #### `web_ui_history.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/web_ui_history.json`
-- **Lines**: 31,266 | **Size**: 2,634,122 bytes | **SHA-256**: `5db2c9e56386894e9a08e929fd76d2dc2456bf54345847f19cdef6a59a74059d` | **Newline**: `False`
+- **Lines**: 31,266 | **Size**: 2,602,857 bytes | **SHA-256**: `b8f6878860d9ae384a7b8707d87961210f44c3d6cc1588e5f6390a3d6976cbd4` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Persistent JSON array of past generation sessions with timestamps, prompts, pass/fail status, and complete source code.
 
@@ -118222,7 +118226,7 @@ A professional-grade SiteAgent candidate should only be promoted if:
 #### `data/siteagent_motion_dataset_manifest.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/siteagent_motion_dataset_manifest.json`
-- **Lines**: 149 | **Size**: 4,981 bytes | **SHA-256**: `95bc4755c38d35790997164ad90340f70d2820bc6e85ee7da7e85577fe066519` | **Newline**: `True`
+- **Lines**: 149 | **Size**: 4,832 bytes | **SHA-256**: `8e1ad950e7bf0e281bd26399f178e8ed0ac6386e6f07015de1735f6c770df5c8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Cryptographic dataset manifest tracking SHA-256 digests, distributions, and motion training policies.
 
@@ -118234,7 +118238,7 @@ A professional-grade SiteAgent candidate should only be promoted if:
   "training_records": 36,
   "evaluation_records": 12,
   "train_sha256": "ab1932e2ce71d08706b63e2461d3094b79e897d34d2619102cc8569dcae89790",
-  "eval_sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
+  "eval_sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
   "categories": {
     "motion_scroll_reveal": 5,
     "motion_parallax": 5,
@@ -118301,8 +118305,8 @@ A professional-grade SiteAgent candidate should only be promoted if:
     },
     "siteagent_motion_eval_v1.jsonl": {
       "relative_path": "data/siteagent_motion_eval_v1.jsonl",
-      "sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
-      "size_bytes": 26359,
+      "sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
+      "size_bytes": 26347,
       "record_count": 12,
       "estimated_tokens": 6586,
       "composition": {
@@ -118933,7 +118937,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/site_trajectories.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/site_trajectories.jsonl`
-- **Lines**: 3 | **Size**: 77,100 bytes | **SHA-256**: `dbd2f770d934b906573fb91be5dcc7a05a81885589da6b645f12ab2522bb3463` | **Newline**: `True`
+- **Lines**: 3 | **Size**: 77,097 bytes | **SHA-256**: `70ba99d2eefdfafd0b2d14d5cef6bacedf1d5d5a0dcc0d7b52468bf46e8904d8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Full-page multi-section website trajectory dataset (13 multi-turn site build traces).
 
@@ -118948,7 +118952,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/star_task_bank.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/star_task_bank.jsonl`
-- **Lines**: 150 | **Size**: 179,958 bytes | **SHA-256**: `df878443e4e05ac56b8c2da23370579ae740022f4aa2e0cbc1dc385a8ba403c2` | **Newline**: `True`
+- **Lines**: 150 | **Size**: 179,808 bytes | **SHA-256**: `6c4072ff73bff2029493e791fb705c457afb09cad284d556de6edae56b57d2ac` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: 150 categorized component tasks for STaR generation.
 
@@ -119110,7 +119114,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/website_task_bank.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/website_task_bank.jsonl`
-- **Lines**: 160 | **Size**: 219,155 bytes | **SHA-256**: `6a567b4a30b89c43f94d8b397b45fe32020f427030ba8e9e5233028eeee50c77` | **Newline**: `True`
+- **Lines**: 160 | **Size**: 218,995 bytes | **SHA-256**: `c08424c7ed5b7c51c7829d3533042b27fcb38407f592c6f51ff933498330dff2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: 160 reverse-engineered website UI component tasks with natural language prompts and Vitest test code, synthesized from The Stack v2 via TeacherClient.
 
@@ -119282,7 +119286,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/site_trajectories_batch3.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/site_trajectories_batch3.jsonl`
-- **Lines**: 5 | **Size**: 145,381 bytes | **SHA-256**: `ed01ff9fb4493b06ad14d93588bafa05c02df659d176a5a0f1028ffe9d268b96` | **Newline**: `True`
+- **Lines**: 5 | **Size**: 145,376 bytes | **SHA-256**: `46ccbd7d13547fc2e807ec1098130ed055e4f60f75e5a695dbb988201b529615` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Batch 3 gold-standard multi-section website trajectories (NexusPay fintech, Lumina Dental healthcare, OmniMind AI agents, Atelier Nord architecture, and Solace Coffee).
 
@@ -119299,7 +119303,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/site_trajectories_stack.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/site_trajectories_stack.jsonl`
-- **Lines**: 6 | **Size**: 143,440 bytes | **SHA-256**: `f94416677bf5f9f953610e3141ba81cdb8c9699291a485c4e70f9bb74b0638f4` | **Newline**: `True`
+- **Lines**: 6 | **Size**: 143,434 bytes | **SHA-256**: `dee684a6328762bfc413597f225257b58ccb598d349859f55f80ba57afdbdded` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Multi-section website trajectories mined autonomously from The Stack v2 via GitHub Git Tree Probe Discovery.
 
@@ -119317,7 +119321,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `data/training_data.jsonl`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data/training_data.jsonl`
-- **Lines**: 251 | **Size**: 6,466,079 bytes | **SHA-256**: `fe39260c1fd5f29116c2d118ecd19e56183fb27cdd488fef4ce0b8dc533205e4` | **Newline**: `True`
+- **Lines**: 251 | **Size**: 6,465,828 bytes | **SHA-256**: `154129ed3ed62453e70386c9488086645d71fe5084313ad0ccaa6459ec0b85bc` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Master SFT training dataset unifying 176 verified multi-turn full-website composition episodes across gold-standard domains, interactive stateful apps, mined Stack repositories, and STaR traces.
 
@@ -123359,7 +123363,7 @@ Based on the failure taxonomy, the highest-leverage targeted data additions are:
 #### `generate_site_trajectories_batch5.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generate_site_trajectories_batch5.py`
-- **Lines**: 4,967 | **Size**: 196,682 bytes | **SHA-256**: `8c78acfe5c53a2a1547c5501164fffbf69e4e633c49d034da1bdaed40eb3c918` | **Newline**: `True`
+- **Lines**: 4,967 | **Size**: 191,715 bytes | **SHA-256**: `2539d7a3d8c1a6d7afd9b825fc65225df241b2f215e4d9a9a794634f59b0d58d` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Batch 5 generator producing 50 modern real-world full-site trajectories with layout archetyping and domain-specific copy.
 
@@ -128338,7 +128342,7 @@ if __name__ == "__main__":
 #### `generate_site_trajectories_batch4.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/generate_site_trajectories_batch4.py`
-- **Lines**: 4,112 | **Size**: 164,982 bytes | **SHA-256**: `44c7ae9af5c001c40b2ed8d6079e3d4551dd8671a0d74dba46ce20854d326195` | **Newline**: `True`
+- **Lines**: 4,112 | **Size**: 160,870 bytes | **SHA-256**: `9f760d8eb8e1ecb17f02099f72ed40706a21ec3eda487c21bdeb33cceb4b8336` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Batch 4 generator producing 50 modern real-world full-site trajectories with layout archetyping and domain-specific copy.
 
@@ -132570,7 +132574,7 @@ During SFT training (`python -m training.train_sft`), `check_benchmark_disjointn
 #### `docs/OPEN_TASKS.md`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/docs/OPEN_TASKS.md`
-- **Lines**: 226 | **Size**: 13,891 bytes | **SHA-256**: `7a5edccda74b99bb983fd64ecc4f233808342945a8f2e1327136196a6ec0e267` | **Newline**: `True`
+- **Lines**: 226 | **Size**: 13,890 bytes | **SHA-256**: `6f65d642f7abeb57a7e6328501a43335d7873f8b575f1bb27428fa4dcfa9ede3` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Consolidated technical debt, audit findings, and remaining milestone tasks.
 
@@ -135678,7 +135682,7 @@ The most important behavioral change is:
 #### `docs/agent_results.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/docs/agent_results.json`
-- **Lines**: 89 | **Size**: 12,060 bytes | **SHA-256**: `1d255917cdc35eeee260db3c428df4d9780d471bc09bd67e0c7fa8a2947c1600` | **Newline**: `False`
+- **Lines**: 89 | **Size**: 11,972 bytes | **SHA-256**: `fb189572f282d1cf3c863fe2c190a4d252cc85f75f2883de103a326866af2c59` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Benchmark execution results artifact for agent runs.
 
@@ -135779,7 +135783,7 @@ The most important behavioral change is:
 #### `docs/eval_results.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/docs/eval_results.json`
-- **Lines**: 42 | **Size**: 11,946 bytes | **SHA-256**: `d1605fd8e69d4b2b08ebf43068cbe9d52150a83c7a40ce3428f9ffdd39717eb6` | **Newline**: `False`
+- **Lines**: 42 | **Size**: 11,905 bytes | **SHA-256**: `a2a710bfae54c3bb647859ed4a0b2e416dd43a2d04abee31e047925da77bcfe8` | **Newline**: `False`
 - **Fence**: 5 backticks
 - **Description**: Benchmark evaluation scorecards and metrics summary artifact.
 
@@ -135833,7 +135837,7 @@ The most important behavioral change is:
 #### `README.md`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/README.md`
-- **Lines**: 262 | **Size**: 14,769 bytes | **SHA-256**: `822f3cc98e2f8994f79327a00cdd0b1422f280db256c9133c215d4b46c810882` | **Newline**: `True`
+- **Lines**: 262 | **Size**: 14,507 bytes | **SHA-256**: `7dde0d274ccf126d74867e36ecc9e64571f8aabde77491ee2bfa4a76fb9317a0` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Project README and system overview.
 
@@ -136548,7 +136552,7 @@ the last two rounds of unimplemented changelogs before they shipped.
 #### `pytest.ini`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/pytest.ini`
-- **Lines**: 5 | **Size**: 225 bytes | **SHA-256**: `45947b0e1a3cd235f4b6637351d7b1b7f12823dccfd1652ce6f6c05e92e759cc` | **Newline**: `True`
+- **Lines**: 5 | **Size**: 220 bytes | **SHA-256**: `93315bf5224f6292a2a8564e3e57210dc497f80705b75ab4898c46aed11b8e38` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Pytest configuration file.
 
@@ -136565,7 +136569,7 @@ markers =
 #### `siteagent_motion_dataset_manifest.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/siteagent_motion_dataset_manifest.json`
-- **Lines**: 149 | **Size**: 4,981 bytes | **SHA-256**: `95bc4755c38d35790997164ad90340f70d2820bc6e85ee7da7e85577fe066519` | **Newline**: `True`
+- **Lines**: 149 | **Size**: 4,832 bytes | **SHA-256**: `8e1ad950e7bf0e281bd26399f178e8ed0ac6386e6f07015de1735f6c770df5c8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Cryptographic motion dataset manifest.
 
@@ -136577,7 +136581,7 @@ markers =
   "training_records": 36,
   "evaluation_records": 12,
   "train_sha256": "ab1932e2ce71d08706b63e2461d3094b79e897d34d2619102cc8569dcae89790",
-  "eval_sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
+  "eval_sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
   "categories": {
     "motion_scroll_reveal": 5,
     "motion_parallax": 5,
@@ -136644,8 +136648,8 @@ markers =
     },
     "siteagent_motion_eval_v1.jsonl": {
       "relative_path": "data/siteagent_motion_eval_v1.jsonl",
-      "sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
-      "size_bytes": 26359,
+      "sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
+      "size_bytes": 26347,
       "record_count": 12,
       "estimated_tokens": 6586,
       "composition": {
@@ -137003,7 +137007,7 @@ def validate_benchmark_provenance(report: Dict[str, Any]) -> Tuple[bool, List[st
 #### `models/promoted_model.json`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/models/promoted_model.json`
-- **Lines**: 29 | **Size**: 1,259 bytes | **SHA-256**: `c0b71bbef88bbf3ea65cae9ffe8e5e8eec49a8ed6c7ea10f436522cae520ffe4` | **Newline**: `True`
+- **Lines**: 29 | **Size**: 1,230 bytes | **SHA-256**: `1ddf6cee7cd62d8ec46231e5fd46205b734d137e51d304d7654ad334c1a39a68` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Promoted model pointer artifact for active production serving.
 
@@ -138017,7 +138021,7 @@ if __name__ == '__main__':
 #### `scripts/build_reference_review_gallery.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/build_reference_review_gallery.py`
-- **Lines**: 41 | **Size**: 7,244 bytes | **SHA-256**: `b5a539214e521a7be78a6af373f4cbf558cbed516d4fc24807b39195fd48f982` | **Newline**: `True`
+- **Lines**: 41 | **Size**: 7,217 bytes | **SHA-256**: `83f88b6b4f71ce126dc402f6f30a7defed6fc7c4998c632cc17ea9d8f4c938b8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Builds visual review gallery HTML from benchmark screenshots.
 
@@ -138153,7 +138157,7 @@ if __name__ == "__main__":
 #### `scripts/generate_architecture_and_source.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/scripts/generate_architecture_and_source.py`
-- **Lines**: 298 | **Size**: 12,157 bytes | **SHA-256**: `f3af46bb1abeac4615553da1aea46c187cc834240e4aac43f2ef27e42487c293` | **Newline**: `True`
+- **Lines**: 300 | **Size**: 12,414 bytes | **SHA-256**: `d82117994dbaa8a325dfcbc7a6d62fc1eb8c2865d1d409c3a1d318b6a96a93c7` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Corruption-proof architecture and complete source code exporter with round-trip SHA-256 validation.
 
@@ -138309,7 +138313,9 @@ def generate_architecture_and_source():
                 disk_path = ROOT_DIR / norm_link
 
         if disk_path.exists() and disk_path.is_file():
-            raw_bytes = disk_path.read_bytes()
+            # Canonical LF content: git checks text out as CRLF on Windows and LF elsewhere,
+            # so the export (and its SHA-256 metadata) must not depend on the OS it ran on.
+            raw_bytes = disk_path.read_bytes().replace(b"\r\n", b"\n")
             text_content = raw_bytes.decode("utf-8", errors="replace")
             sha256_hex = hashlib.sha256(raw_bytes).hexdigest()
             byte_size = len(raw_bytes)
@@ -138420,7 +138426,7 @@ def generate_architecture_and_source():
         # If file exists on disk, assert 100% byte equality with file on disk
         target_file = ROOT_DIR / rel_disk_path
         if target_file.exists() and target_file.is_file():
-            actual_disk_bytes = target_file.read_bytes()
+            actual_disk_bytes = target_file.read_bytes().replace(b"\r\n", b"\n")
             if reconstructed_bytes != actual_disk_bytes:
                 print(f"[SourceExport] ERROR: Reconstructed bytes differ from disk for {rel_disk_path}!", file=sys.stderr)
                 sys.exit(1)
@@ -138433,7 +138439,7 @@ def generate_architecture_and_source():
         print("[SourceExport] ERROR: server/app.py section was not found in export!", file=sys.stderr)
         sys.exit(1)
 
-    app_disk_bytes = (ROOT_DIR / "server" / "app.py").read_bytes()
+    app_disk_bytes = (ROOT_DIR / "server" / "app.py").read_bytes().replace(b"\r\n", b"\n")
     app_extracted = (app_matches[0].group(11) + "\n").encode("utf-8")
     if app_extracted != app_disk_bytes:
         print("[SourceExport] ERROR: server/app.py extracted bytes do not match server/app.py on disk!", file=sys.stderr)
@@ -139635,7 +139641,7 @@ def test_write_site_accepts_file_name_attribute():
 #### `tests/test_auto_scaffold_repair.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_auto_scaffold_repair.py`
-- **Lines**: 136 | **Size**: 5,643 bytes | **SHA-256**: `d597a63b1e20810d1f81251808662fdaa893f165b1b6cb48e7a94454a6e0a040` | **Newline**: `True`
+- **Lines**: 136 | **Size**: 5,507 bytes | **SHA-256**: `0ddd0feaf27c9b208c78712161ca5423f75918bfd11d29bb2aa7f810358c6839` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying auto-scaffold section generation and fallback recovery.
 
@@ -140896,7 +140902,7 @@ def test_visual_holdout_is_distinct_from_training():
 #### `tests/test_recovery_metrics.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_recovery_metrics.py`
-- **Lines**: 298 | **Size**: 11,265 bytes | **SHA-256**: `049d36d2b9245e4b019dc68e1572cbb246ac65871ac8b70c9f59594f2a7d1bb0` | **Newline**: `True`
+- **Lines**: 298 | **Size**: 10,967 bytes | **SHA-256**: `633dd874f2e0f2dd8d5552ac816ec9dc032a54b45c686fcde9043a7c48020db2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying accounting of automated repairs and fallbacks.
 
@@ -141731,7 +141737,7 @@ def test_interactive_site_section_gets_larger_budget():
 #### `tests/test_site_state_model.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_site_state_model.py`
-- **Lines**: 444 | **Size**: 16,531 bytes | **SHA-256**: `31210e2fc81eb6d1e26c097836ffa3c03a8f8f68c97e414cd8be018fc6cf7576` | **Newline**: `True`
+- **Lines**: 444 | **Size**: 16,087 bytes | **SHA-256**: `3ca2d5edd32c56d975f587a1dc00e5b96a55791bc79cace56dc4ef398aa719e6` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying multi-turn site session state transitions and persistence.
 
@@ -142187,7 +142193,7 @@ def _freeform_site_strategy(monkeypatch):
 #### `tests/test_structural_gate.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/tests/test_structural_gate.py`
-- **Lines**: 323 | **Size**: 12,120 bytes | **SHA-256**: `4aee7e26d64717e45b2eef2cb6cccb6349d278e7f996da73dcf1f8a0507c0181` | **Newline**: `True`
+- **Lines**: 323 | **Size**: 11,797 bytes | **SHA-256**: `cda6e5b4018be73b0f3ac1430bf089ebfdadcc94e8b2ac93094fc4c69b7397e2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Automated tests verifying structural section layout and DOM landmark hierarchy.
 
@@ -143062,7 +143068,7 @@ export function Hero() { return <div>Broken Version</div>; }
 #### `agent/stock_photos.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/stock_photos.py`
-- **Lines**: 191 | **Size**: 10,836 bytes | **SHA-256**: `b74a7d0f9d8b0a5464aca817451d16507cd7ba90bd1ebcc58a65e5d7d04e28e6` | **Newline**: `True`
+- **Lines**: 191 | **Size**: 10,645 bytes | **SHA-256**: `eaed3d5f92d15cfb3ee43ca8f40e222ec97d8d178a211b7638683341d63366f4` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Stock photo query mapping, sanity filtering, and catalog resolution.
 
@@ -143265,7 +143271,7 @@ def resolve_site_images(brief: Dict[str, Any]) -> Dict[str, Any]:
 #### `agent/design_plan.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/agent/design_plan.py`
-- **Lines**: 473 | **Size**: 21,378 bytes | **SHA-256**: `d01bc9b523dd39fc78fae56953b53010e8f7a748bc0a4334ef126c0389985940` | **Newline**: `True`
+- **Lines**: 473 | **Size**: 20,905 bytes | **SHA-256**: `0a2856e43efe25e283984f674a456dbcabff149c19373343958b0837d1a86f93` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Design token planning, style preset composition, and layout sequencing rules.
 
@@ -146135,7 +146141,7 @@ def validate_human_review(report: dict[str, Any], adapter_sha256: str, min_sites
 #### `data_pipeline/build_dataset.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data_pipeline/build_dataset.py`
-- **Lines**: 3,023 | **Size**: 136,062 bytes | **SHA-256**: `73e09fd402ae7d5d1f9d78df299e1d8410853f15982618cf82760342426b4b28` | **Newline**: `True`
+- **Lines**: 3,023 | **Size**: 133,039 bytes | **SHA-256**: `d50dd0e642f21c10f6984c20c9f137afaf2c71624fcb3c9e41e87e460c44f4b8` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Master dataset builder assembling SFT, DPO, and trajectory training corpora across multiple sources.
 
@@ -149170,7 +149176,7 @@ if __name__ == "__main__":
 #### `data_pipeline/curate_dataset.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data_pipeline/curate_dataset.py`
-- **Lines**: 5,890 | **Size**: 243,636 bytes | **SHA-256**: `afe1f5b8f44833a1ea3cf04c4806e1056047336f3aca6e240792abf90b9e075f` | **Newline**: `True`
+- **Lines**: 5,890 | **Size**: 237,746 bytes | **SHA-256**: `04973a8300bbb0a02ba35bfa7a56788e8256e1c74e46481ee79f07f269af00b2` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Dataset curation pipeline applying prompt fidelity, anti-duplication, and syntax validation filters.
 
@@ -155072,7 +155078,7 @@ if __name__ == "__main__":
 #### `data_pipeline/generate_trajectories.py`
 
 - **Path**: `file:///C:/Users/AYUSH/Documents/slm/data_pipeline/generate_trajectories.py`
-- **Lines**: 16,243 | **Size**: 636,365 bytes | **SHA-256**: `7a66bb17c402752136bbeadfcc41777dfef8226630aa41bc178b86745088b9d0` | **Newline**: `True`
+- **Lines**: 16,243 | **Size**: 620,122 bytes | **SHA-256**: `827f6d83992e5895114b7fb6c150f1a9d37e5ef76c6d296bdc374252f5395a37` | **Newline**: `True`
 - **Fence**: 5 backticks
 - **Description**: Comprehensive multi-turn synthetic trajectory generation engine across diverse industry domains.
 

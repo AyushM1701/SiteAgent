@@ -5,7 +5,7 @@
   "training_records": 36,
   "evaluation_records": 12,
   "train_sha256": "ab1932e2ce71d08706b63e2461d3094b79e897d34d2619102cc8569dcae89790",
-  "eval_sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
+  "eval_sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
   "categories": {
     "motion_scroll_reveal": 5,
     "motion_parallax": 5,
@@ -72,8 +72,8 @@
     },
     "siteagent_motion_eval_v1.jsonl": {
       "relative_path": "data/siteagent_motion_eval_v1.jsonl",
-      "sha256": "70e05fedc5d15ab00d63dd6801c07a73a827375cb6904a57f10b97dbef94a2e3",
-      "size_bytes": 26359,
+      "sha256": "3f9512371080c0e65b9232c91ec88ba296297bf920bcb7af16b120f8c032582b",
+      "size_bytes": 26347,
       "record_count": 12,
       "estimated_tokens": 6586,
       "composition": {

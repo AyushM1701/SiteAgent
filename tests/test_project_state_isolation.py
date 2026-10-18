@@ -15,6 +15,7 @@ Verifies:
    - Global system state preserved (model loaded, GPU readiness, server connection, theme preference)
 2. Backend session state isolation between distinct sessions.
 """
+import os
 
 import sys
 import subprocess
@@ -38,7 +39,7 @@ def test_frontend_start_new_project_state_isolation():
         cwd=str(BASE_DIR),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend state isolation test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL ACCEPTANCE CRITERIA VERIFIED SUCCESSFULLY!" in res.stdout

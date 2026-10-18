@@ -45,12 +45,13 @@ MOTION_FAMILIES = [
 ]
 
 
+def canonical_bytes(path: Path) -> bytes:
+    """File content with CRLF normalised to LF: git checks text out differently per OS."""
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def compute_sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        while chunk := f.read(65536):
-            h.update(chunk)
-    return h.hexdigest()
+    return hashlib.sha256(canonical_bytes(path)).hexdigest()
 
 
 def tokenize(text: str) -> set[str]:
@@ -97,9 +98,9 @@ def test_manifest_cryptographic_integrity():
         manifest = json.load(f)
 
     actual_sft_sha = compute_sha256(SFT_PATH_DATA)
-    actual_sft_size = SFT_PATH_DATA.stat().st_size
+    actual_sft_size = len(canonical_bytes(SFT_PATH_DATA))
     actual_eval_sha = compute_sha256(EVAL_PATH_DATA)
-    actual_eval_size = EVAL_PATH_DATA.stat().st_size
+    actual_eval_size = len(canonical_bytes(EVAL_PATH_DATA))
 
     assert manifest["dataset_name"] == "siteagent_motion_v1"
     assert manifest["version"] in ("1.0.0", 1)
@@ -119,7 +120,7 @@ def test_manifest_cryptographic_integrity():
     # Check Eval file hash and size
     eval_meta = files_meta["siteagent_motion_eval_v1.jsonl"]
     actual_eval_sha = compute_sha256(EVAL_PATH_DATA)
-    actual_eval_size = EVAL_PATH_DATA.stat().st_size
+    actual_eval_size = len(canonical_bytes(EVAL_PATH_DATA))
 
     assert actual_eval_sha == eval_meta["sha256"], f"Eval SHA mismatch: {actual_eval_sha} vs {eval_meta['sha256']}"
     assert actual_eval_size == eval_meta["size_bytes"], f"Eval size mismatch: {actual_eval_size} vs {eval_meta['size_bytes']}"

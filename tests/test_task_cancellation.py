@@ -9,6 +9,7 @@ Verifies:
 5. /api/generation/<task_id>/status and UI agree on "cancelled" status.
 6. Frontend active task modal and 3 user options (Cancel & Start New, Keep Running in Background, Stay Here).
 """
+import os
 
 import sys
 import queue
@@ -34,7 +35,7 @@ def test_frontend_active_generation_modal_flow():
         cwd=str(BASE_DIR),
         capture_output=True,
         text=True,
-        shell=True,
+        shell=(os.name == "nt"),  # npx is npx.cmd on Windows
     )
     assert res.returncode == 0, f"Frontend active task modal test failed:\nSTDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
     assert "ALL FRONTEND MODAL & CONFLICT WORKFLOW TESTS PASSED!" in res.stdout
